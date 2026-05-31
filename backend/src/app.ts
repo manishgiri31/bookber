@@ -89,7 +89,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   ];
 
   await registerRoutes(app, routes);
-
+  console.log(app.printRoutes());
   return app;
 }
 
