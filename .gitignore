@@ -1,0 +1,49 @@
+# Environment
+
+.env
+.env.*
+!.env.example
+
+# Node
+
+node_modules/
+dist/
+coverage/
+npm-debug.log*
+
+# Prisma
+
+src/generated/prisma
+
+# Flutter
+
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Android
+
+frontend/android/.gradle
+frontend/android/app/debug
+frontend/android/app/profile
+frontend/android/app/release
+
+# iOS
+
+frontend/ios/Pods/
+frontend/ios/.symlinks/
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+
+# IDE
+
+.vscode/
+.idea/
+
+# OS
+
+.DS_Store
+Thumbs.db

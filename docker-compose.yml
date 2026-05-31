@@ -1,0 +1,18 @@
+services:
+postgres:
+image: postgis/postgis:16-3.4
+container_name: bookber-postgres
+restart: unless-stopped
+environment:
+POSTGRES_USER: postgres
+POSTGRES_PASSWORD: root
+POSTGRES_DB: bookber
+ports:
+- "5433:5432"
+
+redis:
+image: redis:7
+container_name: bookber-redis
+restart: unless-stopped
+ports:
+- "6379:6379"
