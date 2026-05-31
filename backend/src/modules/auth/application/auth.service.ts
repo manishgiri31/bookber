@@ -1,0 +1,206 @@
+import bcrypt from "bcrypt";
+import crypto from "node:crypto";
+import type { FastifyInstance } from "fastify";
+import type { UserRole } from "@prisma/client";
+import { env } from "../../../shared/config/env.js";
+import { Errors } from "../../../shared/http/app-error.js";
+import type { AuthSession, AuthUser, TokenPair } from "../domain/auth.types.js";
+import type { AuthRepository } from "../infrastructure/auth.repository.js";
+import type { TokenService } from "../infrastructure/token.service.js";
+
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const ACCOUNT_LOCK_DURATION_MINUTES = 15;
+
+function randomJti() {
+  return crypto.randomUUID();
+}
+
+export class AuthService {
+  constructor(
+    private readonly app: FastifyInstance,
+    private readonly repository: AuthRepository,
+    private readonly tokens: TokenService
+  ) { }
+
+  async register(input: { fullName: string; email: string; phoneNumber?: string; password: string; role: UserRole }) {
+    const existingByEmail = await this.repository.findByEmail(input.email);
+    if (existingByEmail) throw Errors.conflict("Email already registered");
+
+    if (input.phoneNumber) {
+      const existingByPhone = await this.repository.findByPhoneNumber(input.phoneNumber);
+      if (existingByPhone) throw Errors.conflict("Phone number already registered");
+    }
+
+    const passwordHash = await bcrypt.hash(input.password, env.PASSWORD_BCRYPT_ROUNDS);
+    const user = await this.repository.createUser({
+      fullName: input.fullName,
+      email: input.email,
+      phoneNumber: input.phoneNumber ?? null,
+      password: passwordHash,
+      role: input.role
+    });
+
+    return this.issueTokens(user);
+  }
+
+  async login(input: { identifier: string; password: string }) {
+    const user = await this.repository.findByIdentifier(input.identifier);
+    if (!user) {
+      throw Errors.unauthenticated();
+    }
+
+    const isLocked = await this.repository.isAccountLocked(user.id);
+    if (isLocked) {
+      throw Errors.forbidden();
+    }
+
+    const passwordMatch = await bcrypt.compare(input.password, user.password);
+    if (!passwordMatch) {
+      await this.handleFailedLogin(user.id);
+      throw Errors.unauthenticated();
+    }
+
+    await this.repository.resetFailedLoginAttempts(user.id);
+
+    const authUser = await this.repository.findById(user.id);
+    if (!authUser) throw Errors.unauthenticated();
+
+    return this.issueTokens(authUser);
+  }
+
+  async refresh(input: { refreshToken?: string }) {
+    const token = input.refreshToken;
+    if (!token) throw Errors.unauthenticated();
+
+    const record = await this.repository.findActiveRefreshToken(token);
+    if (!record) throw Errors.unauthenticated();
+    if (record.expiresAt.getTime() < Date.now()) throw Errors.unauthenticated();
+
+    const user = await this.repository.findById(record.userId);
+    if (!user) throw Errors.unauthenticated();
+
+    return this.rotateRefreshToken(user, token);
+  }
+
+  async logout(input: { refreshToken?: string }) {
+    if (!input.refreshToken) return;
+    await this.repository.revokeRefreshToken(input.refreshToken);
+  }
+
+  private async handleFailedLogin(userId: string) {
+    await this.repository.incrementFailedLoginAttempts(userId);
+    await this.repository.lockAccount(userId, ACCOUNT_LOCK_DURATION_MINUTES);
+  }
+
+  private async issueTokens(user: AuthUser): Promise<{ user: AuthUser; tokens: TokenPair }> {
+    const sessionId = crypto.randomUUID();
+    const accessJti = randomJti();
+    const refreshJti = randomJti();
+    const familyId = randomJti();
+    const refreshToken = await this.tokens.signRefreshToken({
+      sub: user.id,
+      jti: refreshJti,
+      sid: sessionId,
+      fam: familyId
+    });
+
+    await this.repository.storeRefreshToken({
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
+    });
+
+    await this.writeSession({
+      userId: user.id,
+      familyId,
+      refreshJti,
+      role: user.role
+    }, sessionId);
+
+    const accessToken = await this.tokens.signAccessToken({
+      sub: user.id,
+      role: user.role,
+      jti: accessJti,
+      sid: sessionId
+    });
+
+    return {
+      user,
+      tokens: {
+        accessToken,
+        refreshToken,
+        refreshJti,
+        refreshFamilyId: familyId,
+        sessionId
+      }
+    };
+  }
+
+  private async rotateRefreshToken(user: AuthUser, oldToken: string) {
+    const sessionId = crypto.randomUUID();
+    const refreshJti = randomJti();
+    const familyId = randomJti();
+    const refreshToken = await this.tokens.signRefreshToken({
+      sub: user.id,
+      jti: refreshJti,
+      sid: sessionId,
+      fam: familyId
+    });
+
+    await this.repository.rotateRefreshToken(oldToken, {
+      userId: user.id,
+      token: refreshToken,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
+    });
+
+    await this.writeSession(
+      {
+        userId: user.id,
+        familyId,
+        refreshJti,
+        role: user.role
+      },
+      sessionId
+    );
+
+    const accessToken = await this.tokens.signAccessToken({
+      sub: user.id,
+      role: user.role,
+      jti: randomJti(),
+      sid: sessionId
+    });
+
+    return {
+      user,
+      tokens: {
+        accessToken,
+        refreshToken,
+        refreshJti,
+        refreshFamilyId: familyId,
+        sessionId
+      }
+    };
+  }
+
+  private async writeSession(session: AuthSession, sessionId: string) {
+    const redis = this.app.redis;
+    if (!redis) return;
+    const ttlSeconds = env.JWT_REFRESH_TTL.endsWith("d")
+      ? Number.parseInt(env.JWT_REFRESH_TTL, 10) * 24 * 60 * 60
+      : 30 * 24 * 60 * 60;
+    await redis.set(`auth:session:${sessionId}`, JSON.stringify(session), "EX", ttlSeconds);
+  }
+
+  private async readSession(sessionId: string) {
+    const redis = this.app.redis;
+    if (!redis) return null;
+    const raw = await redis.get(`auth:session:${sessionId}`);
+    return raw ? (JSON.parse(raw) as AuthSession) : null;
+  }
+
+  private async deleteSession(sessionId: string) {
+    const redis = this.app.redis;
+    if (!redis) return;
+    await redis.del(`auth:session:${sessionId}`);
+  }
+}

@@ -1,0 +1,341 @@
+{
+  "dashboards": {
+    "overview": {
+      "title": "BookBer Overview",
+      "panels": [
+        {
+          "title": "System Health",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "up{job='bookber-backend'}",
+              "legendFormat": "{{instance}}"
+            }
+          ]
+        },
+        {
+          "title": "Request Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_http_requests_total[5m])",
+              "legendFormat": "{{method}} {{route}}"
+            }
+          ]
+        },
+        {
+          "title": "Error Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_http_errors_total[5m])",
+              "legendFormat": "{{method}} {{route}}"
+            }
+          ]
+        },
+        {
+          "title": "P95 Latency",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(bookber_http_request_duration_seconds_bucket[5m]))",
+              "legendFormat": "{{route}}"
+            }
+          ]
+        }
+      ]
+    },
+    "queue_performance": {
+      "title": "Queue Performance",
+      "panels": [
+        {
+          "title": "Queue Latency P95",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(bookber_queue_latency_seconds_bucket[5m]))",
+              "legendFormat": "{{shop_id}} {{lane}} {{operation}}"
+            }
+          ]
+        },
+        {
+          "title": "Booking Throughput",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_booking_throughput_total[5m])",
+              "legendFormat": "{{shop_id}} {{status}} {{lane}}"
+            }
+          ]
+        },
+        {
+          "title": "Active Queues",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_active_queues",
+              "legendFormat": "{{shop_id}} {{lane}}"
+            }
+          ]
+        },
+        {
+          "title": "Queue Size",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_queue_size",
+              "legendFormat": "{{shop_id}} {{lane}}"
+            }
+          ]
+        },
+        {
+          "title": "Wait Time Accuracy",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_wait_time_accuracy",
+              "legendFormat": "{{shop_id}} {{lane}}"
+            }
+          ]
+        },
+        {
+          "title": "Average Wait Time",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_average_wait_time_seconds",
+              "legendFormat": "{{shop_id}} {{lane}}"
+            }
+          ]
+        }
+      ]
+    },
+    "socket_performance": {
+      "title": "Socket Performance",
+      "panels": [
+        {
+          "title": "Socket Connections",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_socket_connections",
+              "legendFormat": "{{shop_id}} {{connection_type}}"
+            }
+          ]
+        },
+        {
+          "title": "Socket Message Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_socket_messages_total[5m])",
+              "legendFormat": "{{shop_id}} {{message_type}} {{direction}}"
+            }
+          ]
+        },
+        {
+          "title": "Socket Latency P95",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(bookber_socket_latency_seconds_bucket[5m]))",
+              "legendFormat": "{{shop_id}} {{message_type}}"
+            }
+          ]
+        }
+      ]
+    },
+    "database_performance": {
+      "title": "Database Performance",
+      "panels": [
+        {
+          "title": "PostgreSQL Latency P95",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(bookber_postgres_latency_seconds_bucket[5m]))",
+              "legendFormat": "{{operation}} {{table}}"
+            }
+          ]
+        },
+        {
+          "title": "PostgreSQL Query Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_postgres_queries_total[5m])",
+              "legendFormat": "{{operation}} {{table}} {{status}}"
+            }
+          ]
+        },
+        {
+          "title": "PostgreSQL Connections",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_postgres_connections",
+              "legendFormat": "{{state}}"
+            }
+          ]
+        },
+        {
+          "title": "PostgreSQL Error Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_postgres_errors_total[5m])",
+              "legendFormat": "{{error_type}}"
+            }
+          ]
+        }
+      ]
+    },
+    "redis_performance": {
+      "title": "Redis Performance",
+      "panels": [
+        {
+          "title": "Redis Latency P95",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(bookber_redis_latency_seconds_bucket[5m]))",
+              "legendFormat": "{{operation}} {{command}}"
+            }
+          ]
+        },
+        {
+          "title": "Redis Operation Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_redis_operations_total[5m])",
+              "legendFormat": "{{operation}} {{status}}"
+            }
+          ]
+        },
+        {
+          "title": "Redis Connections",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_redis_pool_connections",
+              "legendFormat": "{{state}}"
+            }
+          ]
+        },
+        {
+          "title": "Redis Error Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_redis_errors_total[5m])",
+              "legendFormat": "{{error_type}}"
+            }
+          ]
+        }
+      ]
+    },
+    "chair_utilization": {
+      "title": "Chair Utilization",
+      "panels": [
+        {
+          "title": "Chair Utilization",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "bookber_chair_utilization",
+              "legendFormat": "{{shop_id}} {{chair_id}}"
+            }
+          ]
+        },
+        {
+          "title": "Chair Service Time P95",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, rate(bookber_chair_service_time_seconds_bucket[5m]))",
+              "legendFormat": "{{shop_id}} {{chair_id}} {{service_type}}"
+            }
+          ]
+        },
+        {
+          "title": "Bookings Created",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_bookings_created_total[5m])",
+              "legendFormat": "{{shop_id}} {{lane}} {{service_type}}"
+            }
+          ]
+        },
+        {
+          "title": "Bookings Completed",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_bookings_completed_total[5m])",
+              "legendFormat": "{{shop_id}} {{lane}} {{service_type}}"
+            }
+          ]
+        },
+        {
+          "title": "Bookings Cancelled",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_bookings_cancelled_total[5m])",
+              "legendFormat": "{{shop_id}} {{lane}} {{reason}}"
+            }
+          ]
+        },
+        {
+          "title": "No-Shows",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_no_shows_total[5m])",
+              "legendFormat": "{{shop_id}} {{lane}}"
+            }
+          ]
+        }
+      ]
+    },
+    "errors": {
+      "title": "Error Dashboard",
+      "panels": [
+        {
+          "title": "Error Rate by Service",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(bookber_http_errors_total[5m])",
+              "legendFormat": "{{method}} {{route}}"
+            },
+            {
+              "expr": "rate(bookber_redis_errors_total[5m])",
+              "legendFormat": "{{error_type}}"
+            },
+            {
+              "expr": "rate(bookber_postgres_errors_total[5m])",
+              "legendFormat": "{{error_type}}"
+            }
+          ]
+        },
+        {
+          "title": "Error Distribution",
+          "type": "piechart",
+          "targets": [
+            {
+              "expr": "sum by (error_type) (rate(bookber_redis_errors_total[5m]))",
+              "legendFormat": "{{error_type}}"
+            },
+            {
+              "expr": "sum by (error_type) (rate(bookber_postgres_errors_total[5m]))",
+              "legendFormat": "{{error_type}}"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

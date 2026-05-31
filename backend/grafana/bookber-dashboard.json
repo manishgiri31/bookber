@@ -1,0 +1,106 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "HTTP Request Duration (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_bucket[5m])) by (le, route))",
+          "legendFormat": "{{route}}"
+        }
+      ]
+    },
+    {
+      "title": "Booking Creation Duration (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(booking_creation_duration_bucket[5m])) by (le, shop_id, lane))",
+          "legendFormat": "{{shop_id}} {{lane}}"
+        }
+      ]
+    },
+    {
+      "title": "Queue Assignment Duration (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(queue_assignment_duration_bucket[5m])) by (le, shop_id))",
+          "legendFormat": "{{shop_id}}"
+        }
+      ]
+    },
+    {
+      "title": "Active Queue Size",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "active_queue_size",
+          "legendFormat": "{{shop_id}} {{lane}}"
+        }
+      ]
+    },
+    {
+      "title": "Active Bookings",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 16 },
+      "targets": [{ "expr": "sum(active_bookings)" }]
+    },
+    {
+      "title": "Socket Connections",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 16 },
+      "targets": [{ "expr": "sum(socket_connections)" }]
+    },
+    {
+      "title": "Redis Latency (p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(redis_latency_bucket[5m])) by (le, command))",
+          "legendFormat": "{{command}}"
+        }
+      ]
+    },
+    {
+      "title": "Database Query Duration (p95)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(database_query_duration_bucket[5m])) by (le, model))",
+          "legendFormat": "{{model}}"
+        }
+      ]
+    },
+    {
+      "title": "Chairs by Status",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "targets": [
+        {
+          "expr": "active_chairs",
+          "legendFormat": "{{shop_id}} {{status}}"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["bookber", "queue"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "BookBer Backend",
+  "uid": "bookber-backend",
+  "version": 1
+}
