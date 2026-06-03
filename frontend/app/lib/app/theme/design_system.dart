@@ -7,26 +7,32 @@ enum QueueSeverity { safe, warm, critical }
 class BookBerPalette {
   BookBerPalette._();
 
-  static const Color bgPrimary = Color(0xFF0B172A);
-  static const Color bgSurface = Color(0xFF15263F);
-  static const Color bgElevated = Color(0xFF1D3150);
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFFB8C7D8);
-  static const Color textMuted = Color(0xFF94A3B8);
-
-  static const Color primaryAccent = Color(0xFF4F7CFF);
-  static const Color primaryAccentSoft = Color(0xFF3B6CE4);
-  static const Color liveGlow = Color(0xFF22C55E);
-  static const Color liveShadow = Color(0xFF5EE3A4);
-  static const Color operationalAccent = Color(0xFF60A5FA);
-  static const Color premiumGold = Color(0xFFF7D070);
-  static const Color premiumGoldSoft = Color(0xFFF0E5B8);
-  static const Color urgentRed = Color(0xFFEF4444);
-  static const Color warningAmber = Color(0xFFF59E0B);
-  static const Color busyOrange = Color(0xFFF97316);
-  static const Color offlineSlate = Color(0xFF64748B);
+  // Backgrounds — per BookBer design tokens
+  static const Color bgPrimary = Color(0xFF0D0D0F); // near-black obsidian
+  static const Color bgSurface = Color(0xFF141417); // card surface
+  static const Color bgElevated = Color(0xFF1C1C21); // elevated card
+  
+  // Text
+  static const Color textPrimary = Color(0xFFF5F5F7); // warm white
+  static const Color textSecondary = Color(0xFF8A8A9A); // muted
+  static const Color textMuted = Color(0xFF4A4A5A); // disabled
+  
+  // Accents
+  static const Color primaryAccent = Color(0xFF00E5C3); // electric teal
+  static const Color primaryAccentSoft = Color(0x6600E5C3); // 25% opacity for glows
+  static const Color operationalAccent = Color(0xFF00E5C3); // teal secondary
+  
+  // Semantic colors
+  static const Color liveGlow = Color(0xFF22C55E); // success
+  static const Color liveShadow = Color(0xFF22C55E);
+  static const Color premiumGold = Color(0xFFFF6B35); // warm coral (alerts/warnings)
+  static const Color premiumGoldSoft = Color(0xFFFF6B35);
+  static const Color urgentRed = Color(0xFFEF4444); // error
+  static const Color warningAmber = Color(0xFFF59E0B); // warning
+  static const Color busyOrange = Color(0xFFF59E0B);
+  static const Color offlineSlate = Color(0xFF4A4A5A);
   static const Color queueSafe = Color(0xFF22C55E);
-  static const Color queueWarm = Color(0xFFFBBF24);
+  static const Color queueWarm = Color(0xFFF59E0B);
   static const Color queueCritical = Color(0xFFEF4444);
   static const Color availabilityOpen = Color(0xFF22C55E);
 }
@@ -52,80 +58,96 @@ class BookBerTypography {
 
   static TextTheme light() {
     return const TextTheme(
+      // Display styles (Satoshi)
       displayLarge: TextStyle(
-        fontSize: 38,
-        fontWeight: FontWeight.w800,
+        fontFamily: 'Satoshi',
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0.0,
         color: BookBerPalette.textPrimary,
       ),
       displayMedium: TextStyle(
-        fontSize: 32,
-        fontWeight: FontWeight.w800,
+        fontFamily: 'Satoshi',
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: BookBerPalette.textPrimary,
       ),
       displaySmall: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w800,
+        fontFamily: 'Satoshi',
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
         letterSpacing: 0.0,
         color: BookBerPalette.textPrimary,
       ),
       headlineLarge: TextStyle(
+        fontFamily: 'Satoshi',
         fontSize: 24,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.0,
         color: BookBerPalette.textPrimary,
       ),
       headlineMedium: TextStyle(
+        fontFamily: 'Satoshi',
         fontSize: 20,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.0,
         color: BookBerPalette.textPrimary,
       ),
       titleLarge: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: BookBerPalette.textPrimary,
       ),
       titleMedium: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: BookBerPalette.textPrimary,
       ),
       titleSmall: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: BookBerPalette.textPrimary,
       ),
+      // Body styles (DM Sans)
       bodyLarge: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 16,
-        fontWeight: FontWeight.w500,
-        color: BookBerPalette.textSecondary,
+        fontWeight: FontWeight.w400,
+        color: BookBerPalette.textPrimary,
       ),
       bodyMedium: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: BookBerPalette.textSecondary,
       ),
       bodySmall: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: BookBerPalette.textMuted,
       ),
       labelLarge: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
+        fontFamily: 'DM Sans',
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
         color: BookBerPalette.textPrimary,
       ),
       labelMedium: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: BookBerPalette.textPrimary,
+        fontWeight: FontWeight.w400,
+        color: BookBerPalette.textSecondary,
       ),
       labelSmall: TextStyle(
+        fontFamily: 'DM Sans',
         fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: BookBerPalette.textSecondary,
+        fontWeight: FontWeight.w400,
+        color: BookBerPalette.textMuted,
       ),
     );
   }

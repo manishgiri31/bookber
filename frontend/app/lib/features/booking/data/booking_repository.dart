@@ -2,103 +2,106 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/bookber_models.dart';
 import '../../../core/network/api_result.dart';
+import '../../../core/network/dio_client.dart';
 
 class BookingRepository {
-  const BookingRepository();
+  BookingRepository(this._dioClient);
 
-  Future<ApiResult<List<Barber>>> fetchBarbers() async {
-    await Future<void>.delayed(const Duration(milliseconds: 400));
-    return ApiSuccess([
-      Barber(
-        id: 'b1',
-        name: 'Arjun Fade',
-        rating: 4.9,
-        distanceKm: 0.6,
-        bio: 'Precision fades, beard shaping, and fast turnaround.',
-        isAvailable: true,
-      ),
-      Barber(
-        id: 'b2',
-        name: 'Nikhil Studio',
-        rating: 4.8,
-        distanceKm: 1.2,
-        bio: 'Combo packages and premium grooming.',
-        isAvailable: false,
-      ),
-    ]);
-  }
+  final DioClient _dioClient;
 
-  Future<ApiResult<List<ServiceItem>>> fetchServices(String barberId) async {
-    await Future<void>.delayed(const Duration(milliseconds: 300));
-    return ApiSuccess([
-      ServiceItem(
-        id: 's1',
-        name: 'Haircut',
-        category: 'Hair',
-        durationMin: 30,
-        price: 250,
-      ),
-      ServiceItem(
-        id: 's2',
-        name: 'Beard Trim',
-        category: 'Beard',
-        durationMin: 15,
-        price: 120,
-      ),
-      ServiceItem(
-        id: 's3',
-        name: 'Haircut + Beard',
-        category: 'Package',
-        durationMin: 45,
-        price: 320,
-        isCombo: true,
-      ),
-    ]);
+  Future<ApiResult<List<TimeSlot>>> getAvailableSlots(
+    String barberId,
+    DateTime date,
+    int durationMinutes,
+  ) async {
+    return ApiResult.guard(() async {
+      final queryParams = {
+        'date': DateTime(date.year, date.month, date.day).toIso8601String().split('T').first,
+        'duration': durationMinutes,
+      };
+      final response = await _dioClient.get('/api/barbers/$barberId/slots', queryParams: queryParams);
+      final slots = (response['slots'] as List<dynamic>?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(TimeSlot.fromJson)
+              .toList() ??
+          [];
+      return slots;
+    });
   }
 
   Future<ApiResult<Booking>> createBooking({
-    required String barberId,
-    required String barberName,
-    required List<ServiceItem> services,
+    BookingFormState? formState,
+    String? barberId,
+    String? barberName,
+    List<ServiceItem>? services,
     DateTime? scheduledAt,
   }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 700));
-    final duration = services.fold<int>(
-      0,
-      (sum, item) => sum + item.durationMin,
-    );
-    return ApiSuccess(
-      Booking(
-        id: 'bk_${DateTime.now().millisecondsSinceEpoch}',
-        barberId: barberId,
-        barberName: barberName,
-        serviceNames: services.map((e) => e.name).toList(),
-        status: 'CONFIRMED',
-        scheduledAt:
-            scheduledAt ?? DateTime.now().add(const Duration(minutes: 20)),
-        queuePosition: 3,
-        estimatedWaitMinutes: duration + 10,
-      ),
-    );
+    return ApiResult.guard(() async {
+      final form = formState;
+      final body = <String, dynamic>{
+        'shopId': form?.shopId ?? '',
+        'barberId': form?.selectedBarberId ?? barberId,
+        'serviceIds': form?.selectedServiceIds ?? services?.map((service) => service.id).toList() ?? const <String>[],
+        'paymentMethod': form?.paymentMethod ?? 'cash',
+        'mode': form?.isJoinQueue == true ? 'queue' : 'appointment',
+      };
+
+      final slotTime = form?.selectedSlot?.startTime ?? scheduledAt;
+      if (slotTime != null) {
+        body['scheduledAt'] = slotTime.toIso8601String();
+      }
+
+      final response = await _dioClient.post('/api/bookings', body: body);
+      final bookingJson = response is Map<String, dynamic>
+          ? (response['booking'] as Map<String, dynamic>?) ?? response
+          : <String, dynamic>{};
+      return Booking.fromJson(bookingJson);
+    });
   }
 
-  Future<ApiResult<List<Booking>>> fetchHistory() async {
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    return ApiSuccess([
-      Booking(
-        id: 'old_1',
-        barberId: 'b1',
-        barberName: 'Arjun Fade',
-        serviceNames: const ['Haircut'],
-        status: 'COMPLETED',
-        scheduledAt: DateTime.now().subtract(const Duration(days: 2)),
-        queuePosition: 0,
-        estimatedWaitMinutes: 0,
-      ),
-    ]);
+  Future<ApiResult<List<Booking>>> getMyBookings() async {
+    return ApiResult.guard(() async {
+      final response = await _dioClient.get('/api/bookings/my');
+      final bookings = (response['bookings'] as List<dynamic>?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(Booking.fromJson)
+              .toList() ??
+          [];
+      return bookings;
+    });
+  }
+
+  Future<ApiResult<List<Booking>>> fetchHistory() => getMyBookings();
+
+  Future<ApiResult<List<ServiceItem>>> fetchServices(String shopId) async {
+    return ApiResult.guard(() async {
+      final response = await _dioClient.get('/api/shops/$shopId/services');
+      final items = response is Map<String, dynamic>
+          ? (response['services'] as List<dynamic>?) ?? response['data'] as List<dynamic>? ?? const <dynamic>[]
+          : response is List<dynamic>
+              ? response
+              : const <dynamic>[];
+      return items.whereType<Map<String, dynamic>>().map(ServiceItem.fromJson).toList(growable: false);
+    });
+  }
+
+  Future<ApiResult<Booking>> getBookingById(String bookingId) async {
+    return ApiResult.guard(() async {
+      final response = await _dioClient.get('/api/bookings/$bookingId');
+      final bookingJson = response is Map<String, dynamic>
+          ? (response['booking'] as Map<String, dynamic>?) ?? response
+          : <String, dynamic>{};
+      return Booking.fromJson(bookingJson);
+    });
+  }
+
+  Future<ApiResult<void>> cancelBooking(String bookingId) async {
+    return ApiResult.guard(() async {
+      await _dioClient.patch('/api/bookings/$bookingId/cancel');
+    });
   }
 }
 
 final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
-  return const BookingRepository();
+  return BookingRepository(ref.read(dioClientProvider));
 });

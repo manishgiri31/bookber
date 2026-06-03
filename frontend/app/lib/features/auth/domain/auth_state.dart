@@ -1,21 +1,56 @@
-class AuthState {
-  const AuthState({
-    required this.isAuthenticated,
-    this.userId,
-  });
+import '../../../core/models/bookber_models.dart';
 
-  final bool isAuthenticated;
-  final String? userId;
+enum UserRole { customer, barber, admin }
 
-  AuthState copyWith({
-    bool? isAuthenticated,
-    String? userId,
-  }) {
-    return AuthState(
-      isAuthenticated: isAuthenticated ?? this.isAuthenticated,
-      userId: userId ?? this.userId,
-    );
+extension UserRoleX on UserRole {
+  String get value {
+    switch (this) {
+      case UserRole.customer:
+        return 'customer';
+      case UserRole.barber:
+        return 'barber';
+      case UserRole.admin:
+        return 'admin';
+    }
   }
 
-  static const unauthenticated = AuthState(isAuthenticated: false);
+  static UserRole? fromValue(String? value) {
+    switch (value) {
+      case 'customer':
+        return UserRole.customer;
+      case 'barber':
+        return UserRole.barber;
+      case 'admin':
+        return UserRole.admin;
+      default:
+        return null;
+    }
+  }
+}
+
+sealed class AuthState {
+  const AuthState();
+
+  bool get isAuthenticated => this is AuthAuthenticated;
+  bool get isLoading => this is AuthLoading;
+}
+
+class AuthInitial extends AuthState {
+  const AuthInitial();
+}
+
+class AuthLoading extends AuthState {
+  const AuthLoading();
+}
+
+class AuthAuthenticated extends AuthState {
+  const AuthAuthenticated(this.user);
+
+  final UserProfile user;
+}
+
+class AuthError extends AuthState {
+  const AuthError(this.message);
+
+  final String message;
 }

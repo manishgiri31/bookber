@@ -34,9 +34,9 @@ export type CreatePaymentRequest = {
   bookingId: string;
   amount: number;
   method: PaymentMethod;
-  idempotencyKey?: string;
-  upiId?: string;
-  cardToken?: string;
+  idempotencyKey?: string | undefined;
+  upiId?: string | undefined;
+  cardToken?: string | undefined;
 };
 
 export type ProcessPaymentRequest = {
@@ -49,19 +49,19 @@ export type RefundRequest = {
   paymentId: string;
   amount: number;
   reason: string;
-  idempotencyKey?: string;
+  idempotencyKey?: string | undefined;
 };
 
 export type PaymentHistoryRequest = {
-  userId?: string;
-  shopId?: string;
-  bookingId?: string;
-  method?: PaymentMethod;
-  status?: PaymentStatus;
-  fromDate?: Date;
-  toDate?: Date;
-  limit?: number;
-  offset?: number;
+  userId?: string | undefined;
+  shopId?: string | undefined;
+  bookingId?: string | undefined;
+  method?: PaymentMethod | undefined;
+  status?: PaymentStatus | undefined;
+  fromDate?: Date | undefined;
+  toDate?: Date | undefined;
+  limit?: number | undefined;
+  offset?: number | undefined;
 };
 
 export type PaymentTransactionLog = {

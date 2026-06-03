@@ -25,7 +25,8 @@ class _MapScreenState extends State<MapScreen> {
 
   Future<void> loadLocation() async {
     try {
-      final Position position = await _locationService.getCurrentLocation();
+      final Position? position = await _locationService.getCurrentLocation();
+      if (position == null) return;
 
       setState(() {
         currentLocation = LatLng(position.latitude, position.longitude);

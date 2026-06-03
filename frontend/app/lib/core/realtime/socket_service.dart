@@ -2,57 +2,96 @@ import 'dart:async';
 
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
-import '../storage/app_storage.dart';
+import '../../app/config/app_env.dart';
+import '../models/bookber_models.dart';
 
 class SocketService {
-  SocketService({
-    required String socketUrl,
-    required AppStorage storage,
-  })  : _storage = storage,
-        _socketUrl = socketUrl;
-
-  final String _socketUrl;
-  final AppStorage _storage;
   io.Socket? _socket;
-  final _controller = StreamController<Map<String, dynamic>>.broadcast();
 
-  Stream<Map<String, dynamic>> get events => _controller.stream;
+  final _eventsController = StreamController<Map<String, dynamic>>.broadcast();
+  final _queueUpdateController = StreamController<Map<String, dynamic>>.broadcast();
+  final _chairAssignedController = StreamController<ChairAssignment>.broadcast();
+  final _serviceStartedController = StreamController<String>.broadcast();
+  final _connectionController = StreamController<bool>.broadcast();
 
-  Future<void> connect() async {
-    final token = _storage.accessToken;
-    if (token == null) return;
+  Stream<Map<String, dynamic>> get events => _eventsController.stream;
+  Stream<Map<String, dynamic>> get onQueueUpdate => _queueUpdateController.stream;
+  Stream<ChairAssignment> get onChairAssigned => _chairAssignedController.stream;
+  Stream<String> get onServiceStarted => _serviceStartedController.stream;
+  Stream<bool> get onConnectionChange => _connectionController.stream;
+
+  void connect(String userId, String token) {
     _socket?.dispose();
     _socket = io.io(
-      _socketUrl,
+      AppEnv.socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
+          .disableAutoConnect()
           .enableReconnection()
-          .setAuth({'token': token})
+          .setAuth({'token': token, 'userId': userId})
           .build(),
     );
-
-    _socket!
-      ..onConnect((_) {})
-      ..onReconnect((_) {})
-      ..onDisconnect((_) {})
-      ..on('booking.created', (data) => _controller.add({'event': 'booking.created', 'data': data}))
-      ..on('booking.updated', (data) => _controller.add({'event': 'booking.updated', 'data': data}))
-      ..on('queue.updated', (data) => _controller.add({'event': 'queue.updated', 'data': data}))
-      ..on('chair.allocated', (data) => _controller.add({'event': 'chair.allocated', 'data': data}))
-      ..on('barber.delayed', (data) => _controller.add({'event': 'barber.delayed', 'data': data}))
-      ..on('customer.checked_in', (data) => _controller.add({'event': 'customer.checked_in', 'data': data}));
+    _setupListeners();
+    _socket!.connect();
   }
 
-  void subscribeToBooking(String bookingId) {
-    _socket?.emit('room:subscribe', {'bookingId': bookingId});
+  void joinShopRoom(String shopId) {
+    _socket?.emit('queue:join_room', {'shopId': shopId});
   }
 
-  void subscribeToShop(String shopId) {
-    _socket?.emit('room:subscribe', {'shopId': shopId});
+  void leaveShopRoom(String shopId) {
+    _socket?.emit('queue:leave_room', {'shopId': shopId});
+  }
+
+  void emit(String event, Map<String, dynamic> data) {
+    _socket?.emit(event, data);
+  }
+
+  void _setupListeners() {
+    _socket
+      ?..onConnect((_) => _connectionController.add(true))
+      ..onDisconnect((_) => _connectionController.add(false))
+      ..on('queue:updated', (data) {
+        final payload = _asMap(data);
+        _queueUpdateController.add(payload);
+        _eventsController.add({'event': 'queue:updated', 'data': payload});
+        _eventsController.add({'event': 'queue.updated', 'data': payload});
+      })
+      ..on('chair:assigned', (data) {
+        final payload = _asMap(data);
+        _chairAssignedController.add(ChairAssignment.fromJson(payload));
+        _eventsController.add({'event': 'chair:assigned', 'data': payload});
+        _eventsController.add({'event': 'chair.allocated', 'data': payload});
+      })
+      ..on('service:started', (data) {
+        final payload = _asMap(data);
+        _serviceStartedController.add(payload['bookingId']?.toString() ?? '');
+        _eventsController.add({'event': 'service:started', 'data': payload});
+      })
+      ..on('service:completed', (data) {
+        _eventsController.add({'event': 'service:completed', 'data': _asMap(data)});
+      })
+      ..on('admin:activity', (data) {
+        _eventsController.add({'event': 'admin:activity', 'data': data});
+      });
+  }
+
+  bool get isConnected => _socket?.connected ?? false;
+
+  void disconnect() {
+    _socket?.disconnect();
   }
 
   Future<void> dispose() async {
     _socket?.dispose();
-    await _controller.close();
+    await _eventsController.close();
+    await _queueUpdateController.close();
+    await _chairAssignedController.close();
+    await _serviceStartedController.close();
+    await _connectionController.close();
+  }
+
+  Map<String, dynamic> _asMap(dynamic data) {
+    return data is Map<String, dynamic> ? data : <String, dynamic>{};
   }
 }

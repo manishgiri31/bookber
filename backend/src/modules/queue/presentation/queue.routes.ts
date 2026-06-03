@@ -9,10 +9,6 @@ export const queueRoutes: FastifyPluginAsync = async (app) => {
   app.post("/shops/:shopId/queue/enqueue", { preHandler: app.authenticate }, controller.enqueue);
   app.post("/shops/:shopId/queue/rebalance", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.rebalance);
   app.get("/shops/:shopId/queue", { preHandler: app.authenticate }, controller.list);
-  app.post("/bookings/:bookingId/check-in", { preHandler: app.authenticate }, controller.checkIn);
-  app.post("/bookings/:bookingId/start", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.markInService);
-  app.post("/bookings/:bookingId/complete", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.complete);
-  app.post("/bookings/:bookingId/no-show", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.skip);
 
   app.get("/shops/:shopId/wait-estimates", { preHandler: app.authenticate }, waitTimeController.getEstimates);
   app.post(

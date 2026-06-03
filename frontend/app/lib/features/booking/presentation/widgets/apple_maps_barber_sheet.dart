@@ -206,7 +206,8 @@ class _LiveStatsRow extends StatelessWidget {
     final queueStatus = booking?.status ?? (bookingFlow.selectedBarber == null ? 'LIVE' : 'ACTIVE');
     final wait = booking?.estimatedWaitMinutes ?? 12;
     final queuePosition = booking?.queuePosition ?? 1;
-    final completion = booking == null ? 'Today' : '${booking.scheduledAt.hour.toString().padLeft(2, '0')}:${booking.scheduledAt.minute.toString().padLeft(2, '0')}';
+    final scheduledAt = booking?.scheduledAt;
+    final completion = scheduledAt == null ? 'Today' : '${scheduledAt.hour.toString().padLeft(2, '0')}:${scheduledAt.minute.toString().padLeft(2, '0')}';
 
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),

@@ -1,30 +1,56 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/storage/app_storage.dart';
-import '../domain/auth_state.dart';
+import '../../../core/network/api_result.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../core/models/bookber_models.dart';
 
 class AuthRepository {
-  AuthRepository(this._storage);
+  AuthRepository(this._dio);
 
-  final AppStorage _storage;
+  final DioClient _dio;
 
-  Future<AuthState> restoreSession() async {
-    final token = _storage.accessToken;
-    return token == null
-        ? AuthState.unauthenticated
-        : AuthState(isAuthenticated: true, userId: 'demo-user');
+  Future<ApiResult<AuthResponse>> login(
+    String email,
+    String password,
+    String role,
+  ) async {
+    return ApiResult.guard(() async {
+      final response = await _dio.post(
+        '/api/auth/login',
+        body: {
+          'email': email,
+          'password': password,
+          'role': role,
+        },
+      );
+      return AuthResponse.fromJson(response as Map<String, dynamic>);
+    });
   }
 
-  Future<AuthState> login(String email, String password) async {
-    await _storage.saveTokens(accessToken: 'access-demo', refreshToken: 'refresh-demo');
-    return const AuthState(isAuthenticated: true, userId: 'demo-user');
+  Future<ApiResult<AuthResponse>> register(RegisterRequest req) async {
+    return ApiResult.guard(() async {
+      final response = await _dio.post(
+        '/api/auth/register',
+        body: req.toJson(),
+      );
+      return AuthResponse.fromJson(response as Map<String, dynamic>);
+    });
   }
 
-  Future<void> logout() async {
-    await _storage.clear();
+  Future<ApiResult<UserProfile>> getMe() async {
+    return ApiResult.guard(() async {
+      final response = await _dio.get('/api/auth/me');
+      return UserProfile.fromJson(response as Map<String, dynamic>);
+    });
+  }
+
+  Future<ApiResult<void>> logout() async {
+    return ApiResult.guard(() async {
+      await _dio.post('/api/auth/logout');
+    });
   }
 }
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository(ref.read(appStorageProvider));
-});
+final authRepositoryProvider = Provider<AuthRepository>(
+  (ref) => AuthRepository(ref.watch(dioClientProvider)),
+);

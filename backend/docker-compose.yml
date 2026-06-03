@@ -1,16 +1,16 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgis/postgis:16-3.4-alpine
     environment:
       POSTGRES_DB: bookber
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: root
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d bookber"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d bookber" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,7 +22,7 @@ services:
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,7 +42,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:3000/health || exit 1" ]
       interval: 15s
       timeout: 5s
       retries: 5

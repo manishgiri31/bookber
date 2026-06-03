@@ -1,9 +1,356 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model User {
+  id                  String         @id @default(cuid())
+  fullName            String
+  email               String         @unique
+  password            String
+  phoneNumber         String?        @unique
+  role                UserRole
+  profileImage        String?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  failedLoginAttempts Int            @default(0)
+  lockedUntil         DateTime?
+  barber              Barber?
+  bookings            Booking[]
+  refreshTokens       RefreshToken[]
+  reviews             Review[]
+  ownedShops          Shop[]         @relation("ShopOwner")
+
+  @@index([role])
+  @@index([email])
+  @@index([phoneNumber])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Shop {
+  id                        String                    @id @default(cuid())
+  name                      String
+  description               String?
+  address                   String
+  city                      String
+  state                     String
+  country                   String
+  latitude                  Float
+  longitude                 Float
+  openingTime               String?
+  closingTime               String?
+  isActive                  Boolean                   @default(true)
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  location                  Unsupported("geography")?
+  bookBerReservedChairCount Int                       @default(0)
+  addressLine2              String?
+  email                     String?
+  isAcceptingBookings       Boolean                   @default(true)
+  isAcceptingWalkIns        Boolean                   @default(true)
+  ownerId                   String
+  phone                     String?
+  postalCode                String?
+  profileImage              String?
+  slug                      String                    @unique
+  timezone                  String                    @default("UTC")
+  barbers                   Barber[]
+  bookings                  Booking[]
+  chairs                    Chair[]
+  chairAllocations          ChairAllocation[]
+  queueEntries              QueueEntry[]
+  queueEvents               QueueEvent[]
+  reviews                   Review[]
+  services                  Service[]
+  owner                     User                      @relation("ShopOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  operatingHours            ShopOperatingHour[]
+  photos                    ShopPhoto[]
+
+  @@index([city])
+  @@index([latitude, longitude])
+  @@index([ownerId])
+  @@index([slug])
+  @@index([location], type: Gist)
+  @@index([isActive], map: "Shop_active_location_idx", where: raw("(location IS NOT NULL)"))
+}
+
+model ShopOperatingHour {
+  id        String  @id @default(cuid())
+  shopId    String
+  dayOfWeek String
+  openTime  String
+  closeTime String
+  isClosed  Boolean @default(false)
+  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, dayOfWeek])
+}
+
+model ShopPhoto {
+  id        String  @id @default(cuid())
+  shopId    String
+  url       String
+  publicId  String?
+  caption   String?
+  sortOrder Int     @default(0)
+  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+}
+
+model Barber {
+  id                    String       @id @default(cuid())
+  userId                String       @unique
+  shopId                String
+  bio                   String?
+  experienceYears       Int?
+  rating                Float        @default(0)
+  isAvailable           Boolean      @default(true)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  serviceSpeedFactor    Float        @default(1.0)
+  averageServiceMinutes Int?
+  shop                  Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookings              Booking[]
+  queueEntries          QueueEntry[]
+
+  @@index([shopId])
+}
+
+model Chair {
+  id                 String            @id @default(cuid())
+  shopId             String
+  number             Int
+  status             ChairStatus       @default(AVAILABLE)
+  createdAt          DateTime          @default(now())
+  reservedForBookBer Boolean           @default(false)
+  activeServiceStart DateTime?
+  activeServiceEnd   DateTime?
+  updatedAt          DateTime          @updatedAt
+  bookings           Booking[]
+  shop               Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  chairAllocations   ChairAllocation[]
+  queueEntries       QueueEntry[]
+
+  @@unique([shopId, number])
+  @@index([shopId, reservedForBookBer])
+  @@index([activeServiceStart])
+  @@index([shopId, status], map: "Chair_shop_available_idx", where: raw("(status = 'AVAILABLE'::\"ChairStatus\")"))
+}
+
+model Service {
+  id              String          @id @default(cuid())
+  shopId          String
+  name            String
+  description     String?
+  price           Float
+  durationMinutes Int
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  category        ServiceCategory @default(HAIRCUT)
+  bookings        Booking[]
+  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+}
+
+model Booking {
+  id                 String            @id @default(cuid())
+  userId             String
+  shopId             String
+  barberId           String?
+  serviceId          String
+  chairId            String?
+  status             BookingStatus     @default(QUEUED)
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  arrivalWindowStart DateTime
+  arrivalWindowEnd   DateTime
+  walkIn             Boolean           @default(false)
+  cancellationReason String?
+  cancelledAt        DateTime?
+  noShowAt           DateTime?
+  barber             Barber?           @relation(fields: [barberId], references: [id])
+  chair              Chair?            @relation(fields: [chairId], references: [id])
+  service            Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  shop               Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chairAllocations   ChairAllocation[]
+  payment            Payment?
+  queueEntry         QueueEntry?
+  queueEvents        QueueEvent[]
+
+  @@index([shopId, status])
+  @@index([barberId, status])
+  @@index([status])
+}
+
+model QueueEntry {
+  id                    String      @id @default(cuid())
+  shopId                String
+  bookingId             String      @unique
+  barberId              String?
+  chairId               String?
+  lane                  QueueLane
+  position              Int
+  queueStatus           QueueStatus @default(WAITING)
+  estimatedWaitMinutes  Int         @default(0)
+  estimatedServiceStart DateTime?
+  version               Int         @default(0)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  barber                Barber?     @relation(fields: [barberId], references: [id])
+  booking               Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  chair                 Chair?      @relation(fields: [chairId], references: [id])
+  shop                  Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, lane, position])
+  @@index([shopId, lane, position])
+  @@index([shopId, position])
+  @@index([barberId, queueStatus])
+  @@index([bookingId])
+}
+
+model QueueEvent {
+  id        String         @id @default(cuid())
+  shopId    String
+  bookingId String?
+  type      QueueEventType
+  payload   Json           @default("{}")
+  createdAt DateTime       @default(now())
+  booking   Booking?       @relation(fields: [bookingId], references: [id])
+  shop      Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, createdAt])
+  @@index([bookingId])
+}
+
+model ChairAllocation {
+  id                 String    @id @default(cuid())
+  shopId             String
+  chairId            String
+  bookingId          String
+  allocatedAt        DateTime  @default(now())
+  releasedAt         DateTime?
+  activeServiceStart DateTime?
+  activeServiceEnd   DateTime?
+  booking            Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  chair              Chair     @relation(fields: [chairId], references: [id], onDelete: Cascade)
+  shop               Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([chairId, activeServiceStart])
+  @@index([bookingId])
+  @@index([shopId])
+}
+
+model Payment {
+  id              String                  @id @default(cuid())
+  bookingId       String                  @unique
+  amount          Float
+  method          PaymentMethod
+  status          PaymentStatus           @default(PENDING)
+  transactionId   String?
+  createdAt       DateTime                @default(now())
+  completedAt     DateTime?
+  idempotencyKey  String?                 @unique
+  refundReason    String?
+  refundedAmount  Float                   @default(0)
+  updatedAt       DateTime                @updatedAt
+  booking         Booking                 @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  transactionLogs PaymentTransactionLog[]
+  webhookEvents   WebhookEvent[]
+
+  @@index([idempotencyKey])
+  @@index([status])
+  @@index([bookingId])
+}
+
+model PaymentTransactionLog {
+  id              String        @id @default(cuid())
+  paymentId       String
+  action          String
+  status          PaymentStatus
+  gatewayResponse Json?
+  errorMessage    String?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+  payment         Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  paymentId   String
+  eventType   String
+  payload     Json
+  processedAt DateTime?
+  receivedAt  DateTime  @default(now())
+  payment     Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@index([eventType])
+  @@index([processedAt])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  shopId    String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+}
+
+model EventLog {
+  id            String       @id @default(cuid())
+  type          EventLogType
+  shopId        String?
+  bookingId     String?
+  userId        String?
+  chairId       String?
+  correlationId String?
+  payload       Json         @default("{}")
+  createdAt     DateTime     @default(now())
+
+  @@index([type, createdAt])
+  @@index([shopId, createdAt])
+  @@index([bookingId])
+  @@index([correlationId])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
 }
 
 enum UserRole {
@@ -32,10 +379,10 @@ enum ChairStatus {
 enum QueueStatus {
   WAITING
   READY
-  CALLED
   IN_SERVICE
   COMPLETED
   SKIPPED
+  CALLED
   NO_SHOW
   CANCELLED
 }
@@ -86,339 +433,4 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
-}
-
-model User {
-  id                  String         @id @default(cuid())
-  fullName            String
-  email               String         @unique
-  password            String
-  phoneNumber         String?        @unique
-  role                UserRole
-  profileImage        String?
-  failedLoginAttempts Int            @default(0)
-  lockedUntil         DateTime?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  barber              Barber?
-  ownedShops          Shop[]         @relation("ShopOwner")
-  bookings            Booking[]
-  reviews             Review[]
-  refreshTokens       RefreshToken[]
-
-  @@index([role])
-  @@index([email])
-  @@index([phoneNumber])
-}
-
-model RefreshToken {
-  id        String    @id @default(cuid())
-  userId    String
-  token     String    @unique
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([token])
-}
-
-model Shop {
-  id                        String              @id @default(cuid())
-  ownerId                   String
-  name                      String
-  slug                      String              @unique
-  description               String?
-  phone                     String?
-  email                     String?
-  address                   String
-  addressLine2              String?
-  city                      String
-  state                     String
-  country                   String
-  postalCode                String?
-  latitude                  Float
-  longitude                 Float
-  location                  Unsupported("geography(Point,4326)")?
-  timezone                  String              @default("UTC")
-  openingTime               String?
-  closingTime               String?
-  isActive                  Boolean             @default(true)
-  isAcceptingBookings       Boolean             @default(true)
-  isAcceptingWalkIns        Boolean             @default(true)
-  bookBerReservedChairCount Int                 @default(0)
-  profileImage              String?
-  createdAt                 DateTime            @default(now())
-  updatedAt                 DateTime            @updatedAt
-  owner                     User                @relation("ShopOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  barbers                   Barber[]
-  chairs                    Chair[]
-  services                  Service[]
-  bookings                  Booking[]
-  reviews                   Review[]
-  operatingHours            ShopOperatingHour[]
-  photos                    ShopPhoto[]
-  queueEntries              QueueEntry[]
-  queueEvents               QueueEvent[]
-  chairAllocations          ChairAllocation[]
-
-  @@index([city])
-  @@index([latitude, longitude])
-  @@index([ownerId])
-  @@index([slug])
-  @@index([location], type: Gist)
-}
-
-model ShopOperatingHour {
-  id        String  @id @default(cuid())
-  shopId    String
-  dayOfWeek String
-  openTime  String
-  closeTime String
-  isClosed  Boolean @default(false)
-  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
-  @@unique([shopId, dayOfWeek])
-}
-
-model ShopPhoto {
-  id        String  @id @default(cuid())
-  shopId    String
-  url       String
-  publicId  String?
-  caption   String?
-  sortOrder Int     @default(0)
-  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
-  @@index([shopId])
-}
-
-model Barber {
-  id                    String       @id @default(cuid())
-  userId                String       @unique
-  shopId                String
-  bio                   String?
-  experienceYears       Int?
-  rating                Float        @default(0)
-  isAvailable           Boolean      @default(true)
-  serviceSpeedFactor    Float        @default(1.0)
-  averageServiceMinutes Int?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shop                  Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  bookings              Booking[]
-  queueEntries          QueueEntry[]
-
-  @@index([shopId])
-}
-
-model Chair {
-  id                 String             @id @default(cuid())
-  shopId             String
-  number             Int
-  status             ChairStatus        @default(AVAILABLE)
-  reservedForBookBer Boolean            @default(false)
-  activeServiceStart DateTime?
-  activeServiceEnd   DateTime?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  shop               Shop               @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  bookings           Booking[]
-  queueEntries       QueueEntry[]
-  chairAllocations   ChairAllocation[]
-
-  @@unique([shopId, number])
-  @@index([shopId, reservedForBookBer])
-  @@index([activeServiceStart])
-}
-
-model Service {
-  id              String          @id @default(cuid())
-  shopId          String
-  name            String
-  description     String?
-  price           Float
-  durationMinutes Int
-  category        ServiceCategory @default(HAIRCUT)
-  isActive        Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  bookings        Booking[]
-
-  @@index([shopId])
-}
-
-model Booking {
-  id                 String            @id @default(cuid())
-  userId             String
-  shopId             String
-  barberId           String?
-  serviceId          String
-  chairId            String?
-  status             BookingStatus     @default(QUEUED)
-  arrivalWindowStart DateTime
-  arrivalWindowEnd   DateTime
-  walkIn             Boolean           @default(false)
-  notes              String?
-  cancellationReason String?
-  cancelledAt        DateTime?
-  noShowAt           DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shop               Shop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  barber             Barber?           @relation(fields: [barberId], references: [id], onDelete: SetNull)
-  service            Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  chair              Chair?            @relation(fields: [chairId], references: [id])
-  payment            Payment?
-  queueEntry         QueueEntry?
-  queueEvents        QueueEvent[]
-  chairAllocations   ChairAllocation[]
-
-  @@index([shopId, status])
-  @@index([barberId, status])
-  @@index([status])
-}
-
-model QueueEntry {
-  id                    String      @id @default(cuid())
-  shopId                String
-  bookingId             String      @unique
-  barberId              String?
-  chairId               String?
-  lane                  QueueLane
-  position              Int
-  queueStatus           QueueStatus @default(WAITING)
-  estimatedWaitMinutes  Int         @default(0)
-  estimatedServiceStart DateTime?
-  version               Int         @default(0)
-  createdAt             DateTime    @default(now())
-  updatedAt             DateTime    @updatedAt
-  shop                  Shop        @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  booking               Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  barber                Barber?     @relation(fields: [barberId], references: [id], onDelete: SetNull)
-  chair                 Chair?      @relation(fields: [chairId], references: [id])
-
-  @@unique([shopId, lane, position])
-  @@index([shopId, lane, position])
-  @@index([shopId, position])
-  @@index([barberId, queueStatus])
-  @@index([bookingId])
-}
-
-model QueueEvent {
-  id        String         @id @default(cuid())
-  shopId    String
-  bookingId String?
-  type      QueueEventType
-  payload   Json           @default("{}")
-  createdAt DateTime       @default(now())
-  shop      Shop           @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  booking   Booking?       @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-
-  @@index([shopId, createdAt])
-  @@index([bookingId])
-}
-
-model ChairAllocation {
-  id                 String    @id @default(cuid())
-  shopId             String
-  chairId            String
-  bookingId          String
-  allocatedAt        DateTime  @default(now())
-  releasedAt         DateTime?
-  activeServiceStart DateTime?
-  activeServiceEnd   DateTime?
-  shop               Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  chair              Chair     @relation(fields: [chairId], references: [id], onDelete: Cascade)
-  booking            Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-
-  @@index([chairId, activeServiceStart])
-  @@index([bookingId])
-  @@index([shopId])
-}
-
-model Payment {
-  id                 String                  @id @default(cuid())
-  bookingId          String                  @unique
-  amount             Float
-  method             PaymentMethod
-  status             PaymentStatus           @default(PENDING)
-  transactionId      String?
-  idempotencyKey     String?                 @unique
-  refundedAmount     Float                   @default(0)
-  refundReason       String?
-  completedAt        DateTime?
-  createdAt          DateTime                @default(now())
-  updatedAt          DateTime                @updatedAt
-  booking            Booking                 @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  transactionLogs    PaymentTransactionLog[]
-  webhookEvents      WebhookEvent[]
-
-  @@index([idempotencyKey])
-  @@index([status])
-  @@index([bookingId])
-}
-
-model PaymentTransactionLog {
-  id              String        @id @default(cuid())
-  paymentId       String
-  action          String
-  status          PaymentStatus
-  gatewayResponse Json?
-  errorMessage    String?
-  metadata        Json?
-  createdAt       DateTime      @default(now())
-  payment         Payment       @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-
-  @@index([paymentId])
-  @@index([action])
-  @@index([createdAt])
-}
-
-model WebhookEvent {
-  id          String    @id @default(cuid())
-  paymentId   String
-  eventType   String
-  payload     Json
-  processedAt DateTime?
-  receivedAt  DateTime  @default(now())
-  payment     Payment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-
-  @@index([paymentId])
-  @@index([eventType])
-  @@index([processedAt])
-}
-
-model Review {
-  id        String   @id @default(cuid())
-  userId    String
-  shopId    String
-  rating    Int
-  comment   String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-
-  @@index([shopId])
-}
-
-model EventLog {
-  id            String       @id @default(cuid())
-  type          EventLogType
-  shopId        String?
-  bookingId     String?
-  userId        String?
-  chairId       String?
-  correlationId String?
-  payload       Json         @default("{}")
-  createdAt     DateTime     @default(now())
-
-  @@index([type, createdAt])
-  @@index([shopId, createdAt])
-  @@index([bookingId])
-  @@index([correlationId])
 }

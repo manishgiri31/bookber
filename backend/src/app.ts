@@ -17,9 +17,13 @@ import { env } from "./shared/config/index.js";
 import { buildQueueDependencies } from "./modules/queue/queue.container.js";
 import { buildBookingDependencies } from "./modules/booking/booking.container.js";
 import { bookingRoutes } from "./modules/booking/presentation/booking.routes.js";
-// import { queueRoutes } from "./modules/queue/presentation/queue.routes.js";
+import { queueRoutes } from "./modules/queue/presentation/queue.routes.js";
 // import { buildNotificationDependencies } from "./modules/notification/notification.container.js";
 // import { notificationRoutes } from "./modules/notification/presentation/notification.routes.js";
+import { buildPaymentDependencies } from "./modules/payment/payment.container.js";
+import { paymentRoutes } from "./modules/payment/presentation/payment.routes.js";
+import { buildReviewDependencies } from "./modules/review/review.container.js";
+import { reviewRoutes } from "./modules/review/presentation/review.routes.js";
 import type { SocketEventPublisher } from "./shared/socket/socket.publisher.js";
 import { errorHandler } from "./shared/errors/error-handler.js";
 import { prismaPlugin } from "./shared/prisma/prisma.plugin.js";
@@ -27,34 +31,57 @@ import { redisPlugin } from "./shared/redis/redis.plugin.js";
 import { registerRoutes, type RouteDefinition } from "./shared/app/route-registry.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
+  console.log("Creating Fastify instance...");
   const app = Fastify({
     logger: { level: env.LOG_LEVEL },
     trustProxy: true,
     disableRequestLogging: true
   });
+  console.log("✓ Fastify instance created");
 
+  console.log("Building dependency containers...");
   const authDeps = buildAuthDependencies(app);
   const shopDeps = buildShopDependencies();
   // const serviceDeps = buildServiceManagementDependencies();
   const queueDeps = buildQueueDependencies(app);
   const bookingDeps = buildBookingDependencies(queueDeps.engine);
   // const notificationDeps = buildNotificationDependencies(app);
+  const paymentDeps = buildPaymentDependencies(app);
+  const reviewDeps = buildReviewDependencies(app);
+  console.log("✓ Dependency containers built");
 
   app.decorate("authDeps", authDeps);
   app.decorate("shopDeps", shopDeps);
-  // app.decorate("serviceDeps", serviceDeps);
   app.decorate("queueDeps", queueDeps);
   app.decorate("bookingDeps", bookingDeps);
   // app.decorate("notificationDeps", notificationDeps);
+  app.decorate("paymentDeps", paymentDeps);
+  app.decorate("reviewDeps", reviewDeps);
 
+  console.log("Registering prisma plugin...");
   await app.register(prismaPlugin);
+  console.log("✓ Prisma plugin registered");
+
+  console.log("Registering redis plugin...");
   await app.register(redisPlugin);
+  console.log("✓ Redis plugin registered");
+
+  console.log("Registering sensible plugin...");
   await app.register(sensible);
+  console.log("✓ Sensible plugin registered");
+
+  console.log("Registering helmet plugin...");
   await app.register(helmet);
+  console.log("✓ Helmet plugin registered");
+
+  console.log("Registering cors plugin...");
   await app.register(cors, {
     origin: env.CORS_ORIGIN.split(",").map((value) => value.trim()),
     credentials: true
   });
+  console.log("✓ CORS plugin registered");
+
+  console.log("Registering cookie plugin...");
   await app.register(cookie, {
     secret: env.JWT_ACCESS_SECRET,
     hook: "onRequest",
@@ -63,10 +90,16 @@ export async function buildApp(): Promise<FastifyInstance> {
       secure: env.COOKIE_SECURE
     }
   });
+  console.log("✓ Cookie plugin registered");
+
+  console.log("Registering rate-limit plugin...");
   await app.register(rateLimit, {
     max: env.RATE_LIMIT_MAX_REQUESTS,
     timeWindow: `${env.RATE_LIMIT_WINDOW_MS}ms`
   });
+  console.log("✓ Rate-limit plugin registered");
+
+  console.log("Registering jwt plugin...");
   await app.register(jwt, {
     secret: env.JWT_ACCESS_SECRET,
     cookie: {
@@ -77,19 +110,31 @@ export async function buildApp(): Promise<FastifyInstance> {
       expiresIn: env.JWT_ACCESS_TTL
     }
   });
+  console.log("✓ JWT plugin registered");
+
+  console.log("Registering auth plugin...");
   await app.register(authPlugin);
+  console.log("✓ Auth plugin registered");
 
+  console.log("Setting error handler...");
   app.setErrorHandler(errorHandler);
+  console.log("✓ Error handler set");
 
+  console.log("Registering routes...");
   const routes: RouteDefinition[] = [
     { plugin: authRoutes, prefix: "/auth" },
     { plugin: shopRoutes, prefix: "/shops" },
-    // { plugin: serviceManagementRoutes }, // Disabled - shopService model does not exist in Prisma schema
-    { plugin: bookingRoutes, prefix: "/bookings" }
+    { plugin: bookingRoutes, prefix: "/bookings" },
+    { plugin: queueRoutes, prefix: "" },
+    { plugin: paymentRoutes, prefix: "" },
+    { plugin: reviewRoutes, prefix: "" }
   ];
 
   await registerRoutes(app, routes);
+  console.log("✓ Routes registered");
   console.log(app.printRoutes());
+
+  console.log("✓ App build complete");
   return app;
 }
 
@@ -99,8 +144,10 @@ declare module "fastify" {
     shopDeps: ReturnType<typeof buildShopDependencies>;
     // serviceDeps: ReturnType<typeof buildServiceManagementDependencies>;
     bookingDeps: ReturnType<typeof buildBookingDependencies>;
-    queueDeps: ReturnType<typeof buildQueueDependencies>;
+    // queueDeps: ReturnType<typeof buildQueueDependencies>;
     // notificationDeps: ReturnType<typeof buildNotificationDependencies>;
+    paymentDeps: ReturnType<typeof buildPaymentDependencies>;
+    reviewDeps: ReturnType<typeof buildReviewDependencies>;
     prisma: import("@prisma/client").PrismaClient;
     redis: import("ioredis").Redis | null;
     socketPublisher: SocketEventPublisher;

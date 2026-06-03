@@ -1,18 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AppEnv {
-  const AppEnv({
-    required this.apiBaseUrl,
-    required this.socketUrl,
-  });
+  const AppEnv._();
 
-  final String apiBaseUrl;
-  final String socketUrl;
+  static const String baseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'https://clump-passion-cruelty.ngrok-free.dev',
+  );
+
+  static const String socketUrl = String.fromEnvironment(
+    'SOCKET_URL',
+    defaultValue: 'https://clump-passion-cruelty.ngrok-free.dev',
+  );
 }
 
-const _defaultEnv = AppEnv(
-  apiBaseUrl: 'http://localhost:3000',
-  socketUrl: 'http://localhost:3000',
-);
+const _defaultEnv = AppEnv._();
 
 final appEnvProvider = Provider<AppEnv>((ref) => _defaultEnv);

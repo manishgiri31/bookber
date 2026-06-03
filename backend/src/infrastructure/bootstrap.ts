@@ -18,32 +18,59 @@ export async function bootstrapInfrastructure(
   app: FastifyInstance,
   io: SocketServer | null
 ): Promise<InfrastructureHandles> {
-  await registerRequestLogging(app);
-  registerMetricsRoutes(app);
+  try {
+    console.log("Registering request logging...");
+    await registerRequestLogging(app);
+    console.log("✓ Request logging registered");
 
-  const redisManager = getRedisManager();
-  await redisManager.connect();
-  redisManager.startHealthChecks();
+    console.log("Registering metrics routes...");
+    registerMetricsRoutes(app);
+    console.log("✓ Metrics routes registered");
 
-  registerHealthRoutes(app, {
-    prisma: app.prisma,
-    redisManager,
-    io
-  });
+    console.log("Getting Redis manager...");
+    const redisManager = getRedisManager();
+    console.log("✓ Redis manager obtained");
 
-  const stopGaugeCollector = env.PROMETHEUS_ENABLED
-    ? startGaugeCollector(app.prisma, io)
-    : () => undefined;
-  const stopRecoveryWorkers = startRecoveryWorkers(app, redisManager.client);
+    console.log("Connecting to Redis...");
+    await redisManager.connect();
+    console.log("✓ Redis connected");
 
-  rootLogger.info(
-    {
-      prometheus: env.PROMETHEUS_ENABLED,
-      otel: env.OTEL_ENABLED,
-      redis: redisManager.client !== null
-    },
-    "infrastructure initialized"
-  );
+    console.log("Starting Redis health checks...");
+    redisManager.startHealthChecks();
+    console.log("✓ Redis health checks started");
 
-  return { stopGaugeCollector, stopRecoveryWorkers, redisManager };
+    console.log("Registering health routes...");
+    registerHealthRoutes(app, {
+      prisma: app.prisma,
+      redisManager,
+      io
+    });
+    console.log("✓ Health routes registered");
+
+    console.log("Starting gauge collector...");
+    const stopGaugeCollector = env.PROMETHEUS_ENABLED
+      ? startGaugeCollector(app.prisma, io)
+      : () => undefined;
+    console.log("✓ Gauge collector started");
+
+    console.log("Starting recovery workers...");
+    const stopRecoveryWorkers = startRecoveryWorkers(app, redisManager.client);
+    console.log("✓ Recovery workers started");
+
+    rootLogger.info(
+      {
+        prometheus: env.PROMETHEUS_ENABLED,
+        otel: env.OTEL_ENABLED,
+        redis: redisManager.client !== null
+      },
+      "infrastructure initialized"
+    );
+
+    console.log("✓ Infrastructure bootstrap complete");
+    return { stopGaugeCollector, stopRecoveryWorkers, redisManager };
+  } catch (error) {
+    console.error("Bootstrap infrastructure error:", error);
+    console.error("Stack:", error instanceof Error ? error.stack : "No stack");
+    throw error;
+  }
 }

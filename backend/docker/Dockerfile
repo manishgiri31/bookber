@@ -13,5 +13,6 @@ RUN npm ci --omit=dev
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/prisma ./prisma
 COPY --from=base /app/node_modules/.prisma ./node_modules/.prisma
+RUN find dist -name "main.js" | head -5
 EXPOSE 3000
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]

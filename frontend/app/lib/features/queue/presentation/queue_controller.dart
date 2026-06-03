@@ -8,11 +8,11 @@ class QueueController extends AsyncNotifier<QueueStateModel> {
   @override
   Future<QueueStateModel> build() async {
     return QueueStateModel(
-      bookingId: 'demo',
+      bookingId: '',
       position: 0,
       etaMinutes: 0,
       status: 'WAITING',
-      chairLabel: 'Chair 1',
+      chairLabel: '',
     );
   }
 
@@ -26,7 +26,7 @@ class QueueController extends AsyncNotifier<QueueStateModel> {
             position: 0,
             etaMinutes: 0,
             status: 'WAITING',
-            chairLabel: 'Chair 1',
+            chairLabel: '',
           ));
   }
 

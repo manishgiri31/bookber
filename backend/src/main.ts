@@ -1,3 +1,18 @@
+console.log("Starting BookBer...");
+
+// Add error handlers BEFORE any imports to catch silent async failures
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT EXCEPTION:', error);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  console.error('Stack:', reason instanceof Error ? reason.stack : 'No stack');
+  process.exit(1);
+});
+
 import { buildApp } from "./app.js";
 import { env } from "./shared/config/index.js";
 import { bootstrapInfrastructure } from "./infrastructure/bootstrap.js";
@@ -8,58 +23,79 @@ import { REALTIME_NAMESPACE } from "./shared/socket/socket.config.js";
 import { shutdownServer } from "./shared/utils/graceful-shutdown.js";
 import { initializeTracing } from "./infrastructure/tracing/otel.js";
 
-validateEnvOnStartup();
-await initializeTracing();
+try {
+  console.log("Validating environment...");
+  validateEnvOnStartup();
+  console.log("✓ Environment validated");
 
-const app = await buildApp();
-const socketInfra = createSocketInfrastructure(app);
+  console.log("Initializing tracing...");
+  await initializeTracing();
+  console.log("✓ Tracing initialized");
 
-app.decorate("io", socketInfra.io);
-app.decorate("socketPublisher", socketInfra.publisher);
+  console.log("Building app...");
+  const app = await buildApp();
+  console.log("✓ App built");
 
-async function bootstrap(): Promise<void> {
-  const infra = await bootstrapInfrastructure(app, socketInfra.io);
-  await app.ready();
+  console.log("Creating socket infrastructure...");
+  const socketInfra = createSocketInfrastructure(app);
+  console.log("✓ Socket infrastructure created");
 
-  const shutdown = async (signal: string): Promise<void> => {
-    infra.stopGaugeCollector();
-    infra.stopRecoveryWorkers();
-    socketInfra.stop();
-    await shutdownServer({
-      app,
-      httpServer: socketInfra.httpServer,
-      io: socketInfra.io,
-      pubClient: socketInfra.pubClient,
-      subClient: socketInfra.subClient,
-      redisManager: infra.redisManager,
-      signal,
-      timeoutMs: env.SHUTDOWN_TIMEOUT_MS
-    });
-    process.exit(0);
-  };
+  app.decorate("io", socketInfra.io);
+  app.decorate("socketPublisher", socketInfra.publisher);
 
-  process.on("SIGTERM", () => void shutdown("SIGTERM"));
-  process.on("SIGINT", () => void shutdown("SIGINT"));
-  process.on("uncaughtException", async (error) => {
-    rootLogger.fatal({ err: error }, "uncaught exception");
-    await shutdown("UNCAUGHT_EXCEPTION");
-  });
-  process.on("unhandledRejection", async (reason) => {
-    rootLogger.fatal({ err: reason }, "unhandled rejection");
-    await shutdown("UNHANDLED_REJECTION");
-  });
+  async function bootstrap(): Promise<void> {
+    try {
+      console.log("Bootstrapping infrastructure...");
+      const infra = await bootstrapInfrastructure(app, socketInfra.io);
+      console.log("✓ Infrastructure bootstrapped");
 
-  socketInfra.httpServer.listen(env.PORT, env.HOST, () => {
-    rootLogger.info(
-      {
-        host: env.HOST,
-        port: env.PORT,
-        namespace: REALTIME_NAMESPACE,
-        redisAdapter: socketInfra.adapterEnabled
-      },
-      "BookBer backend started"
-    );
-  });
+      console.log("Making app ready...");
+      await app.ready();
+      console.log("✓ App ready");
+
+      const shutdown = async (signal: string): Promise<void> => {
+        console.log(`Shutting down due to ${signal}...`);
+        infra.stopGaugeCollector();
+        infra.stopRecoveryWorkers();
+        socketInfra.stop();
+        await shutdownServer({
+          app,
+          httpServer: socketInfra.httpServer,
+          io: socketInfra.io,
+          pubClient: socketInfra.pubClient,
+          subClient: socketInfra.subClient,
+          redisManager: infra.redisManager,
+          signal,
+          timeoutMs: env.SHUTDOWN_TIMEOUT_MS
+        });
+        process.exit(0);
+      };
+
+      process.on("SIGTERM", () => void shutdown("SIGTERM"));
+      process.on("SIGINT", () => void shutdown("SIGINT"));
+
+      socketInfra.httpServer.listen(env.PORT, env.HOST, () => {
+        rootLogger.info(
+          {
+            host: env.HOST,
+            port: env.PORT,
+            namespace: REALTIME_NAMESPACE,
+            redisAdapter: socketInfra.adapterEnabled
+          },
+          "BookBer backend started"
+        );
+        console.log(`✓ Server listening on ${env.HOST}:${env.PORT}`);
+      });
+    } catch (error) {
+      console.error("Bootstrap error:", error);
+      console.error("Stack:", error instanceof Error ? error.stack : "No stack");
+      process.exit(1);
+    }
+  }
+
+  await bootstrap();
+} catch (error) {
+  console.error("Startup error:", error);
+  console.error("Stack:", error instanceof Error ? error.stack : "No stack");
+  process.exit(1);
 }
-
-await bootstrap();
