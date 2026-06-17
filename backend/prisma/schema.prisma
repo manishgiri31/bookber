@@ -8,26 +8,40 @@ datasource db {
 }
 
 model User {
-  id                  String         @id @default(cuid())
+  id                  String              @id @default(cuid())
   fullName            String
-  email               String         @unique
+  email               String              @unique
   password            String
-  phoneNumber         String?        @unique
+  phoneNumber         String?             @unique
   role                UserRole
   profileImage        String?
-  createdAt           DateTime       @default(now())
-  updatedAt           DateTime       @updatedAt
-  failedLoginAttempts Int            @default(0)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  failedLoginAttempts Int                 @default(0)
   lockedUntil         DateTime?
   barber              Barber?
   bookings            Booking[]
   refreshTokens       RefreshToken[]
   reviews             Review[]
-  ownedShops          Shop[]         @relation("ShopOwner")
+  ownedShops          Shop[]              @relation("ShopOwner")
+  deviceTokens        DeviceToken[]
+  rebookingReminders  RebookingReminder[]
 
   @@index([role])
   @@index([email])
   @@index([phoneNumber])
+}
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  Platform
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model RefreshToken {
@@ -58,7 +72,6 @@ model Shop {
   isActive                  Boolean                   @default(true)
   createdAt                 DateTime                  @default(now())
   updatedAt                 DateTime                  @updatedAt
-  location                  Unsupported("geography")?
   bookBerReservedChairCount Int                       @default(0)
   addressLine2              String?
   email                     String?
@@ -86,8 +99,6 @@ model Shop {
   @@index([latitude, longitude])
   @@index([ownerId])
   @@index([slug])
-  @@index([location], type: Gist)
-  @@index([isActive], map: "Shop_active_location_idx", where: raw("(location IS NOT NULL)"))
 }
 
 model ShopOperatingHour {
@@ -115,23 +126,35 @@ model ShopPhoto {
 }
 
 model Barber {
-  id                    String       @id @default(cuid())
-  userId                String       @unique
+  id                    String          @id @default(cuid())
+  userId                String          @unique
   shopId                String
   bio                   String?
   experienceYears       Int?
-  rating                Float        @default(0)
-  isAvailable           Boolean      @default(true)
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  serviceSpeedFactor    Float        @default(1.0)
+  rating                Float           @default(0)
+  isAvailable           Boolean         @default(true)
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  serviceSpeedFactor    Float           @default(1.0)
   averageServiceMinutes Int?
-  shop                  Shop         @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  user                  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop                  Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   bookings              Booking[]
   queueEntries          QueueEntry[]
+  barberServices        BarberService[]
+  waitTimeMetrics       WaitTimeMetric[]
 
   @@index([shopId])
+}
+
+model BarberService {
+  barberId  String
+  serviceId String
+  barber    Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([barberId, serviceId])
+  @@index([serviceId])
 }
 
 model Chair {
@@ -156,18 +179,21 @@ model Chair {
 }
 
 model Service {
-  id              String          @id @default(cuid())
-  shopId          String
-  name            String
-  description     String?
-  price           Float
-  durationMinutes Int
-  isActive        Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  category        ServiceCategory @default(HAIRCUT)
-  bookings        Booking[]
-  shop            Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  id                 String              @id @default(cuid())
+  shopId             String
+  name               String
+  description        String?
+  price              Float
+  durationMinutes    Int
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  category           ServiceCategory     @default(HAIRCUT)
+  rebookIntervalDays Int?
+  bookings           Booking[]
+  barberServices     BarberService[]
+  shop               Shop                @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  rebookingReminders RebookingReminder[]
 
   @@index([shopId])
 }
@@ -327,6 +353,61 @@ model Review {
   @@index([shopId])
 }
 
+model WaitTimeMetric {
+  id              String          @id @default(cuid())
+  shopId          String
+  barberId        String
+  category        ServiceCategory
+  actualMinutes   Int
+  expectedMinutes Int
+  recordedAt      DateTime        @default(now())
+  barber          Barber          @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([shopId, barberId, category])
+  @@index([recordedAt])
+}
+
+model ShopAnalyticDaily {
+  id                    String   @id @default(cuid())
+  shopId                String
+  date                  DateTime @db.Date
+  totalBookings         Int      @default(0)
+  totalWalkIns          Int      @default(0)
+  completedBookings     Int      @default(0)
+  cancelledBookings     Int      @default(0)
+  noShows               Int      @default(0)
+  avgWaitMinutes        Float    @default(0)
+  avgServiceMinutes     Float    @default(0)
+  totalRevenue          Float    @default(0)
+  peakHour              Int?
+  chairUtilizationPct   Float    @default(0)
+  queueAbandonments     Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([shopId, date])
+  @@index([shopId, date])
+}
+
+model RebookingReminder {
+  id          String    @id @default(cuid())
+  userId      String
+  shopId      String
+  serviceId   String
+  lastVisitAt DateTime
+  reminderAt  DateTime
+  sentAt      DateTime?
+  dismissed   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  service     Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([reminderAt])
+  @@index([userId])
+  @@index([shopId])
+  @@index([sentAt], where: raw("(\"sentAt\" IS NULL)"))
+}
+
 model EventLog {
   id            String       @id @default(cuid())
   type          EventLogType
@@ -342,15 +423,6 @@ model EventLog {
   @@index([shopId, createdAt])
   @@index([bookingId])
   @@index([correlationId])
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model spatial_ref_sys {
-  srid      Int     @id
-  auth_name String? @db.VarChar(256)
-  auth_srid Int?
-  srtext    String? @db.VarChar(2048)
-  proj4text String? @db.VarChar(2048)
 }
 
 enum UserRole {
@@ -416,10 +488,14 @@ enum QueueEventType {
 enum EventLogType {
   BOOKING_CREATED
   BOOKING_CANCELLED
+  BOOKING_NO_SHOW
   QUEUE_JOINED
   QUEUE_LEFT
   CHAIR_ASSIGNED
   CHAIR_RELEASED
+  PAYMENT_COMPLETED
+  REVIEW_CREATED
+  REBOOKING_REMINDER_SENT
 }
 
 enum PaymentMethod {
@@ -433,4 +509,10 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum Platform {
+  IOS
+  ANDROID
+  WEB
 }

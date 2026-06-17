@@ -32,6 +32,36 @@ export function buildNotificationTemplate(input: NotificationPayload) {
         body: input.body || "There is a delay at the shop.",
         data: input.data ?? {}
       };
+    case "NO_SHOW_DETECTED":
+      return {
+        title: input.title || "Booking marked as no-show",
+        body: input.body || "You missed your arrival window. Please rebook.",
+        data: input.data ?? {}
+      };
+    case "CHAIR_ASSIGNED":
+      return {
+        title: input.title || "Your chair is ready",
+        body: input.body || "Please head to your assigned chair now.",
+        data: input.data ?? {}
+      };
+    case "SERVICE_COMPLETE":
+      return {
+        title: input.title || "Service complete",
+        body: input.body || "Thanks for visiting! Leave a review.",
+        data: input.data ?? {}
+      };
+    case "REBOOKING_REMINDER":
+      return {
+        title: input.title || "Time for a fresh cut?",
+        body: input.body || "It's been a while — book your next appointment.",
+        data: input.data ?? {}
+      };
+    case "ARRIVAL_ALERT":
+      return {
+        title: input.title || "Almost your turn",
+        body: input.body || "You're next in queue. Head to the shop now.",
+        data: input.data ?? {}
+      };
     default:
       return {
         title: input.title,

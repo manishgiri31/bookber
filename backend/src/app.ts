@@ -18,8 +18,10 @@ import { buildQueueDependencies } from "./modules/queue/queue.container.js";
 import { buildBookingDependencies } from "./modules/booking/booking.container.js";
 import { bookingRoutes } from "./modules/booking/presentation/booking.routes.js";
 import { queueRoutes } from "./modules/queue/presentation/queue.routes.js";
-// import { buildNotificationDependencies } from "./modules/notification/notification.container.js";
-// import { notificationRoutes } from "./modules/notification/presentation/notification.routes.js";
+import { buildNotificationDependencies } from "./modules/notification/notification.container.js";
+import { notificationRoutes } from "./modules/notification/presentation/notification.routes.js";
+import { buildAnalyticsContainer } from "./modules/analytics/analytics.container.js";
+import { registerAnalyticsRoutes } from "./modules/analytics/presentation/analytics.routes.js";
 import { buildPaymentDependencies } from "./modules/payment/payment.container.js";
 import { paymentRoutes } from "./modules/payment/presentation/payment.routes.js";
 import { buildReviewDependencies } from "./modules/review/review.container.js";
@@ -45,7 +47,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   // const serviceDeps = buildServiceManagementDependencies();
   const queueDeps = buildQueueDependencies(app);
   const bookingDeps = buildBookingDependencies(queueDeps.engine);
-  // const notificationDeps = buildNotificationDependencies(app);
+  const notificationDeps = buildNotificationDependencies(app);
+  const analyticsDeps = buildAnalyticsContainer();
   const paymentDeps = buildPaymentDependencies(app);
   const reviewDeps = buildReviewDependencies(app);
   console.log("✓ Dependency containers built");
@@ -54,7 +57,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.decorate("shopDeps", shopDeps);
   app.decorate("queueDeps", queueDeps);
   app.decorate("bookingDeps", bookingDeps);
-  // app.decorate("notificationDeps", notificationDeps);
+  app.decorate("notificationDeps", notificationDeps);
+  app.decorate("analyticsDeps", analyticsDeps);
   app.decorate("paymentDeps", paymentDeps);
   app.decorate("reviewDeps", reviewDeps);
 
@@ -127,10 +131,13 @@ export async function buildApp(): Promise<FastifyInstance> {
     { plugin: bookingRoutes, prefix: "/bookings" },
     { plugin: queueRoutes, prefix: "" },
     { plugin: paymentRoutes, prefix: "" },
-    { plugin: reviewRoutes, prefix: "" }
+    { plugin: reviewRoutes, prefix: "" },
+    { plugin: notificationRoutes, prefix: "" },
   ];
 
   await registerRoutes(app, routes);
+
+  registerAnalyticsRoutes(app, analyticsDeps.controller);
   console.log("✓ Routes registered");
   console.log(app.printRoutes());
 
@@ -142,10 +149,9 @@ declare module "fastify" {
   interface FastifyInstance {
     authDeps: ReturnType<typeof buildAuthDependencies>;
     shopDeps: ReturnType<typeof buildShopDependencies>;
-    // serviceDeps: ReturnType<typeof buildServiceManagementDependencies>;
     bookingDeps: ReturnType<typeof buildBookingDependencies>;
-    // queueDeps: ReturnType<typeof buildQueueDependencies>;
-    // notificationDeps: ReturnType<typeof buildNotificationDependencies>;
+    notificationDeps: ReturnType<typeof buildNotificationDependencies>;
+    analyticsDeps: ReturnType<typeof buildAnalyticsContainer>;
     paymentDeps: ReturnType<typeof buildPaymentDependencies>;
     reviewDeps: ReturnType<typeof buildReviewDependencies>;
     prisma: import("@prisma/client").PrismaClient;

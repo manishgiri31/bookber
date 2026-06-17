@@ -1,8 +1,22 @@
 import type { SocketEventPublisher } from "../../../shared/socket/socket.publisher.js";
 import type { QueueSnapshot, ChairView } from "../domain/queue.types.js";
 
+export type PositionChangedEvent = {
+  shopId: string;
+  bookingId: string;
+  userId: string;
+  position: number;
+  estimatedWaitMinutes: number;
+};
+
 export class QueueRealtimeEmitter {
+  private positionHooks: Array<(e: PositionChangedEvent) => void> = [];
+
   constructor(private readonly getPublisher: () => SocketEventPublisher | undefined) {}
+
+  onPositionChanged(hook: (e: PositionChangedEvent) => void): void {
+    this.positionHooks.push(hook);
+  }
 
   private pub(): SocketEventPublisher | undefined {
     return this.getPublisher();
@@ -157,5 +171,19 @@ export class QueueRealtimeEmitter {
       ],
       walkIn: []
     });
+
+    for (const hook of this.positionHooks) {
+      try {
+        hook({
+          shopId: args.shopId,
+          bookingId: args.bookingId,
+          userId: args.userId,
+          position: args.position,
+          estimatedWaitMinutes: args.estimatedWaitMinutes,
+        });
+      } catch {
+        // hooks must not crash the emitter
+      }
+    }
   }
 }

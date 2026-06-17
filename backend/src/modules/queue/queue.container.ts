@@ -49,6 +49,7 @@ export function buildQueueDependencies(app: FastifyInstance) {
     repository,
     lock,
     chairAllocator,
+    realtime,
     waitTime,
     engine,
     coordinator,
