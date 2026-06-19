@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import type { AccessTokenPayload } from "./auth-user.js";
 import { AuthController } from "./auth.controller.js";
 
 export const authRoutes: FastifyPluginAsync = async (app) => {
@@ -8,5 +9,10 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   app.post("/login", controller.login);
   app.post("/refresh", controller.refresh);
   app.post("/logout", controller.logout);
-  app.get("/me", { preHandler: app.authenticate }, async (request) => ({ user: request.user }));
+  app.patch("/change-password", { preHandler: app.authenticate }, controller.changePassword);
+  app.get("/me", { preHandler: app.authenticate }, async (request) => {
+    const payload = request.user as AccessTokenPayload;
+    const user = await app.authDeps.authService.getMe(payload.sub);
+    return { user };
+  });
 };

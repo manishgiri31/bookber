@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/widgets/auth_layout.dart';
 import '../../../core/widgets/auth_input_field.dart';
@@ -43,11 +44,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    ref.listen<AuthState>(authControllerProvider, (previous, next) {
-      if (next is AuthError && mounted) {
-        BookerSnackbar.error(context, next.message);
-      }
-    });
   }
 
   @override
@@ -166,6 +162,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authControllerProvider, (_, next) {
+      if (next is AuthError && mounted) {
+        BookerSnackbar.error(context, next.message);
+      }
+    });
+
     final formState = ref.watch(registerFormProvider);
     final authState = ref.watch(authControllerProvider);
 
@@ -206,30 +208,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: authState.isLoading
                 ? const Center(
                     child: SizedBox(
-                      width: 56,
-                      height: 56,
+                      width: 40,
+                      height: 40,
                       child: CircularProgressIndicator(
-                        color: BookBerPalette.primaryAccent,
+                        color: BBColors.brandPrimary,
                         strokeWidth: 3,
                       ),
                     ),
                   )
                 : ElevatedButton(
                     onPressed: _handleContinue,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: BookBerPalette.primaryAccent,
-                      foregroundColor: BookBerPalette.bgPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      elevation: 0,
-                    ),
                     child: Text(
                       formState.currentStep == 1 ? 'Continue' : 'Create Account',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
                     ),
                   ),
           ),
@@ -239,17 +229,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           if (formState.currentStep == 2)
             TextButton(
               onPressed: () => ref.read(registerFormProvider.notifier).previousStep(),
-              child: Text(
-                'Back',
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: BookBerPalette.textSecondary,
-                ),
-              ),
+              child: Text('Back'),
             ),
 
-          // Login Link
           if (formState.currentStep == 1)
             Center(
               child: GestureDetector(
@@ -257,19 +239,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 child: Text.rich(
                   TextSpan(
                     text: 'Already have an account? ',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.bodyM.copyWith(
+                        color: context.bbColors.textSecondary),
                     children: [
                       TextSpan(
                         text: 'Sign In',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: BookBerPalette.primaryAccent,
-                        ),
+                        style: BBTypography.labelM.copyWith(
+                            color: BBColors.brandPrimary),
                       ),
                     ],
                   ),
@@ -359,16 +335,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Widget _buildCustomerStep2(RegisterFormState formState) {
+    final colors = context.bbColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'What services do you usually get?',
-          style: GoogleFonts.dmSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.labelM.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 12),
         MultiSelectChip(
@@ -392,46 +365,33 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           children: [
             Text(
               'Enable Notifications',
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: BookBerPalette.textPrimary,
-              ),
+              style: BBTypography.labelM.copyWith(color: colors.textPrimary),
             ),
             Switch(
               value: formState.notificationsEnabled,
-              onChanged: (value) => ref.read(registerFormProvider.notifier).toggleNotifications(),
-              activeColor: BookBerPalette.primaryAccent,
+              onChanged: (value) =>
+                  ref.read(registerFormProvider.notifier).toggleNotifications(),
+              activeColor: BBColors.brandPrimary,
             ),
           ],
         ),
         const SizedBox(height: 16),
         TextButton(
-          onPressed: () => _handleRegister(),
-          child: Text(
-            'Skip for now',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: BookBerPalette.textSecondary,
-            ),
-          ),
+          onPressed: _handleRegister,
+          child: const Text('Skip for now'),
         ),
       ],
     );
   }
 
   Widget _buildBarberStep2(RegisterFormState formState) {
+    final colors = context.bbColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Specializations',
-          style: GoogleFonts.dmSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.labelM.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 12),
         MultiSelectChip(
@@ -456,11 +416,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         const SizedBox(height: 24),
         Text(
           'Profile Photo',
-          style: GoogleFonts.dmSans(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.labelM.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: 12),
         GestureDetector(
@@ -469,18 +425,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgSurface,
+              color: colors.bgSurface,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: const Color(0x0FFFFFFF),
-                width: 2,
-                style: BorderStyle.solid,
-              ),
+              border: Border.all(color: colors.border, width: 2),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.camera_alt_outlined,
               size: 40,
-              color: BookBerPalette.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
         ),

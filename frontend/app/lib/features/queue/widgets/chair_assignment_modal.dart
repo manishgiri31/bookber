@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
-import '../providers/queue_providers.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 
 class ChairAssignmentModal extends ConsumerStatefulWidget {
   const ChairAssignmentModal({super.key});
 
   @override
-  ConsumerState<ChairAssignmentModal> createState() => _ChairAssignmentModalState();
+  ConsumerState<ChairAssignmentModal> createState() =>
+      _ChairAssignmentModalState();
 }
 
 class _ChairAssignmentModalState extends ConsumerState<ChairAssignmentModal>
@@ -36,8 +36,6 @@ class _ChairAssignmentModalState extends ConsumerState<ChairAssignmentModal>
     );
 
     _controller.forward();
-
-    // Trigger haptic feedback
     HapticFeedback.heavyImpact();
   }
 
@@ -49,41 +47,38 @@ class _ChairAssignmentModalState extends ConsumerState<ChairAssignmentModal>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         return SlideTransition(
           position: _slideAnimation,
-          child: FadeTransition(
-            opacity: _controller,
-            child: child,
-          ),
+          child: FadeTransition(opacity: _controller, child: child),
         );
       },
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: BookBerPalette.bgSurface,
+          color: colors.bgSurface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(BBSpacing.px32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Handle bar
                 Container(
                   width: 40,
                   height: 4,
-                  margin: const EdgeInsets.only(bottom: 32),
+                  margin: const EdgeInsets.only(bottom: BBSpacing.px32),
                   decoration: BoxDecoration(
-                    color: BookBerPalette.textMuted,
+                    color: colors.textDisabled,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
 
-                // Animated arrow
                 AnimatedBuilder(
                   animation: _scaleAnimation,
                   builder: (context, child) {
@@ -93,84 +88,56 @@ class _ChairAssignmentModalState extends ConsumerState<ChairAssignmentModal>
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: BookBerPalette.primaryAccent.withValues(alpha: 0.12),
+                          color: BBColors.brandPrimaryDim,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.arrow_downward,
                           size: 40,
-                          color: BookBerPalette.primaryAccent,
+                          color: BBColors.brandPrimary,
                         ),
                       ),
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: BBSpacing.px24),
 
-                // You're Next text
                 Text(
                   "You're Next! 🎉",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
+                  style: BBTypography.displayS.copyWith(color: colors.textPrimary),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: BBSpacing.px16),
 
-                // Chair number
                 Text(
                   'Proceed to Chair 2',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: BookBerPalette.textSecondary,
-                  ),
+                  style: BBTypography.headingS.copyWith(color: colors.textSecondary),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: BBSpacing.px32),
 
-                // Chair visualization
                 _ChairVisualization(chairNumber: 2),
-                const SizedBox(height: 32),
+                const SizedBox(height: BBSpacing.px32),
 
-                // Check-in button
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: BBTouchTarget.button,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: Emit queue:checkin event
-                      Navigator.of(context).pop();
-                    },
+                    onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: BookBerPalette.primaryAccent,
-                      foregroundColor: BookBerPalette.bgPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
+                      backgroundColor: BBColors.brandPrimary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'I\'m Here',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text("I'm Here", style: BBTypography.button),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: BBSpacing.px16),
 
-                // Close button
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
                     'Close',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.labelM.copyWith(color: colors.textSecondary),
                   ),
                 ),
               ],
@@ -189,43 +156,31 @@ class _ChairVisualization extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Container(
       width: double.infinity,
       height: 120,
       decoration: BoxDecoration(
-        color: BookBerPalette.bgElevated,
-        borderRadius: BorderRadius.circular(16),
+        color: colors.bgElevated,
+        borderRadius: BBRadius.card,
       ),
       child: Stack(
         children: [
-          // Chair icon
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.event_seat,
-                  size: 48,
-                  color: BookBerPalette.primaryAccent,
-                ),
-                const SizedBox(height: 8),
+                const Icon(Icons.event_seat, size: 48, color: BBColors.brandPrimary),
+                const SizedBox(height: BBSpacing.px8),
                 Text(
                   'Chair $chairNumber',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
+                  style: BBTypography.headingS.copyWith(color: colors.textPrimary),
                 ),
               ],
             ),
           ),
-          // Pulsing glow effect
-          Positioned.fill(
-            child: Center(
-              child: _PulsingGlow(),
-            ),
-          ),
+          Positioned.fill(child: Center(child: _PulsingGlow())),
         ],
       ),
     );
@@ -270,7 +225,7 @@ class _PulsingGlowState extends State<_PulsingGlow>
           width: 80 * _animation.value,
           height: 80 * _animation.value,
           decoration: BoxDecoration(
-            color: BookBerPalette.primaryAccent.withValues(alpha: 0.2),
+            color: BBColors.brandPrimary.withValues(alpha: 0.2),
             shape: BoxShape.circle,
           ),
         );

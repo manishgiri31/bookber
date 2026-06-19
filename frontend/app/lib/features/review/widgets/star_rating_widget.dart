@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../payment/providers/payment_providers.dart';
 
 class StarRatingWidget extends ConsumerWidget {
@@ -20,7 +21,7 @@ class StarRatingWidget extends ConsumerWidget {
         return GestureDetector(
           onTap: () => ref.read(reviewFormProvider.notifier).setRating(starValue),
           child: Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: BBSpacing.px8),
             child: _AnimatedStar(
               isSelected: isSelected,
               isPartiallyFilled: isPartiallyFilled,
@@ -66,9 +67,7 @@ class _AnimatedStarState extends State<_AnimatedStar>
     );
 
     if (widget.isSelected) {
-      _controller.forward().then((_) {
-        _controller.reverse();
-      });
+      _controller.forward().then((_) => _controller.reverse());
     }
   }
 
@@ -76,9 +75,7 @@ class _AnimatedStarState extends State<_AnimatedStar>
   void didUpdateWidget(_AnimatedStar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.isSelected != widget.isSelected && widget.isSelected) {
-      _controller.forward().then((_) {
-        _controller.reverse();
-      });
+      _controller.forward().then((_) => _controller.reverse());
     }
   }
 
@@ -90,6 +87,8 @@ class _AnimatedStarState extends State<_AnimatedStar>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return AnimatedBuilder(
       animation: _scaleAnimation,
       builder: (context, child) {
@@ -100,19 +99,17 @@ class _AnimatedStarState extends State<_AnimatedStar>
             height: 40,
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? const Color(0xFFF59E0B).withValues(alpha: 0.12)
-                  : BookBerPalette.bgElevated,
+                  ? BBColors.brandSecondary.withValues(alpha: 0.12)
+                  : colors.bgElevated,
               shape: BoxShape.circle,
               border: Border.all(
-                color: widget.isSelected
-                    ? const Color(0xFFF59E0B)
-                    : BookBerPalette.textMuted,
+                color: widget.isSelected ? BBColors.brandSecondary : colors.textDisabled,
                 width: 2,
               ),
               boxShadow: widget.isSelected
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                        color: BBColors.brandSecondary.withValues(alpha: 0.3),
                         blurRadius: 12,
                         spreadRadius: 4,
                       ),
@@ -122,9 +119,7 @@ class _AnimatedStarState extends State<_AnimatedStar>
             child: Icon(
               Icons.star,
               size: 24,
-              color: widget.isSelected
-                  ? const Color(0xFFF59E0B)
-                  : BookBerPalette.textMuted,
+              color: widget.isSelected ? BBColors.brandSecondary : colors.textDisabled,
             ),
           ),
         );

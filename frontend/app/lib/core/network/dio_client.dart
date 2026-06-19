@@ -150,7 +150,7 @@ class AuthInterceptor extends Interceptor {
 
     try {
       final refreshResponse = await _refreshDio.post(
-        '/api/auth/refresh',
+        '/auth/refresh',
         data: {'refreshToken': refreshToken},
       );
 
@@ -292,4 +292,6 @@ class AuthInterceptor extends Interceptor {
   }
 }
 
-final dioClientProvider = Provider<DioClient>((ref) => DioClient());
+final dioClientProvider = Provider<DioClient>(
+  (ref) => DioClient(storage: ref.watch(appStorageProvider)),
+);

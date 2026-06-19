@@ -82,9 +82,26 @@ export class AuthService {
     return this.rotateRefreshToken(user, token);
   }
 
+  async getMe(userId: string): Promise<AuthUser> {
+    const user = await this.repository.findById(userId);
+    if (!user) throw Errors.unauthenticated();
+    return user;
+  }
+
   async logout(input: { refreshToken?: string }) {
     if (!input.refreshToken) return;
     await this.repository.revokeRefreshToken(input.refreshToken);
+  }
+
+  async changePassword(userId: string, input: { currentPassword: string; newPassword: string }) {
+    const authUser = await this.repository.findById(userId);
+    if (!authUser) throw Errors.unauthenticated();
+    const fullUser = await this.repository.findByEmail(authUser.email);
+    if (!fullUser) throw Errors.unauthenticated();
+    const match = await bcrypt.compare(input.currentPassword, fullUser.password);
+    if (!match) throw Errors.unauthenticated("Current password is incorrect");
+    const newHash = await bcrypt.hash(input.newPassword, env.PASSWORD_BCRYPT_ROUNDS);
+    await this.repository.updatePassword(userId, newHash);
   }
 
   private async handleFailedLogin(userId: string) {

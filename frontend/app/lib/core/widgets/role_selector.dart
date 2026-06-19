@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../app/theme/design_system.dart';
-import '../../features/auth/domain/auth_state.dart';
 
-class RoleSelector extends StatefulWidget {
+import '../../features/auth/domain/auth_state.dart';
+import '../design/theme.dart';
+import '../design/tokens.dart';
+
+class RoleSelector extends StatelessWidget {
   const RoleSelector({
     super.key,
     required this.selectedRole,
@@ -14,115 +15,70 @@ class RoleSelector extends StatefulWidget {
   final ValueChanged<UserRole> onChanged;
 
   @override
-  State<RoleSelector> createState() => _RoleSelectorState();
-}
-
-class _RoleSelectorState extends State<RoleSelector>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-    _slideAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void didUpdateWidget(RoleSelector oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedRole != widget.selectedRole) {
-      _animationController.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: BookBerPalette.bgElevated,
-        borderRadius: BorderRadius.circular(999),
+        color: colors.bgElevated,
+        borderRadius: BBRadius.pill,
       ),
       padding: const EdgeInsets.all(4),
-      child: Stack(
+      child: Row(
         children: [
-          // Animated background pill
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            left: widget.selectedRole == UserRole.customer ? 4 : null,
-            right: widget.selectedRole == UserRole.barber ? 4 : null,
-            child: AnimatedBuilder(
-              animation: _slideAnimation,
-              builder: (context, child) {
-                return Container(
-                  width: (MediaQuery.of(context).size.width - 48) / 2 - 8,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: BookBerPalette.primaryAccent,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                );
-              },
-            ),
+          _Tab(
+            label: 'Customer',
+            isSelected: selectedRole == UserRole.customer,
+            onTap: () => onChanged(UserRole.customer),
+            colors: colors,
           ),
-          // Buttons
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => widget.onChanged(UserRole.customer),
-                  child: Container(
-                    height: 40,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Customer',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: widget.selectedRole == UserRole.customer
-                            ? BookBerPalette.bgPrimary
-                            : BookBerPalette.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => widget.onChanged(UserRole.barber),
-                  child: Container(
-                    height: 40,
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Barber',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: widget.selectedRole == UserRole.barber
-                            ? BookBerPalette.bgPrimary
-                            : BookBerPalette.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          _Tab(
+            label: 'Barber',
+            isSelected: selectedRole == UserRole.barber,
+            onTap: () => onChanged(UserRole.barber),
+            colors: colors,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Tab extends StatelessWidget {
+  const _Tab({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.colors,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final BBColorTheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: BBMotion.fast,
+          curve: Curves.easeInOut,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? BBColors.brandPrimary : Colors.transparent,
+            borderRadius: BBRadius.pill,
+          ),
+          child: Text(
+            label,
+            style: BBTypography.labelM.copyWith(
+              color: isSelected ? Colors.white : colors.textSecondary,
+            ),
+          ),
+        ),
       ),
     );
   }

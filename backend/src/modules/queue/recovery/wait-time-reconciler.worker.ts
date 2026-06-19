@@ -4,6 +4,7 @@ import type { WaitTimeMismatch, RecoveryConfig, RecoveryStats } from "./recovery
 import { DEFAULT_RECOVERY_CONFIG } from "./recovery-types.js";
 import { RecoveryTransactionManager } from "./recovery-transaction-manager.js";
 import { QueueLock } from "../queue.lock.js";
+import { WaitTimeRedisStore } from "../infrastructure/wait-time-redis.store.js";
 
 /**
  * Wait-time reconciler worker.
@@ -35,7 +36,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Detect wait time mismatches across all active shops
    */
-  async detectWaitTimeMismatches(redisStore: any): Promise<WaitTimeMismatch[]> {
+  async detectWaitTimeMismatches(redisStore: WaitTimeRedisStore): Promise<WaitTimeMismatch[]> {
     const mismatches: WaitTimeMismatch[] = [];
 
     const shops = await prisma.shop.findMany({
@@ -54,7 +55,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Detect wait time mismatches for a specific shop
    */
-  async detectWaitTimeMismatchesForShop(shopId: string, redisStore: any): Promise<WaitTimeMismatch[]> {
+  async detectWaitTimeMismatchesForShop(shopId: string, redisStore: WaitTimeRedisStore): Promise<WaitTimeMismatch[]> {
     const mismatches: WaitTimeMismatch[] = [];
     const lanes: QueueLane[] = ["BOOKBER", "WALKIN"];
 
@@ -69,7 +70,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Detect wait time mismatches for a specific lane
    */
-  async detectWaitTimeMismatchesForLane(shopId: string, lane: QueueLane, redisStore: any): Promise<WaitTimeMismatch[]> {
+  async detectWaitTimeMismatchesForLane(shopId: string, lane: QueueLane, redisStore: WaitTimeRedisStore): Promise<WaitTimeMismatch[]> {
     const mismatches: WaitTimeMismatch[] = [];
 
     const activeQueue = await prisma.queueEntry.findMany({
@@ -110,7 +111,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Get wait minutes from Redis
    */
-  private async getRedisWaitMinutes(redisStore: any, bookingId: string): Promise<number | null> {
+  private async getRedisWaitMinutes(redisStore: WaitTimeRedisStore, bookingId: string): Promise<number | null> {
     if (!redisStore || !redisStore.isAvailable()) {
       return null;
     }
@@ -167,7 +168,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Run the wait-time reconciler worker
    */
-  async run(redisStore: any, waitTimeEngine: any): Promise<RecoveryStats> {
+  async run(redisStore: WaitTimeRedisStore, waitTimeEngine: any): Promise<RecoveryStats> {
     const stats: RecoveryStats = {
       chairsRecovered: 0,
       servicesFlagged: 0,
@@ -227,7 +228,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Start the periodic worker
    */
-  start(redisStore: any, waitTimeEngine: any): () => void {
+  start(redisStore: WaitTimeRedisStore, waitTimeEngine: any): () => void {
     const interval = setInterval(() => {
       this.run(redisStore, waitTimeEngine).catch((error) => {
         console.error("Wait-time reconciler worker failed:", error);
@@ -245,7 +246,7 @@ export class WaitTimeReconcilerWorker {
   /**
    * Get statistics for monitoring
    */
-  async getStats(redisStore: any): Promise<{
+  async getStats(redisStore: WaitTimeRedisStore): Promise<{
     totalActiveQueue: number;
     mismatches: number;
     byShop: Record<string, number>;

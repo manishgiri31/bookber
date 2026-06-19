@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/payment_providers.dart';
 
 class ReceiptCard extends ConsumerWidget {
@@ -9,72 +9,52 @@ class ReceiptCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final formState = ref.watch(paymentFormProvider);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: BBSpacing.cardPadding,
       decoration: BoxDecoration(
-        color: const Color(0x0AFFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0x0FFFFFFF),
-          width: 1,
-        ),
+        color: colors.bgSurface,
+        borderRadius: BBRadius.card,
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Services breakdown
           ...formState.services.map((service) {
             return Column(
               children: [
-                _ReceiptRow(
-                  label: service.name,
-                  value: '₹${service.price}',
-                ),
-                const SizedBox(height: 8),
-                const _DottedDivider(),
-                const SizedBox(height: 8),
+                _ReceiptRow(label: service.name, value: '₹${service.price}'),
+                const SizedBox(height: BBSpacing.px8),
+                _DottedDivider(color: colors.borderSubtle),
+                const SizedBox(height: BBSpacing.px8),
               ],
             );
-          }).toList(),
-          const SizedBox(height: 8),
-          const Divider(color: Color(0x0FFFFFFF)),
-          const SizedBox(height: 16),
+          }),
+          const SizedBox(height: BBSpacing.px8),
+          Divider(color: colors.borderSubtle),
+          const SizedBox(height: BBSpacing.px16),
 
-          // Subtotal
-          _ReceiptRow(
-            label: 'Subtotal',
-            value: '₹${formState.subtotal}',
-          ),
-          const SizedBox(height: 12),
+          _ReceiptRow(label: 'Subtotal', value: '₹${formState.subtotal}'),
+          const SizedBox(height: BBSpacing.px12),
 
-          // Discount
           _ReceiptRow(
             label: 'BookBer Discount',
             value: '-₹${formState.discount}',
-            valueColor: BookBerPalette.primaryAccent,
+            valueColor: BBColors.brandPrimary,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: BBSpacing.px16),
 
-          const Divider(color: Color(0x0FFFFFFF)),
-          const SizedBox(height: 16),
+          Divider(color: colors.borderSubtle),
+          const SizedBox(height: BBSpacing.px16),
 
-          // Total
           _ReceiptRow(
             label: 'Total',
             value: '₹${formState.total}',
-            labelStyle: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
-            ),
-            valueStyle: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
-            ),
+            labelStyle: BBTypography.headingS.copyWith(color: colors.textPrimary),
+            valueStyle: BBTypography.headingS.copyWith(color: colors.textPrimary),
           ),
         ],
       ),
@@ -99,26 +79,19 @@ class _ReceiptRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: labelStyle ??
-              GoogleFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: BookBerPalette.textSecondary,
-              ),
+          style: labelStyle ?? BBTypography.bodyM.copyWith(color: colors.textSecondary),
         ),
         Text(
           value,
           style: valueStyle ??
-              TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? BookBerPalette.textPrimary,
-              ),
+              BBTypography.labelM.copyWith(color: valueColor ?? colors.textPrimary),
         ),
       ],
     );
@@ -126,16 +99,17 @@ class _ReceiptRow extends StatelessWidget {
 }
 
 class _DottedDivider extends StatelessWidget {
-  const _DottedDivider();
+  const _DottedDivider({required this.color});
+
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final boxWidth = constraints.constrainWidth();
-        final dashWidth = 4.0;
-        final dashHeight = 1.0;
-        final dashCount = (boxWidth / (2 * dashWidth)).floor();
+      builder: (context, constraints) {
+        const dashWidth = 4.0;
+        const dashHeight = 1.0;
+        final dashCount = (constraints.constrainWidth() / (2 * dashWidth)).floor();
         return Flex(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           direction: Axis.horizontal,
@@ -143,9 +117,7 @@ class _DottedDivider extends StatelessWidget {
             return SizedBox(
               width: dashWidth,
               height: dashHeight,
-              child: DecoratedBox(
-                decoration: BoxDecoration(color: BookBerPalette.textMuted),
-              ),
+              child: DecoratedBox(decoration: BoxDecoration(color: color)),
             );
           }),
         );

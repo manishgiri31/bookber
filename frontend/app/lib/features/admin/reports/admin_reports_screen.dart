@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:url_launcher/url_launcher.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/admin_providers.dart';
-import '../widgets/admin_bottom_nav.dart';
 
 class AdminReportsScreen extends ConsumerStatefulWidget {
   const AdminReportsScreen({super.key});
@@ -22,7 +22,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
     final statsAsync = ref.watch(adminReportProvider(range));
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: context.bbColors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -37,7 +37,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: BookBerPalette.textPrimary,
+                      color: context.bbColors.textPrimary,
                     ),
                   ),
                   OutlinedButton.icon(
@@ -49,7 +49,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                         await launchUrl(uri, mode: LaunchMode.externalApplication);
                       }
                     },
-                    icon: const Icon(Icons.download_outlined, size: 18),
+                    icon: Icon(Icons.download_outlined, size: 18),
                     label: Text(
                       'Export CSV',
                       style: TextStyle(
@@ -58,8 +58,8 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: BookBerPalette.primaryAccent,
-                      side: BorderSide(color: BookBerPalette.primaryAccent),
+                      foregroundColor: BBColors.brandPrimary,
+                      side: BorderSide(color: BBColors.brandPrimary),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(999),
                       ),
@@ -79,7 +79,7 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
               ),
               loading: () => const Padding(
                 padding: EdgeInsets.all(24),
-                child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+                child: CircularProgressIndicator(color: BBColors.brandPrimary),
               ),
               error: (_, __) => _RevenueChartSection(
                 selectedPeriod: _selectedPeriod,
@@ -112,12 +112,6 @@ class _AdminReportsScreenState extends ConsumerState<AdminReportsScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: AdminBottomNav(
-        currentIndex: 4,
-        onTap: (index) {
-          // TODO: Navigate to respective screens
-        },
-      ),
     );
   }
 }
@@ -138,7 +132,7 @@ class _RevenueChartSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -152,7 +146,7 @@ class _RevenueChartSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: BookBerPalette.textPrimary,
+                  color: context.bbColors.textPrimary,
                 ),
               ),
               Row(
@@ -182,7 +176,7 @@ class _RevenueChartSection extends StatelessWidget {
           Container(
             height: 200,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated.withValues(alpha: 0.3),
+              color: context.bbColors.bgElevated.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -192,22 +186,22 @@ class _RevenueChartSection extends StatelessWidget {
                   Icon(
                     Icons.show_chart,
                     size: 48,
-                    color: BookBerPalette.textMuted,
+                    color: context.bbColors.textDisabled,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Rs. ${stats.revenueToday}',
-                    style: GoogleFonts.dmSans(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
-                      color: BookBerPalette.primaryAccent,
+                      color: BBColors.brandPrimary,
                     ),
                   ),
                   Text(
                     '${stats.bookingsToday} bookings - ${stats.activeQueueEntries} active queue entries',
-                    style: GoogleFonts.dmSans(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: BookBerPalette.textMuted,
+                      color: context.bbColors.textDisabled,
                     ),
                   ),
                 ],
@@ -239,16 +233,16 @@ class _PeriodChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
-              ? BookBerPalette.primaryAccent
+              ? BBColors.brandPrimary
               : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
-          style: GoogleFonts.dmSans(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? BookBerPalette.bgPrimary : BookBerPalette.textSecondary,
+            color: isSelected ? context.bbColors.bgCanvas : context.bbColors.textSecondary,
           ),
         ),
       ),
@@ -264,7 +258,7 @@ class _BookingsByStatusSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -275,7 +269,7 @@ class _BookingsByStatusSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
+              color: context.bbColors.textPrimary,
             ),
           ),
           const SizedBox(height: 24),
@@ -286,16 +280,16 @@ class _BookingsByStatusSection extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: BookBerPalette.bgElevated.withValues(alpha: 0.3),
+                  color: context.bbColors.bgElevated.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     'Donut\nChart',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.dmSans(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: BookBerPalette.textMuted,
+                      color: context.bbColors.textDisabled,
                     ),
                   ),
                 ),
@@ -305,13 +299,13 @@ class _BookingsByStatusSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _LegendItem(color: BookBerPalette.primaryAccent, label: 'Confirmed', value: '45%'),
+                    _LegendItem(color: BBColors.brandPrimary, label: 'Confirmed', value: '45%'),
                     const SizedBox(height: 12),
-                    _LegendItem(color: BookBerPalette.warningAmber, label: 'In Progress', value: '15%'),
+                    _LegendItem(color: BBColors.warning, label: 'In Progress', value: '15%'),
                     const SizedBox(height: 12),
-                    _LegendItem(color: BookBerPalette.queueSafe, label: 'Completed', value: '30%'),
+                    _LegendItem(color: BBColors.success, label: 'Completed', value: '30%'),
                     const SizedBox(height: 12),
-                    _LegendItem(color: BookBerPalette.textMuted, label: 'Cancelled', value: '10%'),
+                    _LegendItem(color: context.bbColors.textDisabled, label: 'Cancelled', value: '10%'),
                   ],
                 ),
               ),
@@ -350,10 +344,10 @@ class _LegendItem extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.dmSans(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w400,
-              color: BookBerPalette.textPrimary,
+              color: context.bbColors.textPrimary,
             ),
           ),
         ),
@@ -362,7 +356,7 @@ class _LegendItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: BookBerPalette.textPrimary,
+            color: context.bbColors.textPrimary,
           ),
         ),
       ],
@@ -378,7 +372,7 @@ class _TopShopsSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -389,7 +383,7 @@ class _TopShopsSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
+              color: context.bbColors.textPrimary,
             ),
           ),
           const SizedBox(height: 24),
@@ -411,10 +405,10 @@ class _TopShopsSection extends StatelessWidget {
                       children: [
                         Text(
                           shopNames[index],
-                          style: GoogleFonts.dmSans(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: BookBerPalette.textPrimary,
+                            color: context.bbColors.textPrimary,
                           ),
                         ),
                         Text(
@@ -422,7 +416,7 @@ class _TopShopsSection extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: BookBerPalette.primaryAccent,
+                            color: BBColors.brandPrimary,
                           ),
                         ),
                       ],
@@ -431,7 +425,7 @@ class _TopShopsSection extends StatelessWidget {
                     Container(
                       height: 8,
                       decoration: BoxDecoration(
-                        color: BookBerPalette.bgElevated,
+                        color: context.bbColors.bgElevated,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: FractionallySizedBox(
@@ -439,7 +433,7 @@ class _TopShopsSection extends StatelessWidget {
                         widthFactor: percentage,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: BookBerPalette.primaryAccent,
+                            color: BBColors.brandPrimary,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),
@@ -464,7 +458,7 @@ class _TopServicesSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -475,7 +469,7 @@ class _TopServicesSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
+              color: context.bbColors.textPrimary,
             ),
           ),
           const SizedBox(height: 24),
@@ -493,17 +487,17 @@ class _TopServicesSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: BookBerPalette.textMuted,
+                        color: context.bbColors.textDisabled,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         services[index],
-                        style: GoogleFonts.dmSans(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: BookBerPalette.textPrimary,
+                          color: context.bbColors.textPrimary,
                         ),
                       ),
                     ),
@@ -512,7 +506,7 @@ class _TopServicesSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: BookBerPalette.primaryAccent,
+                        color: BBColors.brandPrimary,
                       ),
                     ),
                   ],

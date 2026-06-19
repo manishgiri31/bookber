@@ -133,6 +133,13 @@ export class PrismaAuthRepository {
     });
   }
 
+  async updatePassword(userId: string, newPasswordHash: string): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: newPasswordHash }
+    });
+  }
+
   async rotateRefreshToken(oldToken: string, newToken: StoreRefreshTokenInput): Promise<void> {
     await prisma.$transaction([
       prisma.refreshToken.update({

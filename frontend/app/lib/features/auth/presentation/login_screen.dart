@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/tokens.dart';
+import '../../../core/components/bb_button.dart';
+import '../../../core/components/bb_input.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/widgets/auth_layout.dart';
-import '../../../core/widgets/auth_input_field.dart';
-import '../../../core/widgets/role_selector.dart';
 import '../../../core/utils/snackbar.dart';
 import '../domain/auth_state.dart';
 
@@ -17,279 +17,390 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  UserRole _selectedRole = UserRole.customer;
+class _LoginScreenState extends ConsumerState<LoginScreen>
+    with SingleTickerProviderStateMixin {
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  UserRole _role = UserRole.customer;
   bool _obscurePassword = true;
-  final _formKey = GlobalKey<FormState>();
   String? _emailError;
   String? _passwordError;
+
+  late final AnimationController _enterCtrl;
+  late final Animation<double> _fadeAnim;
+  late final Animation<Offset> _slideAnim;
 
   @override
   void initState() {
     super.initState();
-    ref.listen<AuthState>(authControllerProvider, (previous, next) {
-      if (next is AuthError && mounted) {
-        BookerSnackbar.error(context, next.message);
-      }
-    });
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+
+    _enterCtrl = AnimationController(vsync: this, duration: BBMotion.xslow);
+    _fadeAnim = CurvedAnimation(parent: _enterCtrl, curve: BBMotion.enter);
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _enterCtrl, curve: BBMotion.smooth));
+    _enterCtrl.forward();
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _enterCtrl.dispose();
     super.dispose();
   }
 
   void _validateEmail() {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
-      setState(() => _emailError = 'Email is required');
-    } else if (!email.contains('@')) {
-      setState(() => _emailError = 'Please enter a valid email');
-    } else {
-      setState(() => _emailError = null);
-    }
+    final v = _emailCtrl.text.trim();
+    setState(() {
+      _emailError = v.isEmpty
+          ? 'Email is required'
+          : !v.contains('@')
+              ? 'Enter a valid email address'
+              : null;
+    });
   }
 
   void _validatePassword() {
-    final password = _passwordController.text;
-    if (password.isEmpty) {
-      setState(() => _passwordError = 'Password is required');
-    } else if (password.length < 6) {
-      setState(() => _passwordError = 'Password must be at least 6 characters');
-    } else {
-      setState(() => _passwordError = null);
-    }
+    final v = _passwordCtrl.text;
+    setState(() {
+      _passwordError = v.isEmpty
+          ? 'Password is required'
+          : v.length < 6
+              ? 'At least 6 characters required'
+              : null;
+    });
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter your email address and we\'ll send you a reset link.'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                hintText: 'you@example.com',
+                prefixIcon: Icon(Icons.mail_outline_rounded),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Password reset link sent! Check your inbox.'),
+                ),
+              );
+            },
+            child: const Text('Send Link'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showComingSoon(BuildContext context, String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$feature coming soon!')),
+    );
   }
 
   Future<void> _handleLogin() async {
     _validateEmail();
     _validatePassword();
-
     if (_emailError != null || _passwordError != null) return;
-
     await ref.read(authControllerProvider.notifier).login(
-          _emailController.text.trim(),
-          _passwordController.text,
-          role: _selectedRole,
+          _emailCtrl.text.trim(),
+          _passwordCtrl.text,
+          role: _role,
         );
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final isLoading = authState.isLoading;
 
-    return AuthLayout(
-      title: 'Welcome back',
-      subtitle: 'Sign in to your account',
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            // Role Selector
-            RoleSelector(
-              selectedRole: _selectedRole,
-              onChanged: (role) => setState(() => _selectedRole = role),
-            ),
-            const SizedBox(height: 24),
+    ref.listen<AuthState>(authControllerProvider, (_, next) {
+      if (next is AuthError && mounted) {
+        BookerSnackbar.error(context, next.message);
+      }
+    });
 
-            // Email Field
-            AuthInputField(
-              label: 'Email',
-              controller: _emailController,
-              prefixIcon: Icons.mail_outline,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              errorText: _emailError,
-              onChanged: (_) => setState(() => _emailError = null),
-            ),
-            const SizedBox(height: 16),
-
-            // Password Field
-            AuthInputField(
-              label: 'Password',
-              controller: _passwordController,
-              prefixIcon: Icons.lock_outline,
-              suffixIcon: _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-              onSuffixIconPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-              obscureText: _obscurePassword,
-              textInputAction: TextInputAction.done,
-              errorText: _passwordError,
-              onChanged: (_) => setState(() => _passwordError = null),
-              onSubmitted: (_) => _handleLogin(),
-            ),
-            const SizedBox(height: 8),
-
-            // Forgot Password
-            Align(
-              alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  // TODO: Implement forgot password
-                },
-                child: Text(
-                  'Forgot Password?',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: BookBerPalette.primaryAccent,
-                  ),
-                ),
+    return Scaffold(
+      backgroundColor: BBColors.bgCanvas,
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnim,
+          child: SlideTransition(
+            position: _slideAnim,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.px24,
+                vertical: BBSpacing.px16,
               ),
-            ),
-            const SizedBox(height: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ── Logo ───────────────────────────────────────
+                  const SizedBox(height: BBSpacing.px24),
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: BBColors.brandPrimary,
+                            borderRadius: BBRadius.md,
+                            boxShadow: BBElevation.brandGlow(
+                              BBColors.brandPrimary,
+                              intensity: 0.25,
+                            ),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'B',
+                              style: TextStyle(
+                                fontFamily: 'Satoshi',
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                color: BBColorPrimitives.neutral50,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: BBSpacing.px12),
+                        const Text('BookBer', style: BBTypography.displayS),
+                      ],
+                    ),
+                  ),
 
-            // Sign In Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: authState.isLoading
-                  ? const Center(
-                      child: SizedBox(
-                        width: 56,
-                        height: 56,
-                        child: CircularProgressIndicator(
-                          color: BookBerPalette.primaryAccent,
-                          strokeWidth: 3,
-                        ),
+                  const SizedBox(height: BBSpacing.px40),
+
+                  // ── Headline ─────────────────────────────────
+                  const Text('Welcome back', style: BBTypography.displayM),
+                  const SizedBox(height: BBSpacing.px6),
+                  const Text('Sign in to continue', style: BBTypography.bodyM),
+
+                  const SizedBox(height: BBSpacing.px32),
+
+                  // ── Role selector ────────────────────────────
+                  BBSegmentedControl<UserRole>(
+                    selected: _role,
+                    onChanged: (r) => setState(() => _role = r),
+                    options: const [
+                      BBSegmentOption(
+                        label: 'Customer',
+                        value: UserRole.customer,
+                        icon: Icons.person_outline,
                       ),
-                    )
-                  : ElevatedButton(
-                      onPressed: _handleLogin,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: BookBerPalette.primaryAccent,
-                        foregroundColor: BookBerPalette.bgPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        elevation: 0,
+                      BBSegmentOption(
+                        label: 'Barber',
+                        value: UserRole.barber,
+                        icon: Icons.content_cut,
                       ),
+                    ],
+                  ),
+
+                  const SizedBox(height: BBSpacing.px28),
+
+                  // ── Email ────────────────────────────────────
+                  BBTextField(
+                    label: 'Email',
+                    hint: 'you@example.com',
+                    controller: _emailCtrl,
+                    prefixIcon: Icons.mail_outline_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    errorText: _emailError,
+                    onChanged: (_) => setState(() => _emailError = null),
+                  ),
+
+                  const SizedBox(height: BBSpacing.px20),
+
+                  // ── Password ─────────────────────────────────
+                  BBTextField(
+                    label: 'Password',
+                    hint: '••••••••',
+                    controller: _passwordCtrl,
+                    prefixIcon: Icons.lock_outline_rounded,
+                    suffixIcon: _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    onSuffixTap: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    errorText: _passwordError,
+                    onChanged: (_) => setState(() => _passwordError = null),
+                    onSubmitted: (_) => _handleLogin(),
+                  ),
+
+                  const SizedBox(height: BBSpacing.px12),
+
+                  // ── Forgot password ──────────────────────────
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onTap: () => _showForgotPasswordDialog(context),
                       child: Text(
-                        'Sign In',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                        'Forgot password?',
+                        style: BBTypography.labelM.copyWith(
+                          color: BBColors.brandPrimary,
                         ),
                       ),
                     ),
-            ),
-            const SizedBox(height: 32),
+                  ),
 
-            // Social Auth Divider
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: const Color(0x0FFFFFFF),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Or continue with',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textSecondary,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 1,
-                    color: const Color(0x0FFFFFFF),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  const SizedBox(height: BBSpacing.px32),
 
-            // Social Auth Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // TODO: Implement Google auth
-                    },
-                    icon: const Icon(Icons.g_mobiledata, size: 20),
-                    label: Text(
-                      'Google',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: BookBerPalette.textPrimary,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: BookBerPalette.textPrimary,
-                      side: const BorderSide(color: Color(0x0FFFFFFF), width: 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                  // ── Sign in button ───────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: BBButton(
+                      label: 'Sign In',
+                      onPressed: isLoading ? null : _handleLogin,
+                      isLoading: isLoading,
+                      icon: Icons.arrow_forward_rounded,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      // TODO: Implement Apple auth
-                    },
-                    icon: const Icon(Icons.apple, size: 20),
-                    label: Text(
-                      'Apple',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: BookBerPalette.textPrimary,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: BookBerPalette.textPrimary,
-                      side: const BorderSide(color: Color(0x0FFFFFFF), width: 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
 
-            // Register Link
-            Center(
-              child: GestureDetector(
-                onTap: () => context.go('/register'),
-                child: Text.rich(
-                  TextSpan(
-                    text: "Don't have an account? ",
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                  const SizedBox(height: BBSpacing.px32),
+
+                  // ── Divider ──────────────────────────────────
+                  Row(
                     children: [
-                      TextSpan(
-                        text: 'Register',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: BookBerPalette.primaryAccent,
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: BBColors.borderSubtle,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: BBSpacing.px16,
+                        ),
+                        child: Text(
+                          'or',
+                          style: BBTypography.labelS,
+                        ),
+                      ),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          color: BBColors.borderSubtle,
                         ),
                       ),
                     ],
                   ),
-                ),
+
+                  const SizedBox(height: BBSpacing.px28),
+
+                  // ── Social auth ──────────────────────────────
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SocialButton(
+                          label: 'Google',
+                          icon: Icons.g_mobiledata_rounded,
+                          onTap: () => _showComingSoon(context, 'Google Sign-In'),
+                        ),
+                      ),
+                      const SizedBox(width: BBSpacing.px12),
+                      Expanded(
+                        child: _SocialButton(
+                          label: 'Apple',
+                          icon: Icons.apple,
+                          onTap: () => _showComingSoon(context, 'Apple Sign-In'),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: BBSpacing.px40),
+
+                  // ── Register link ────────────────────────────
+                  Center(
+                    child: GestureDetector(
+                      onTap: () => context.go('/register'),
+                      child: RichText(
+                        text: TextSpan(
+                          text: "Don't have an account? ",
+                          style: BBTypography.bodyM,
+                          children: [
+                            TextSpan(
+                              text: 'Create one',
+                              style: BBTypography.labelL.copyWith(
+                                color: BBColors.brandPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: BBSpacing.px24),
+                ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// SOCIAL BUTTON
+// ─────────────────────────────────────────────────────────────
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: BBTouchTarget.button,
+        decoration: BoxDecoration(
+          color: BBColors.bgSurface,
+          borderRadius: BBRadius.pill,
+          border: Border.all(color: BBColors.borderDefault, width: 1),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: BBIconSize.lg, color: BBColors.textPrimary),
+            const SizedBox(width: BBSpacing.px8),
+            Text(label, style: BBTypography.labelL),
           ],
         ),
       ),

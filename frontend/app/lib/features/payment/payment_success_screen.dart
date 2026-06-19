@@ -3,13 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/router/route_paths.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/network/api_result.dart';
-import '../../../core/providers/auth_provider.dart';
 import '../../../core/storage/app_storage.dart';
 import 'providers/payment_providers.dart';
 
@@ -61,15 +60,16 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final payment = ref.watch(paymentControllerProvider).valueOrNull;
     final paymentId = widget.paymentId ?? payment?.id;
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -83,63 +83,50 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen>
                         painter: _ReceiptCheckmarkPainter(
                           receiptProgress: _receiptAnimation.value,
                           checkProgress: _checkAnimation.value,
+                          color: BBColors.brandPrimary,
                         ),
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: BBSpacing.px32),
                 Text(
                   'Payment Successful',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
+                  style: BBTypography.displayS.copyWith(color: colors.textPrimary),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: BBSpacing.px8),
                 Text(
-                  payment?.transactionId.isNotEmpty == true ? payment!.transactionId : paymentId ?? '',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: BookBerPalette.primaryAccent,
+                  payment?.transactionId.isNotEmpty == true
+                      ? payment!.transactionId
+                      : paymentId ?? '',
+                  style: BBTypography.labelL.copyWith(
+                    color: BBColors.brandPrimary,
                     letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: BBSpacing.px48),
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: BBTouchTarget.button,
                   child: OutlinedButton.icon(
                     onPressed: paymentId == null || paymentId.isEmpty
                         ? null
                         : () => _downloadReceipt(context, paymentId),
                     icon: const Icon(Icons.download_outlined),
-                    label: Text(
-                      'Download Receipt',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    label: Text('Download Receipt', style: BBTypography.button),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: BookBerPalette.primaryAccent,
-                      side: const BorderSide(color: BookBerPalette.primaryAccent),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                      foregroundColor: BBColors.brandPrimary,
+                      side: const BorderSide(color: BBColors.brandPrimary),
+                      shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: BBSpacing.px16),
                 TextButton(
                   onPressed: _goToReview,
                   child: Text(
                     'Continue',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.labelM.copyWith(color: colors.textSecondary),
                   ),
                 ),
               ],
@@ -187,17 +174,19 @@ class _ReceiptCheckmarkPainter extends CustomPainter {
   _ReceiptCheckmarkPainter({
     required this.receiptProgress,
     required this.checkProgress,
+    required this.color,
   });
 
   final double receiptProgress;
   final double checkProgress;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 8;
     final receiptPaint = Paint()
-      ..color = BookBerPalette.primaryAccent
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
 
@@ -211,7 +200,7 @@ class _ReceiptCheckmarkPainter extends CustomPainter {
 
     if (checkProgress > 0) {
       final checkPaint = Paint()
-        ..color = BookBerPalette.primaryAccent
+        ..color = color
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round;

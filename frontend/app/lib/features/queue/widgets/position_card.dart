@@ -1,90 +1,98 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/tokens.dart';
+import '../../../core/components/bb_status.dart';
 import '../providers/queue_providers.dart';
 
+// ─────────────────────────────────────────────────────────────
+// POSITION CARD — embeddable live queue position widget
+// ─────────────────────────────────────────────────────────────
+
 class PositionCard extends ConsumerWidget {
-  const PositionCard({super.key});
+  const PositionCard({super.key, required this.shopId});
+
+  final String shopId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final queuePositionAsync = ref.watch(queuePositionProvider('shop_1'));
+    final queuePositionAsync = ref.watch(queuePositionProvider(shopId));
 
     return queuePositionAsync.when(
       data: (position) {
         if (position.status == QueueStatus.inService) {
-          return const _InServiceCard();
+          return _InServiceCard(position: position);
+        }
+        if (position.status == QueueStatus.completed) {
+          return const _CompletedCard();
         }
         return _WaitingCard(position: position);
       },
       loading: () => const _LoadingCard(),
-      error: (error, stack) => const _ErrorCard(),
+      error: (_, __) => const _ErrorCard(),
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// WAITING CARD
+// ─────────────────────────────────────────────────────────────
+
 class _WaitingCard extends StatelessWidget {
   const _WaitingCard({required this.position});
-
   final QueuePosition position;
 
   @override
   Widget build(BuildContext context) {
+    final isNext = position.status == QueueStatus.next;
+    final accent = isNext ? BBColors.warning : BBColors.brandPrimary;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(BBSpacing.px28),
       decoration: BoxDecoration(
-        color: const Color(0x0AFFFFFF),
-        borderRadius: BorderRadius.circular(24),
+        color: BBColors.bgSurface,
+        borderRadius: BBRadius.xxl,
         border: Border.all(
-          color: const Color(0x0FFFFFFF),
+          color: isNext
+              ? BBColors.warning.withValues(alpha: 0.4)
+              : BBColors.borderDefault,
           width: 1,
         ),
       ),
       child: Column(
         children: [
           Text(
-            'Your Position',
-            style: GoogleFonts.dmSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: BookBerPalette.textSecondary,
-            ),
+            isNext ? "You're next!" : 'Your Position',
+            style: BBTypography.labelL.copyWith(color: BBColors.textSecondary),
           ),
-          const SizedBox(height: 16),
-          AnimatedCounter(
-            value: position.position,
-            duration: const Duration(milliseconds: 300),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: BBSpacing.px16),
+          BBQueuePositionCounter(position: position.position, color: accent),
+          const SizedBox(height: BBSpacing.px6),
           Text(
             'in queue',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: BookBerPalette.textSecondary,
-            ),
+            style: BBTypography.bodyM.copyWith(color: BBColors.textDisabled),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: BBSpacing.px20),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: BBSpacing.px20,
+              vertical: BBSpacing.px10,
+            ),
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
-              borderRadius: BorderRadius.circular(999),
+              color: BBColors.bgElevated,
+              borderRadius: BBRadius.pill,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.access_time,
-                  size: 20,
-                  color: BookBerPalette.textSecondary,
+                  Icons.schedule_rounded,
+                  size: BBIconSize.sm,
+                  color: BBColors.textSecondary,
                 ),
-                const SizedBox(width: 8),
-                AnimatedWaitTime(
-                  minutes: position.estimatedWaitMinutes,
-                ),
+                const SizedBox(width: BBSpacing.px8),
+                _AnimatedWaitTime(minutes: position.estimatedWaitMinutes),
               ],
             ),
           ),
@@ -94,93 +102,81 @@ class _WaitingCard extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// IN SERVICE CARD
+// ─────────────────────────────────────────────────────────────
+
 class _InServiceCard extends StatelessWidget {
-  const _InServiceCard();
+  const _InServiceCard({required this.position});
+  final QueuePosition position;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(BBSpacing.px28),
       decoration: BoxDecoration(
-        color: BookBerPalette.warningAmber.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(24),
+        color: BBColors.bgSurface,
+        borderRadius: BBRadius.xxl,
         border: Border.all(
-          color: BookBerPalette.warningAmber,
-          width: 1,
+          color: BBColors.brandPrimary.withValues(alpha: 0.4),
+          width: 1.5,
         ),
+        boxShadow: BBElevation.brandGlow(BBColors.brandPrimary, intensity: 0.12),
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _PulsingBadge(),
-              const SizedBox(width: 12),
-              Text(
-                'In Service',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: BookBerPalette.warningAmber,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Haircut',
-            style: GoogleFonts.dmSans(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: BookBerPalette.textPrimary,
+          const BBStatusPill(type: BBStatusType.live, label: 'In Service', showPulse: true),
+          const SizedBox(height: BBSpacing.px20),
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: BBColors.brandPrimaryDim,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.content_cut_rounded,
+              size: BBIconSize.xxl,
+              color: BBColors.brandPrimary,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'with Rahul',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: BookBerPalette.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(BookBerPalette.warningAmber),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'In progress',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    '~5 min remaining',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          const SizedBox(height: BBSpacing.px16),
+          if (position.serviceName != null)
+            Text(position.serviceName!, style: BBTypography.headingL),
+          if (position.barberName != null) ...[
+            const SizedBox(height: BBSpacing.px4),
+            Text('with ${position.barberName}', style: BBTypography.bodyM),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CompletedCard extends StatelessWidget {
+  const _CompletedCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(BBSpacing.px28),
+      decoration: BoxDecoration(
+        color: BBColors.successDim,
+        borderRadius: BBRadius.xxl,
+        border: Border.all(
+          color: BBColors.success.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.check_circle_rounded, size: 56, color: BBColors.success),
+          SizedBox(height: BBSpacing.px12),
+          Text('All done!', style: BBTypography.headingL),
+          SizedBox(height: BBSpacing.px4),
+          Text('Hope you loved the experience', style: BBTypography.bodyM),
         ],
       ),
     );
@@ -196,15 +192,15 @@ class _LoadingCard extends StatelessWidget {
       width: double.infinity,
       height: 200,
       decoration: BoxDecoration(
-        color: const Color(0x0AFFFFFF),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0x0FFFFFFF),
-          width: 1,
-        ),
+        color: BBColors.bgSurface,
+        borderRadius: BBRadius.xxl,
+        border: Border.all(color: BBColors.borderDefault, width: 1),
       ),
       child: const Center(
-        child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+        child: CircularProgressIndicator(
+          color: BBColors.brandPrimary,
+          strokeWidth: 2,
+        ),
       ),
     );
   }
@@ -217,39 +213,22 @@ class _ErrorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(BBSpacing.px28),
       decoration: BoxDecoration(
-        color: const Color(0x0AFFFFFF),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: const Color(0x0FFFFFFF),
-          width: 1,
-        ),
+        color: BBColors.bgSurface,
+        borderRadius: BBRadius.xxl,
+        border: Border.all(color: BBColors.borderDefault, width: 1),
       ),
-      child: Column(
+      child: const Column(
         children: [
-          const Icon(
-            Icons.error_outline,
-            size: 48,
-            color: BookBerPalette.urgentRed,
-          ),
-          const SizedBox(height: 16),
+          Icon(Icons.error_outline_rounded, size: 40, color: BBColors.error),
+          SizedBox(height: BBSpacing.px12),
+          Text('Connection Error', style: BBTypography.headingM),
+          SizedBox(height: BBSpacing.px6),
           Text(
-            'Connection Error',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Unable to connect to queue',
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: BookBerPalette.textSecondary,
-            ),
+            'Unable to connect to the queue',
+            style: BBTypography.bodyM,
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -257,164 +236,43 @@ class _ErrorCard extends StatelessWidget {
   }
 }
 
-class AnimatedCounter extends StatefulWidget {
-  const AnimatedCounter({
-    required this.value,
-    this.duration = const Duration(milliseconds: 300),
-  });
+// ─────────────────────────────────────────────────────────────
+// ANIMATED WAIT TIME
+// ─────────────────────────────────────────────────────────────
 
-  final int value;
-  final Duration duration;
-
-  @override
-  State<AnimatedCounter> createState() => _AnimatedCounterState();
-}
-
-class _AnimatedCounterState extends State<AnimatedCounter> {
-  int _displayValue = 0;
-
-  @override
-  void didUpdateWidget(AnimatedCounter oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.value != widget.value) {
-      setState(() {
-        _displayValue = widget.value;
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _displayValue = widget.value;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: widget.duration,
-      transitionBuilder: (child, animation) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, -0.5),
-            end: Offset.zero,
-          ).animate(animation),
-          child: FadeTransition(
-            opacity: animation,
-            child: child,
-          ),
-        );
-      },
-      child: Text(
-        _displayValue.toString(),
-        key: ValueKey(_displayValue),
-        style: TextStyle(
-          fontSize: 64,
-          fontWeight: FontWeight.w700,
-          color: BookBerPalette.primaryAccent,
-        ),
-      ),
-    );
-  }
-}
-
-class AnimatedWaitTime extends StatefulWidget {
-  const AnimatedWaitTime({required this.minutes});
-
+class _AnimatedWaitTime extends StatefulWidget {
+  const _AnimatedWaitTime({required this.minutes});
   final int minutes;
 
   @override
-  State<AnimatedWaitTime> createState() => _AnimatedWaitTimeState();
+  State<_AnimatedWaitTime> createState() => _AnimatedWaitTimeState();
 }
 
-class _AnimatedWaitTimeState extends State<AnimatedWaitTime> {
-  int _displayMinutes = 0;
-
-  @override
-  void didUpdateWidget(AnimatedWaitTime oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.minutes != widget.minutes) {
-      setState(() {
-        _displayMinutes = widget.minutes;
-      });
-    }
-  }
+class _AnimatedWaitTimeState extends State<_AnimatedWaitTime> {
+  late int _display;
 
   @override
   void initState() {
     super.initState();
-    _displayMinutes = widget.minutes;
+    _display = widget.minutes;
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedWaitTime old) {
+    super.didUpdateWidget(old);
+    if (old.minutes != widget.minutes) setState(() => _display = widget.minutes);
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: child,
-        );
-      },
+      duration: BBMotion.normal,
+      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
       child: Text(
-        '~$_displayMinutes minutes',
-        key: ValueKey(_displayMinutes),
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          color: BookBerPalette.textPrimary,
-        ),
+        '~$_display min',
+        key: ValueKey(_display),
+        style: BBTypography.labelL,
       ),
-    );
-  }
-}
-
-class _PulsingBadge extends StatefulWidget {
-  @override
-  State<_PulsingBadge> createState() => _PulsingBadgeState();
-}
-
-class _PulsingBadgeState extends State<_PulsingBadge>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _animation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: _animation.value,
-          child: Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: BookBerPalette.warningAmber,
-              shape: BoxShape.circle,
-            ),
-          ),
-        );
-      },
     );
   }
 }

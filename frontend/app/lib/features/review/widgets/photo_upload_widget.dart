@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../payment/providers/payment_providers.dart';
 
 class PhotoUploadWidget extends ConsumerWidget {
@@ -10,6 +10,7 @@ class PhotoUploadWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final formState = ref.watch(reviewFormProvider);
     final photos = formState.photos;
 
@@ -18,16 +19,11 @@ class PhotoUploadWidget extends ConsumerWidget {
       children: [
         Text(
           'Add photos (optional)',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.labelL.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: BBSpacing.px12),
         Row(
           children: [
-            // Add photo button
             if (photos.length < 3)
               GestureDetector(
                 onTap: () => _pickImage(ref),
@@ -35,83 +31,65 @@ class PhotoUploadWidget extends ConsumerWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: BookBerPalette.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0x0FFFFFFF),
-                      width: 1,
-                    ),
+                    color: colors.bgSurface,
+                    borderRadius: BBRadius.md,
+                    border: Border.all(color: colors.borderSubtle),
                   ),
-                  child: const Icon(
-                    Icons.add,
-                    size: 32,
-                    color: BookBerPalette.textSecondary,
-                  ),
+                  child: Icon(Icons.add, size: 32, color: colors.textSecondary),
                 ),
               ),
-            // Photo thumbnails
             ...photos.map((photo) {
               return Padding(
-                padding: const EdgeInsets.only(left: 12),
+                padding: const EdgeInsets.only(left: BBSpacing.px12),
                 child: Stack(
                   children: [
                     Container(
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: BookBerPalette.bgElevated,
-                        borderRadius: BorderRadius.circular(12),
+                        color: colors.bgElevated,
+                        borderRadius: BBRadius.md,
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BBRadius.md,
                         child: Image.network(
                           photo,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: BookBerPalette.bgElevated,
-                            );
+                            return Container(color: colors.bgElevated);
                           },
                         ),
                       ),
                     ),
-                    // Remove button
                     Positioned(
                       top: 4,
                       right: 4,
                       child: GestureDetector(
-                        onTap: () => ref.read(reviewFormProvider.notifier).removePhoto(photo),
+                        onTap: () =>
+                            ref.read(reviewFormProvider.notifier).removePhoto(photo),
                         child: Container(
                           width: 24,
                           height: 24,
-                          decoration: BoxDecoration(
-                            color: BookBerPalette.urgentRed,
+                          decoration: const BoxDecoration(
+                            color: BBColors.error,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
-                          ),
+                          child: const Icon(Icons.close, size: 16, color: Colors.white),
                         ),
                       ),
                     ),
                   ],
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
-        if (photos.length > 0)
+        if (photos.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: BBSpacing.px8),
             child: Text(
               '${photos.length}/3 photos',
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: BookBerPalette.textSecondary,
-              ),
+              style: BBTypography.caption.copyWith(color: colors.textSecondary),
             ),
           ),
       ],

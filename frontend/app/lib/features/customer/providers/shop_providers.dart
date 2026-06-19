@@ -3,179 +3,131 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../../core/models/bookber_models.dart';
 import '../../../core/network/api_result.dart';
-import '../../../core/network/dio_client.dart';
 import '../../maps/services/location_service.dart';
+import '../../shops/data/shop_repository.dart';
+import '../../shops/domain/shop_models.dart';
 
-// Location provider with graceful fallback to default city
+// ── Location ───────────────────────────────────────────────────
+
 final locationProvider = FutureProvider<Position?>((ref) async {
   try {
-    final locationService = LocationService();
-    final position = await locationService.getCurrentLocation();
-    return position;
+    return await LocationService().getCurrentLocation();
   } catch (_) {
-    // If location fails, return null (fallback to city-based search)
     return null;
   }
 });
 
-// Nearby shops provider with location-based search or city fallback
-final nearbyShopsProvider = FutureProvider.family<List<Shop>, String>(
+// ── Shops list ─────────────────────────────────────────────────
+
+final nearbyShopsProvider = FutureProvider.family<List<ShopSummary>, String>(
   (ref, cityOrDefault) async {
-    final dio = ref.read(dioClientProvider);
-    
-    try {
-      // Try to get current location
-      final locationAsync = await ref.watch(locationProvider.future);
-      
-      String url;
-      if (locationAsync != null) {
-        // Location-based search
-        url = '/api/shops?lat=${locationAsync.latitude}&lng=${locationAsync.longitude}&radius=10&limit=20';
-      } else {
-        // Fallback to city-based search
-        url = '/api/shops?city=Ludhiana&limit=20';
-      }
-      
-      final response = await dio.get(url);
-      
-      if (response is List) {
-        return response
-            .map((json) => Shop.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      if (response is Map<String, dynamic> && response['data'] is List) {
-        return (response['data'] as List)
-            .map((json) => Shop.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      return [];
-    } catch (_) {
-      return [];
-    }
+    final repo = ref.read(shopRepositoryProvider);
+    final locationAsync = await ref.watch(locationProvider.future);
+
+    final result = await repo.searchShops(
+      city: locationAsync == null ? cityOrDefault : null,
+      latitude: locationAsync?.latitude,
+      longitude: locationAsync?.longitude,
+      radiusKm: locationAsync != null ? 10 : null,
+      isActive: true,
+    );
+
+    if (result is ApiSuccess<ShopPage>) return result.data.data;
+    return const [];
   },
 );
 
-// Shop detail provider
-final shopDetailProvider = FutureProvider.family<Shop?, String>(
+// ── Shop detail ────────────────────────────────────────────────
+
+final shopDetailProvider = FutureProvider.family<ShopDetail?, String>(
   (ref, shopId) async {
     if (shopId.isEmpty) return null;
-    
-    final dio = ref.read(dioClientProvider);
-    
-    try {
-      final response = await dio.get('/api/shops/$shopId');
-      
-      if (response is Map<String, dynamic>) {
-        return Shop.fromJson(response);
-      }
-      
-      if (response is Map<String, dynamic> && response['data'] is Map<String, dynamic>) {
-        return Shop.fromJson(response['data'] as Map<String, dynamic>);
-      }
-      
-      return null;
-    } catch (_) {
-      return null;
-    }
+    final result = await ref.read(shopRepositoryProvider).getShop(shopId);
+    if (result is ApiSuccess<ShopDetail>) return result.data;
+    return null;
   },
 );
 
-// Shop services provider
+// ── Services ───────────────────────────────────────────────────
+
 final shopServicesProvider = FutureProvider.family<List<ServiceItem>, String>(
   (ref, shopId) async {
-    if (shopId.isEmpty) return [];
-    
-    final dio = ref.read(dioClientProvider);
-    
-    try {
-      final response = await dio.get('/api/shops/$shopId/services');
-      
-      if (response is List) {
-        return response
-            .map((json) => ServiceItem.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      if (response is Map<String, dynamic> && response['data'] is List) {
-        return (response['data'] as List)
-            .map((json) => ServiceItem.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      return [];
-    } catch (_) {
-      return [];
+    if (shopId.isEmpty) return const [];
+    final result = await ref.read(shopRepositoryProvider).getServices(shopId);
+    if (result is ApiSuccess<List<ShopService>>) {
+      return result.data.map(_toServiceItem).toList();
     }
+    return const [];
   },
 );
 
-// Shop barbers provider
+ServiceItem _toServiceItem(ShopService s) => ServiceItem(
+      id: s.id,
+      name: s.name,
+      category: '',
+      durationMin: s.durationMinutes,
+      price: s.price,
+    );
+
+// ── Barbers ────────────────────────────────────────────────────
+
 final shopBarbersProvider = FutureProvider.family<List<Barber>, String>(
   (ref, shopId) async {
-    if (shopId.isEmpty) return [];
-    
-    final dio = ref.read(dioClientProvider);
-    
-    try {
-      final response = await dio.get('/api/shops/$shopId/barbers');
-      
-      if (response is List) {
-        return response
-            .map((json) => Barber.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      if (response is Map<String, dynamic> && response['data'] is List) {
-        return (response['data'] as List)
-            .map((json) => Barber.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      return [];
-    } catch (_) {
-      return [];
-    }
+    // GET /shops/:shopId/barbers not yet in ShopRepository — returns empty until extended.
+    return const [];
   },
 );
 
-// Search query state provider
+// ── Search ─────────────────────────────────────────────────────
+
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
-// Shop filters state provider with notifier
+final searchShopsProvider = FutureProvider.family<List<ShopSummary>, String>(
+  (ref, query) async {
+    if (query.isEmpty) {
+      return ref.watch(nearbyShopsProvider('Ludhiana')).when(
+            data: (shops) => shops,
+            loading: () => const [],
+            error: (_, __) => const [],
+          );
+    }
+
+    final repo = ref.read(shopRepositoryProvider);
+    final locationAsync = await ref.watch(locationProvider.future);
+
+    final result = await repo.searchShops(
+      query: query,
+      city: locationAsync == null ? 'Ludhiana' : null,
+      latitude: locationAsync?.latitude,
+      longitude: locationAsync?.longitude,
+    );
+
+    if (result is ApiSuccess<ShopPage>) return result.data.data;
+    return const [];
+  },
+);
+
+// ── Filters ────────────────────────────────────────────────────
+
 class ShopFiltersNotifier extends StateNotifier<ShopFilters> {
   ShopFiltersNotifier() : super(const ShopFilters());
 
-  void updateMaxDistance(double value) {
-    state = state.copyWith(maxDistance: value);
-  }
-
-  void updateMinRating(int value) {
-    state = state.copyWith(minRating: value);
-  }
-
-  void toggleOpenNow() {
-    state = state.copyWith(openNow: !state.openNow);
-  }
-
-  void updateSortBy(String value) {
-    state = state.copyWith(sortBy: value);
-  }
+  void updateMaxDistance(double v) => state = state.copyWith(maxDistance: v);
+  void updateMinRating(int v) => state = state.copyWith(minRating: v);
+  void toggleOpenNow() => state = state.copyWith(openNow: !state.openNow);
+  void updateSortBy(String v) => state = state.copyWith(sortBy: v);
 
   void toggleService(String service) {
-    final newServices = Set<String>.from(state.services);
-    if (newServices.contains(service)) {
-      newServices.remove(service);
+    final next = Set<String>.from(state.services);
+    if (next.contains(service)) {
+      next.remove(service);
     } else {
-      newServices.add(service);
+      next.add(service);
     }
-    state = state.copyWith(services: newServices);
+    state = state.copyWith(services: next);
   }
 
-  void reset() {
-    state = const ShopFilters();
-  }
+  void reset() => state = const ShopFilters();
 }
 
 final shopFiltersProvider =
@@ -183,67 +135,14 @@ final shopFiltersProvider =
   (ref) => ShopFiltersNotifier(),
 );
 
-// Search shops provider with search query and filters
-final searchShopsProvider = FutureProvider.family<List<Shop>, String>(
-  (ref, query) async {
-    if (query.isEmpty) {
-      // If query is empty, return nearby shops instead
-      return ref.watch(nearbyShopsProvider('Ludhiana')).when(
-        data: (shops) => shops,
-        loading: () => [],
-        error: (_, __) => [],
-      );
-    }
-    
-    final dio = ref.read(dioClientProvider);
-    final filters = ref.watch(shopFiltersProvider);
-    final locationAsync = await ref.watch(locationProvider.future);
-    
-    try {
-      final queryParams = <String, dynamic>{
-        'q': query,
-        ...filters.toQueryParams(),
-      };
-      
-      if (locationAsync != null) {
-        queryParams['lat'] = locationAsync.latitude;
-        queryParams['lng'] = locationAsync.longitude;
-      } else {
-        queryParams['city'] = 'Ludhiana';
-      }
-      
-      final response = await dio.get('/api/shops/search', queryParams: queryParams);
-      
-      if (response is List) {
-        return response
-            .map((json) => Shop.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      if (response is Map<String, dynamic> && response['data'] is List) {
-        return (response['data'] as List)
-            .map((json) => Shop.fromJson(json is Map<String, dynamic> ? json : {}))
-            .toList();
-      }
-      
-      return [];
-    } catch (_) {
-      return [];
-    }
-  },
-);
+// ── Live queue stub ────────────────────────────────────────────
 
-// Live queue provider (stream for real-time updates via Socket.io)
 final liveQueueProvider = StreamProvider.family<Map<String, dynamic>, String>(
   (ref, shopId) async* {
-    // TODO: Replace with socket.io connection once socket service is integrated
+    // Replaced by real socket events in socket_providers.dart.
     while (true) {
-      await Future.delayed(const Duration(seconds: 5));
-      yield {
-        'waitTime': 8,
-        'peopleAhead': 4,
-        'availableChairs': 3,
-      };
+      await Future<void>.delayed(const Duration(seconds: 10));
+      yield const {'waitTime': 0, 'peopleAhead': 0, 'availableChairs': 0};
     }
   },
 );

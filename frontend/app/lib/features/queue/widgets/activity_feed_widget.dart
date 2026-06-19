@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/queue_providers.dart';
 
 class ActivityFeedWidget extends ConsumerStatefulWidget {
@@ -14,6 +14,7 @@ class ActivityFeedWidget extends ConsumerStatefulWidget {
 class _ActivityFeedWidgetState extends ConsumerState<ActivityFeedWidget> {
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final activities = ref.watch(queueActivityProvider);
 
     if (activities.isEmpty) {
@@ -25,13 +26,9 @@ class _ActivityFeedWidgetState extends ConsumerState<ActivityFeedWidget> {
       children: [
         Text(
           'Queue Updates',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.headingS.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: BBSpacing.px16),
         ...activities.take(3).map((activity) {
           return _ActivityTile(
             key: ValueKey(activity.id),
@@ -43,7 +40,7 @@ class _ActivityFeedWidgetState extends ConsumerState<ActivityFeedWidget> {
               ];
             },
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -88,7 +85,6 @@ class _ActivityTileState extends State<_ActivityTile>
 
     _controller.forward();
 
-    // Auto-dismiss after 5 seconds
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted) {
         widget.onDismiss();
@@ -104,6 +100,8 @@ class _ActivityTileState extends State<_ActivityTile>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Dismissible(
       key: ValueKey(widget.activity.id),
       direction: DismissDirection.endToStart,
@@ -113,38 +111,31 @@ class _ActivityTileState extends State<_ActivityTile>
         builder: (context, child) {
           return SlideTransition(
             position: _slideAnimation,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: child,
-            ),
+            child: FadeTransition(opacity: _fadeAnimation, child: child),
           );
         },
         child: Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+          margin: const EdgeInsets.only(bottom: BBSpacing.px12),
+          padding: const EdgeInsets.all(BBSpacing.px16),
           decoration: BoxDecoration(
             color: _getActivityColor(widget.activity.type).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _getActivityColor(widget.activity.type),
-              width: 1,
-            ),
+            borderRadius: BBRadius.md,
+            border: Border.all(color: _getActivityColor(widget.activity.type)),
           ),
           child: Row(
             children: [
               Icon(
                 _getActivityIcon(widget.activity.type),
-                size: 20,
+                size: BBIconSize.sm,
                 color: _getActivityColor(widget.activity.type),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: BBSpacing.px12),
               Expanded(
                 child: Text(
                   widget.activity.message,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
+                  style: BBTypography.bodyS.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: BookBerPalette.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -155,27 +146,15 @@ class _ActivityTileState extends State<_ActivityTile>
     );
   }
 
-  Color _getActivityColor(ActivityType type) {
-    switch (type) {
-      case ActivityType.success:
-        return BookBerPalette.queueSafe;
-      case ActivityType.warning:
-        return BookBerPalette.warningAmber;
-      case ActivityType.info:
-      default:
-        return BookBerPalette.primaryAccent;
-    }
-  }
+  Color _getActivityColor(ActivityType type) => switch (type) {
+        ActivityType.success => BBColors.success,
+        ActivityType.warning => BBColors.warning,
+        _ => BBColors.brandPrimary,
+      };
 
-  IconData _getActivityIcon(ActivityType type) {
-    switch (type) {
-      case ActivityType.success:
-        return Icons.check_circle;
-      case ActivityType.warning:
-        return Icons.warning;
-      case ActivityType.info:
-      default:
-        return Icons.info;
-    }
-  }
+  IconData _getActivityIcon(ActivityType type) => switch (type) {
+        ActivityType.success => Icons.check_circle,
+        ActivityType.warning => Icons.warning,
+        _ => Icons.info,
+      };
 }

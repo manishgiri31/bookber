@@ -119,6 +119,7 @@ class Shop {
 
   String get distanceLabel => '${distanceKm.toStringAsFixed(1)} km';
   String get waitTimeLabel => '~$waitTimeMinutes min wait';
+  int? get waitMinutes => waitTimeMinutes > 0 ? waitTimeMinutes : null;
 
   factory Shop.fromJson(Map<String, dynamic> json) {
     return Shop(
@@ -195,7 +196,6 @@ class ShopFilters {
   }
 }
 
-typedef ShopService = ServiceItem;
 typedef Service = ServiceItem;
 
 class TimeSlot {
@@ -369,7 +369,7 @@ class BookingFormState {
   const BookingFormState({
     this.shopId = '',
     this.shopName = '',
-    this.selectedServices = const <ShopService>[],
+    this.selectedServices = const <ServiceItem>[],
     this.selectedBarberId,
     this.anyBarber = false,
     this.selectedDate,
@@ -382,7 +382,7 @@ class BookingFormState {
 
   final String shopId;
   final String shopName;
-  final List<ShopService> selectedServices;
+  final List<ServiceItem> selectedServices;
   final String? selectedBarberId;
   final bool anyBarber;
   final DateTime? selectedDate;
@@ -395,7 +395,7 @@ class BookingFormState {
   BookingFormState copyWith({
     String? shopId,
     String? shopName,
-    List<ShopService>? selectedServices,
+    List<ServiceItem>? selectedServices,
     String? selectedBarberId,
     bool? anyBarber,
     DateTime? selectedDate,
@@ -755,12 +755,28 @@ class UserProfile {
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
+      name: json['fullName']?.toString() ?? json['name']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
-      phone: json['phone']?.toString() ?? '',
-      role: json['role']?.toString() ?? 'customer',
-      profilePhoto: json['profilePhoto']?.toString() ?? json['profile_photo']?.toString(),
+      phone: json['phoneNumber']?.toString() ?? json['phone']?.toString() ?? '',
+      role: _normalizeRole(json['role']?.toString()),
+      profilePhoto: json['profileImage']?.toString() ??
+          json['profilePhoto']?.toString() ??
+          json['profile_photo']?.toString(),
     );
+  }
+
+  static String _normalizeRole(String? raw) {
+    switch ((raw ?? '').toUpperCase()) {
+      case 'CLIENT':
+        return 'customer';
+      case 'BARBER':
+        return 'barber';
+      case 'ADMIN':
+        return 'admin';
+      default:
+        final lower = (raw ?? '').toLowerCase();
+        return lower.isEmpty ? 'customer' : lower;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -792,12 +808,23 @@ class RegisterRequest {
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
+      'fullName': name,
       'email': email,
-      'phone': phone,
+      if (phone.isNotEmpty) 'phoneNumber': phone,
       'password': password,
-      'role': role,
+      'role': _toBackendRole(role),
     };
+  }
+
+  static String _toBackendRole(String localRole) {
+    switch (localRole.toLowerCase()) {
+      case 'barber':
+        return 'BARBER';
+      case 'admin':
+        return 'ADMIN';
+      default:
+        return 'CLIENT';
+    }
   }
 }
 
@@ -884,3 +911,4 @@ class ReviewFormState {
     };
   }
 }
+

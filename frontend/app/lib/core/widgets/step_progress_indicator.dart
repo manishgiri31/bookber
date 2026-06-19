@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../app/theme/design_system.dart';
+
+import '../design/theme.dart';
+import '../design/tokens.dart';
 
 class StepProgressIndicator extends StatelessWidget {
   const StepProgressIndicator({
@@ -15,40 +16,24 @@ class StepProgressIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = (_currentStep) / _totalSteps;
+    final colors = context.bbColors;
+    final progress = _currentStep / _totalSteps;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Step $_currentStep of $_totalSteps',
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: BookBerPalette.textSecondary,
-              ),
-            ),
-          ],
+        Text(
+          'Step $_currentStep of $_totalSteps',
+          style: BBTypography.labelS.copyWith(color: colors.textSecondary),
         ),
-        const SizedBox(height: 12),
-        Container(
-          height: 4,
-          decoration: BoxDecoration(
-            color: BookBerPalette.bgElevated,
-            borderRadius: BorderRadius.circular(2),
-          ),
-          child: FractionallySizedBox(
-            widthFactor: progress,
-            alignment: Alignment.centerLeft,
-            child: Container(
-              decoration: BoxDecoration(
-                color: BookBerPalette.primaryAccent,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+        const SizedBox(height: BBSpacing.px8),
+        ClipRRect(
+          borderRadius: BBRadius.pill,
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 4,
+            backgroundColor: colors.bgElevated,
+            color: BBColors.brandPrimary,
           ),
         ),
       ],

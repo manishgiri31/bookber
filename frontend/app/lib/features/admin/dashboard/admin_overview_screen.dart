@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/admin_providers.dart';
-import '../widgets/admin_bottom_nav.dart';
 
 class AdminOverviewScreen extends ConsumerStatefulWidget {
   const AdminOverviewScreen({super.key});
@@ -23,7 +23,7 @@ class _AdminOverviewScreenState extends ConsumerState<AdminOverviewScreen> {
     final adminAccent = const Color(0xFF8B5CF6);
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: context.bbColors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -38,7 +38,7 @@ class _AdminOverviewScreenState extends ConsumerState<AdminOverviewScreen> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: BookBerPalette.textPrimary,
+                      color: context.bbColors.textPrimary,
                     ),
                   ),
                   Container(
@@ -49,7 +49,7 @@ class _AdminOverviewScreenState extends ConsumerState<AdminOverviewScreen> {
                     ),
                     child: Text(
                       'Admin',
-                      style: GoogleFonts.dmSans(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: adminAccent,
@@ -85,7 +85,7 @@ class _AdminOverviewScreenState extends ConsumerState<AdminOverviewScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
+                        color: context.bbColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -102,7 +102,7 @@ class _AdminOverviewScreenState extends ConsumerState<AdminOverviewScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
+                        color: context.bbColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -118,12 +118,6 @@ class _AdminOverviewScreenState extends ConsumerState<AdminOverviewScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AdminBottomNav(
-        currentIndex: 0,
-        onTap: (index) {
-          // TODO: Navigate to respective screens
-        },
       ),
     );
   }
@@ -162,17 +156,17 @@ class _PlatformStatsGrid extends StatelessWidget {
         _StatCard(
           label: 'Active Shops',
           value: stats.activeShops.toString(),
-          color: BookBerPalette.primaryAccent,
+          color: BBColors.brandPrimary,
         ),
         _StatCard(
           label: 'Bookings Today',
           value: stats.bookingsToday.toString(),
-          color: BookBerPalette.primaryAccent,
+          color: BBColors.brandPrimary,
         ),
         _StatCard(
           label: 'Revenue Today',
           value: '₹${stats.revenueToday}',
-          color: BookBerPalette.queueSafe,
+          color: BBColors.success,
         ),
         _StatCard(
           label: 'Platform Commission',
@@ -182,7 +176,7 @@ class _PlatformStatsGrid extends StatelessWidget {
         _StatCard(
           label: 'Active Queue Entries',
           value: stats.activeQueueEntries.toString(),
-          color: BookBerPalette.primaryAccent,
+          color: BBColors.brandPrimary,
         ),
       ],
     );
@@ -209,7 +203,7 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -221,10 +215,10 @@ class _StatCard extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: GoogleFonts.dmSans(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: BookBerPalette.textSecondary,
+                  color: context.bbColors.textSecondary,
                 ),
               ),
               if (onToggle != null)
@@ -233,7 +227,7 @@ class _StatCard extends StatelessWidget {
                   child: Icon(
                     Icons.swap_horiz,
                     size: 16,
-                    color: BookBerPalette.textMuted,
+                    color: context.bbColors.textDisabled,
                   ),
                 ),
             ],
@@ -251,10 +245,10 @@ class _StatCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               subtitle!,
-              style: GoogleFonts.dmSans(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w400,
-                color: BookBerPalette.textMuted,
+                color: context.bbColors.textDisabled,
               ),
             ),
           ],
@@ -287,7 +281,7 @@ class _StatCardSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -298,7 +292,7 @@ class _StatCardSkeleton extends StatelessWidget {
             width: 80,
             height: 12,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
+              color: context.bbColors.bgElevated,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -307,7 +301,7 @@ class _StatCardSkeleton extends StatelessWidget {
             width: 40,
             height: 24,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
+              color: context.bbColors.bgElevated,
               borderRadius: BorderRadius.circular(4),
             ),
           ),
@@ -343,7 +337,7 @@ class _ActivityLoading extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           height: 60,
           decoration: BoxDecoration(
-            color: BookBerPalette.bgSurface,
+            color: context.bbColors.bgSurface,
             borderRadius: BorderRadius.circular(12),
           ),
         );
@@ -362,16 +356,16 @@ class _ActivityTile extends StatelessWidget {
     Color borderColor;
     switch (activity.type) {
       case ActivityType.success:
-        borderColor = BookBerPalette.queueSafe;
+        borderColor = BBColors.success;
         break;
       case ActivityType.warning:
-        borderColor = BookBerPalette.warningAmber;
+        borderColor = BBColors.warning;
         break;
       case ActivityType.alert:
-        borderColor = BookBerPalette.urgentRed;
+        borderColor = BBColors.error;
         break;
       case ActivityType.info:
-        borderColor = BookBerPalette.primaryAccent;
+        borderColor = BBColors.brandPrimary;
         break;
     }
 
@@ -379,7 +373,7 @@ class _ActivityTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border(
           left: BorderSide(
@@ -396,27 +390,27 @@ class _ActivityTile extends StatelessWidget {
               children: [
                 Text(
                   activity.message,
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: BookBerPalette.textPrimary,
+                    color: context.bbColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _formatTime(activity.timestamp),
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: BookBerPalette.textSecondary,
+                    color: context.bbColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.chevron_right,
-            color: BookBerPalette.textMuted,
+            color: context.bbColors.textDisabled,
           ),
         ],
       ),
@@ -465,10 +459,10 @@ class _AlertsLoading extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           height: 80,
           decoration: BoxDecoration(
-            color: BookBerPalette.bgSurface,
+            color: context.bbColors.bgSurface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: BookBerPalette.urgentRed,
+              color: BBColors.error,
               width: 1,
             ),
           ),
@@ -489,10 +483,10 @@ class _AlertCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: BookBerPalette.urgentRed,
+          color: BBColors.error,
           width: 1,
         ),
       ),
@@ -502,12 +496,12 @@ class _AlertCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: BookBerPalette.urgentRed.withValues(alpha: 0.12),
+              color: BBColors.error.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.warning_amber_rounded,
-              color: BookBerPalette.urgentRed,
+              color: BBColors.error,
               size: 20,
             ),
           ),
@@ -521,24 +515,24 @@ class _AlertCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
+                    color: context.bbColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   alert.message,
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: BookBerPalette.textSecondary,
+                    color: context.bbColors.textSecondary,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(
+          Icon(
             Icons.chevron_right,
-            color: BookBerPalette.textMuted,
+            color: context.bbColors.textDisabled,
           ),
         ],
       ),

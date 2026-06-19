@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/queue_providers.dart';
 
 class QueueProgressWidget extends ConsumerWidget {
@@ -47,26 +47,21 @@ class _QueueProgressRow extends StatelessWidget {
           final isAhead = index + 1 < userPosition;
           final isBehind = index + 1 > userPosition;
 
-          return _PersonIcon(
-            isAhead: isAhead,
-            isUser: isUser,
-            isBehind: isBehind,
-          );
+          return _PersonIcon(isAhead: isAhead, isUser: isUser, isBehind: isBehind);
         }),
         if (showMore) ...[
-          const SizedBox(width: 8),
+          const SizedBox(width: BBSpacing.px8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.px12, vertical: BBSpacing.px8),
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
-              borderRadius: BorderRadius.circular(999),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BBRadius.pill,
             ),
             child: Text(
               '+${totalInQueue - 8} more',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: BookBerPalette.textSecondary,
+              style: BBTypography.caption.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
           ),
@@ -108,14 +103,15 @@ class _PersonIconState extends State<_PersonIcon>
       _glowAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
         CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
       );
+    } else {
+      _controller = AnimationController(vsync: this);
+      _glowAnimation = const AlwaysStoppedAnimation(1.0);
     }
   }
 
   @override
   void dispose() {
-    if (widget.isUser) {
-      _controller.dispose();
-    }
+    _controller.dispose();
     super.dispose();
   }
 
@@ -123,49 +119,48 @@ class _PersonIconState extends State<_PersonIcon>
   Widget build(BuildContext context) {
     final size = widget.isUser ? 32.0 : 24.0;
     final color = widget.isAhead
-        ? BookBerPalette.primaryAccent
+        ? BBColors.brandPrimary
         : widget.isUser
-            ? BookBerPalette.textPrimary
-            : BookBerPalette.bgElevated;
-
-    final icon = AnimatedBuilder(
-      animation: widget.isUser ? _glowAnimation : const AlwaysStoppedAnimation(1.0),
-      builder: (context, child) {
-        return Transform.scale(
-          scale: widget.isUser ? _glowAnimation.value : 1.0,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(size / 2),
-              boxShadow: widget.isUser
-                  ? [
-                      BoxShadow(
-                        color: BookBerPalette.primaryAccent.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        spreadRadius: 4,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Icon(
-              Icons.person,
-              size: size * 0.6,
-              color: widget.isUser
-                  ? BookBerPalette.bgPrimary
-                  : widget.isAhead
-                      ? BookBerPalette.bgPrimary
-                      : BookBerPalette.textMuted,
-            ),
-          ),
-        );
-      },
-    );
+            ? BBColors.brandPrimary
+            : Theme.of(context).colorScheme.surfaceContainerHighest;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: icon,
+      padding: const EdgeInsets.only(right: BBSpacing.px8),
+      child: AnimatedBuilder(
+        animation: _glowAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: widget.isUser ? _glowAnimation.value : 1.0,
+            child: Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(size / 2),
+                boxShadow: widget.isUser
+                    ? [
+                        BoxShadow(
+                          color: BBColors.brandPrimary.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          spreadRadius: 4,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Icon(
+                Icons.person,
+                size: size * 0.6,
+                color: (widget.isUser || widget.isAhead)
+                    ? Colors.white
+                    : Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.4),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -178,12 +173,12 @@ class _LoadingProgress extends StatelessWidget {
     return Row(
       children: List.generate(8, (index) {
         return Padding(
-          padding: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.only(right: BBSpacing.px8),
           child: Container(
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
           ),

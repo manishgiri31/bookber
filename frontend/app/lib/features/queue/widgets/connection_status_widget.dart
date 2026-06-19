@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/queue_providers.dart';
 
 class ConnectionStatusWidget extends ConsumerWidget {
@@ -11,31 +10,28 @@ class ConnectionStatusWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(connectionStatusProvider);
 
+    final color = switch (status) {
+      ConnectionStatus.connected => BBColors.success,
+      ConnectionStatus.reconnecting => BBColors.warning,
+      _ => BBColors.error,
+    };
+
+    final label = switch (status) {
+      ConnectionStatus.connected => 'Live',
+      ConnectionStatus.reconnecting => 'Reconnecting...',
+      _ => 'Offline',
+    };
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _PulsingDot(
-          color: status == ConnectionStatus.connected
-              ? BookBerPalette.queueSafe
-              : status == ConnectionStatus.reconnecting
-                  ? BookBerPalette.warningAmber
-                  : BookBerPalette.urgentRed,
-        ),
-        const SizedBox(width: 8),
+        _PulsingDot(color: color),
+        const SizedBox(width: BBSpacing.px8),
         Text(
-          status == ConnectionStatus.connected
-              ? 'Live'
-              : status == ConnectionStatus.reconnecting
-                  ? 'Reconnecting...'
-                  : 'Offline',
-          style: GoogleFonts.dmSans(
-            fontSize: 13,
+          label,
+          style: BBTypography.labelS.copyWith(
             fontWeight: FontWeight.w500,
-            color: status == ConnectionStatus.connected
-                ? BookBerPalette.queueSafe
-                : status == ConnectionStatus.reconnecting
-                    ? BookBerPalette.warningAmber
-                    : BookBerPalette.urgentRed,
+            color: color,
           ),
         ),
       ],
@@ -66,10 +62,7 @@ class _PulsingDotState extends State<_PulsingDot>
     )..repeat();
 
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.4).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -89,10 +82,7 @@ class _PulsingDotState extends State<_PulsingDot>
           child: Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: widget.color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
           ),
         );
       },

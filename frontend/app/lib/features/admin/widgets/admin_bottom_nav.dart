@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
 
 class AdminBottomNav extends ConsumerWidget {
   const AdminBottomNav({
@@ -18,7 +18,7 @@ class AdminBottomNav extends ConsumerWidget {
     return Container(
       height: 80,
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         border: Border(
           top: BorderSide(
             color: const Color(0x0FFFFFFF),
@@ -103,16 +103,16 @@ class _AdminNavItem extends StatelessWidget {
             child: Icon(
               icon,
               size: 24,
-              color: isSelected ? adminAccent : BookBerPalette.textMuted,
+              color: isSelected ? adminAccent : context.bbColors.textDisabled,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: GoogleFonts.dmSans(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected ? adminAccent : BookBerPalette.textMuted,
+              color: isSelected ? adminAccent : context.bbColors.textDisabled,
             ),
           ),
         ],

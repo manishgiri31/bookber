@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../app/theme/design_system.dart';
+
+import '../design/theme.dart';
+import '../design/tokens.dart';
 
 class MultiSelectChip extends StatefulWidget {
   const MultiSelectChip({
@@ -19,48 +20,42 @@ class MultiSelectChip extends StatefulWidget {
 }
 
 class _MultiSelectChipState extends State<MultiSelectChip> {
-  void _toggleSelection(String option) {
-    final newSelection = Set<String>.from(widget.selectedOptions);
-    if (newSelection.contains(option)) {
-      newSelection.remove(option);
+  void _toggle(String option) {
+    final next = Set<String>.from(widget.selectedOptions);
+    if (next.contains(option)) {
+      next.remove(option);
     } else {
-      newSelection.add(option);
+      next.add(option);
     }
-    widget.onSelectionChanged(newSelection);
+    widget.onSelectionChanged(next);
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
+      spacing: BBSpacing.px8,
+      runSpacing: BBSpacing.px8,
       children: widget.options.map((option) {
         final isSelected = widget.selectedOptions.contains(option);
         return GestureDetector(
-          onTap: () => _toggleSelection(option),
+          onTap: () => _toggle(option),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            duration: BBMotion.fast,
+            padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.px16, vertical: BBSpacing.px10),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? BookBerPalette.primaryAccent.withValues(alpha: 0.12)
-                  : BookBerPalette.bgSurface,
-              borderRadius: BorderRadius.circular(999),
+              color: isSelected ? BBColors.brandPrimaryDim : colors.bgSurface,
+              borderRadius: BBRadius.pill,
               border: Border.all(
-                color: isSelected
-                    ? BookBerPalette.primaryAccent
-                    : const Color(0x0FFFFFFF),
-                width: 1,
+                color: isSelected ? BBColors.brandPrimary : colors.borderSubtle,
               ),
             ),
             child: Text(
               option,
-              style: GoogleFonts.dmSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isSelected
-                    ? BookBerPalette.primaryAccent
-                    : BookBerPalette.textSecondary,
+              style: BBTypography.labelM.copyWith(
+                color: isSelected ? BBColors.brandPrimary : colors.textSecondary,
               ),
             ),
           ),

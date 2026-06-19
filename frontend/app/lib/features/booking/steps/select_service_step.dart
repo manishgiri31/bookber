@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/models/bookber_models.dart' show Service;
 import '../widgets/booking_step_indicator.dart';
 import '../providers/booking_form_provider.dart';
@@ -11,61 +11,43 @@ class SelectServiceStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final formState = ref.watch(bookingFormProvider);
     final servicesAsync = ref.watch(availableServicesProvider(formState.shopId));
 
     return Column(
       children: [
-        // Step indicator
         const BookingStepIndicator(currentStep: 1),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // Shop name header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
           child: Text(
             formState.shopName,
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              color: BookBerPalette.textSecondary,
-            ),
+            style: BBTypography.bodyM.copyWith(color: colors.textSecondary),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: BBSpacing.px16),
 
-        // Search bar
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgSurface,
-              borderRadius: BorderRadius.circular(12),
+              color: colors.bgSurface,
+              borderRadius: BBRadius.md,
             ),
             child: Row(
               children: [
-                const SizedBox(width: 16),
-                const Icon(
-                  Icons.search,
-                  size: 20,
-                  color: BookBerPalette.textSecondary,
-                ),
-                const SizedBox(width: 12),
+                const SizedBox(width: BBSpacing.px16),
+                Icon(Icons.search, size: BBIconSize.sm, color: colors.textSecondary),
+                const SizedBox(width: BBSpacing.px12),
                 Expanded(
                   child: TextField(
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textPrimary,
-                    ),
+                    style: BBTypography.bodyM.copyWith(color: colors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search services...',
-                      hintStyle: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: BookBerPalette.textSecondary,
-                      ),
+                      hintStyle: BBTypography.bodyM.copyWith(color: colors.textSecondary),
                       border: InputBorder.none,
                     ),
                   ),
@@ -74,15 +56,14 @@ class SelectServiceStep extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // Services list
         Expanded(
           child: servicesAsync.when(
             data: (services) {
               final groupedServices = _groupServicesByCategory(services);
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
                 itemCount: groupedServices.length,
                 itemBuilder: (context, index) {
                   final category = groupedServices.keys.elementAt(index);
@@ -91,17 +72,11 @@ class SelectServiceStep extends ConsumerWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Category header
                       Text(
                         category,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: BookBerPalette.textPrimary,
-                        ),
+                        style: BBTypography.headingS.copyWith(color: colors.textPrimary),
                       ),
-                      const SizedBox(height: 12),
-                      // Service tiles
+                      const SizedBox(height: BBSpacing.px12),
                       ...categoryServices.map((service) {
                         final isSelected = formState.selectedServiceIds.contains(service.id);
                         return _ServiceTile(
@@ -111,98 +86,72 @@ class SelectServiceStep extends ConsumerWidget {
                             ref.read(bookingFormProvider.notifier).toggleService(service);
                           },
                         );
-                      }).toList(),
-                      const SizedBox(height: 24),
+                      }),
+                      const SizedBox(height: BBSpacing.px24),
                     ],
                   );
                 },
               );
             },
             loading: () => const Center(
-              child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+              child: CircularProgressIndicator(color: BBColors.brandPrimary),
             ),
             error: (error, stack) => Center(
               child: Text(
                 'Error loading services',
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  color: BookBerPalette.textSecondary,
-                ),
+                style: BBTypography.bodyM.copyWith(color: colors.textSecondary),
               ),
             ),
           ),
         ),
 
-        // Bottom section
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(BBSpacing.px20),
           decoration: BoxDecoration(
-            color: BookBerPalette.bgSurface,
-            border: Border(
-              top: BorderSide(
-                color: const Color(0x0FFFFFFF),
-                width: 1,
-              ),
-            ),
+            color: colors.bgSurface,
+            border: Border(top: BorderSide(color: colors.borderSubtle)),
           ),
           child: Column(
             children: [
-              // Selected summary
               if (formState.selectedServiceIds.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: BBSpacing.px16, vertical: BBSpacing.px12),
                   decoration: BoxDecoration(
-                    color: BookBerPalette.primaryAccent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    color: BBColors.brandPrimaryDim,
+                    borderRadius: BBRadius.md,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         '${formState.selectedServiceIds.length} services',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: BookBerPalette.primaryAccent,
-                        ),
+                        style: BBTypography.labelM.copyWith(color: BBColors.brandPrimary),
                       ),
                       Text(
                         '₹${formState.totalPrice} · ~${formState.totalDuration} min',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: BookBerPalette.textPrimary,
-                        ),
+                        style: BBTypography.labelM.copyWith(color: colors.textPrimary),
                       ),
                     ],
                   ),
                 ),
-              if (formState.selectedServiceIds.isNotEmpty) const SizedBox(height: 16),
-              // Continue button
+              if (formState.selectedServiceIds.isNotEmpty) const SizedBox(height: BBSpacing.px16),
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: BBTouchTarget.button,
                 child: ElevatedButton(
                   onPressed: formState.selectedServiceIds.isNotEmpty
                       ? () => ref.read(bookingFormProvider.notifier).nextStep()
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: BookBerPalette.primaryAccent,
-                    foregroundColor: BookBerPalette.bgPrimary,
-                    disabledBackgroundColor: BookBerPalette.bgElevated,
-                    disabledForegroundColor: BookBerPalette.textMuted,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
+                    backgroundColor: BBColors.brandPrimary,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: colors.bgElevated,
+                    disabledForegroundColor: colors.textDisabled,
+                    shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  child: Text('Continue', style: BBTypography.button),
                 ),
               ),
             ],
@@ -234,20 +183,18 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: BBSpacing.px12),
+        padding: const EdgeInsets.all(BBSpacing.px16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? BookBerPalette.primaryAccent.withValues(alpha: 0.08)
-              : BookBerPalette.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? BBColors.brandPrimaryDim : colors.bgSurface,
+          borderRadius: BBRadius.md,
           border: Border.all(
-            color: isSelected
-                ? BookBerPalette.primaryAccent
-                : const Color(0x0FFFFFFF),
+            color: isSelected ? BBColors.brandPrimary : colors.borderSubtle,
             width: 1,
           ),
         ),
@@ -259,28 +206,16 @@ class _ServiceTile extends StatelessWidget {
                 children: [
                   Text(
                     service.name,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textPrimary,
-                    ),
+                    style: BBTypography.bodyL.copyWith(color: colors.textPrimary),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: BBSpacing.px4),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: BookBerPalette.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
+                      Icon(Icons.access_time, size: 14, color: colors.textSecondary),
+                      const SizedBox(width: BBSpacing.px4),
                       Text(
                         '${service.duration} min',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: BookBerPalette.textSecondary,
-                        ),
+                        style: BBTypography.bodyS.copyWith(color: colors.textSecondary),
                       ),
                     ],
                   ),
@@ -291,19 +226,11 @@ class _ServiceTile extends StatelessWidget {
               children: [
                 Text(
                   '₹${service.price}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
+                  style: BBTypography.headingS.copyWith(color: colors.textPrimary),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: BBSpacing.px12),
                 if (isSelected)
-                  const Icon(
-                    Icons.check_circle,
-                    color: BookBerPalette.primaryAccent,
-                    size: 24,
-                  ),
+                  const Icon(Icons.check_circle, color: BBColors.brandPrimary, size: 24),
               ],
             ),
           ],

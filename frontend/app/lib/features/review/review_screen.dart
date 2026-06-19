@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../app/router/route_paths.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/models/bookber_models.dart';
 import '../../../core/network/api_result.dart';
 import '../../../core/utils/snackbar.dart';
@@ -58,6 +58,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final form = ref.watch(reviewFormProvider);
     final bookingAsync = ref.watch(bookingDetailsProvider(widget.bookingId));
     final isSubmitting = ref.watch(reviewSubmittingProvider);
@@ -65,17 +66,17 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
     final tags = form.rating >= 4 ? _positiveTags : _negativeTags;
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       appBar: AppBar(
-        backgroundColor: BookBerPalette.bgPrimary,
+        backgroundColor: colors.bgCanvas,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: BookBerPalette.textPrimary),
+          icon: Icon(Icons.close, color: colors.textPrimary),
           onPressed: () => context.go(RoutePaths.home),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -87,16 +88,12 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
               error: (error, stackTrace) => _BookingSummaryFallback(bookingId: widget.bookingId),
               data: (booking) => _BookingSummary(booking: booking),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: BBSpacing.px32),
             Text(
               'How was your experience?',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: BookBerPalette.textPrimary,
-              ),
+              style: BBTypography.headingS.copyWith(color: colors.textPrimary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: BBSpacing.px16),
             _Stars(
               rating: form.rating,
               onChanged: (rating) {
@@ -106,38 +103,34 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     );
               },
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: BBSpacing.px32),
             _QuickTags(
               tags: tags,
               selectedTags: form.selectedTags,
               onToggle: (tag) => _toggleTag(form, tag),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: BBSpacing.px32),
             Text(
               'Tell us more (optional)',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: BookBerPalette.textPrimary,
-              ),
+              style: BBTypography.labelL.copyWith(color: colors.textPrimary),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: BBSpacing.px12),
             Container(
               decoration: BoxDecoration(
-                color: BookBerPalette.bgSurface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0x0FFFFFFF)),
+                color: colors.bgSurface,
+                borderRadius: BBRadius.md,
+                border: Border.all(color: colors.border),
               ),
               child: TextField(
                 controller: _commentController,
                 maxLines: 4,
                 maxLength: 280,
-                style: GoogleFonts.dmSans(fontSize: 14, color: BookBerPalette.textPrimary),
+                style: BBTypography.bodyM.copyWith(color: colors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'What did you love? What could be better?',
-                  hintStyle: GoogleFonts.dmSans(fontSize: 14, color: BookBerPalette.textSecondary),
+                  hintStyle: BBTypography.bodyM.copyWith(color: colors.textSecondary),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.all(BBSpacing.px16),
                   counterText: '',
                 ),
                 onChanged: (comment) {
@@ -145,15 +138,15 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: BBSpacing.px8),
             Align(
               alignment: Alignment.centerRight,
               child: Text(
                 '${form.comment.length}/280',
-                style: GoogleFonts.dmSans(fontSize: 12, color: BookBerPalette.textSecondary),
+                style: BBTypography.caption.copyWith(color: colors.textSecondary),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: BBSpacing.px32),
             _PhotoPicker(
               photoUrls: form.photoUrls,
               isUploading: isUploading,
@@ -234,34 +227,32 @@ class _BookingSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Row(
       children: [
         Container(
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            color: BookBerPalette.bgElevated,
+            color: colors.bgElevated,
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Icon(Icons.content_cut, color: BookBerPalette.textSecondary),
+          child: Icon(Icons.content_cut, color: colors.textSecondary),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: BBSpacing.px16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 booking.barberName,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: BookBerPalette.textPrimary,
-                ),
+                style: BBTypography.headingS.copyWith(color: colors.textPrimary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: BBSpacing.px4),
               Text(
                 booking.shopName,
-                style: GoogleFonts.dmSans(fontSize: 14, color: BookBerPalette.textSecondary),
+                style: BBTypography.bodyM.copyWith(color: colors.textSecondary),
               ),
             ],
           ),
@@ -280,11 +271,7 @@ class _BookingSummaryFallback extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       'Booking $bookingId',
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-        color: BookBerPalette.textPrimary,
-      ),
+      style: BBTypography.headingS.copyWith(color: context.bbColors.textPrimary),
     );
   }
 }
@@ -309,7 +296,7 @@ class _Stars extends StatelessWidget {
           onPressed: () => onChanged(value),
           icon: Icon(
             Icons.star,
-            color: selected ? const Color(0xFFF59E0B) : BookBerPalette.textMuted,
+            color: selected ? BBColors.brandSecondary : context.bbColors.textDisabled,
             size: 32,
           ),
         );
@@ -331,21 +318,22 @@ class _QuickTags extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Wrap(
-      spacing: 8,
-      runSpacing: 8,
+      spacing: BBSpacing.px8,
+      runSpacing: BBSpacing.px8,
       children: tags.map((tag) {
         final selected = selectedTags.contains(tag);
         return FilterChip(
           selected: selected,
           label: Text(tag),
           onSelected: (_) => onToggle(tag),
-          backgroundColor: BookBerPalette.bgSurface,
-          selectedColor: BookBerPalette.primaryAccent.withValues(alpha: 0.16),
-          checkmarkColor: BookBerPalette.primaryAccent,
-          labelStyle: GoogleFonts.dmSans(
-            color: selected ? BookBerPalette.primaryAccent : BookBerPalette.textSecondary,
-            fontWeight: FontWeight.w600,
+          backgroundColor: colors.bgSurface,
+          selectedColor: BBColors.brandPrimaryDim,
+          checkmarkColor: BBColors.brandPrimary,
+          labelStyle: BBTypography.labelM.copyWith(
+            color: selected ? BBColors.brandPrimary : colors.textSecondary,
           ),
         );
       }).toList(),
@@ -368,18 +356,16 @@ class _PhotoPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Add photos (optional)',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.labelL.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: BBSpacing.px12),
         Row(
           children: [
             if (photoUrls.length < 3)
@@ -389,25 +375,25 @@ class _PhotoPicker extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: BookBerPalette.bgSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0x0FFFFFFF)),
+                    color: colors.bgSurface,
+                    borderRadius: BBRadius.md,
+                    border: Border.all(color: colors.borderSubtle),
                   ),
                   child: isUploading
                       ? const Padding(
                           padding: EdgeInsets.all(24),
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.add, size: 32, color: BookBerPalette.textSecondary),
+                      : Icon(Icons.add, size: 32, color: colors.textSecondary),
                 ),
               ),
             ...photoUrls.map((url) {
               return Padding(
-                padding: const EdgeInsets.only(left: 12),
+                padding: const EdgeInsets.only(left: BBSpacing.px12),
                 child: Stack(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BBRadius.md,
                       child: Image.network(
                         url,
                         width: 80,
@@ -422,7 +408,7 @@ class _PhotoPicker extends StatelessWidget {
                         onTap: () => onRemove(url),
                         child: const CircleAvatar(
                           radius: 12,
-                          backgroundColor: BookBerPalette.urgentRed,
+                          backgroundColor: BBColors.error,
                           child: Icon(Icons.close, size: 16, color: Colors.white),
                         ),
                       ),
@@ -451,24 +437,26 @@ class _SubmitBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: BookBerPalette.bgSurface,
-        border: Border(top: BorderSide(color: Color(0x0FFFFFFF))),
+      padding: const EdgeInsets.all(BBSpacing.px20),
+      decoration: BoxDecoration(
+        color: colors.bgSurface,
+        border: Border(top: BorderSide(color: colors.borderSubtle)),
       ),
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          height: 56,
+          height: BBTouchTarget.button,
           child: ElevatedButton(
             onPressed: canSubmit ? onSubmit : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: BookBerPalette.primaryAccent,
-              foregroundColor: BookBerPalette.bgPrimary,
-              disabledBackgroundColor: BookBerPalette.bgElevated,
-              disabledForegroundColor: BookBerPalette.textMuted,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              backgroundColor: BBColors.brandPrimary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: colors.bgElevated,
+              disabledForegroundColor: colors.textDisabled,
+              shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
               elevation: 0,
             ),
             child: isSubmitting
@@ -477,13 +465,10 @@ class _SubmitBar extends StatelessWidget {
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: BookBerPalette.bgPrimary,
+                      color: Colors.white,
                     ),
                   )
-                : Text(
-                    'Submit Review',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
+                : Text('Submit Review', style: BBTypography.button),
           ),
         ),
       ),

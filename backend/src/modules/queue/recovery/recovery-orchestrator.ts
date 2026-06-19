@@ -8,6 +8,7 @@ import { WaitTimeReconcilerWorker } from "./wait-time-reconciler.worker.js";
 import { RedisRepairService } from "./redis-repair.service.js";
 import { DeadSocketCleanupWorker } from "./dead-socket-cleanup.worker.js";
 import { QueueLock } from "../queue.lock.js";
+import { WaitTimeRedisStore } from "../infrastructure/wait-time-redis.store.js";
 
 /**
  * Recovery orchestrator.
@@ -72,7 +73,10 @@ export class RecoveryOrchestrator {
 
     // Start wait-time reconciler worker (if Redis and waitTimeEngine available)
     if (redis && waitTimeEngine) {
-      const stopWaitTimeReconcilerWorker = this.waitTimeReconcilerWorker.start(redis, waitTimeEngine);
+      const stopWaitTimeReconcilerWorker = this.waitTimeReconcilerWorker.start(
+        new WaitTimeRedisStore(redis),
+        waitTimeEngine
+      );
       this.cleanupFunctions.push(stopWaitTimeReconcilerWorker);
     }
 
@@ -147,7 +151,10 @@ export class RecoveryOrchestrator {
 
       // Run wait-time reconciler worker (if Redis and waitTimeEngine available)
       if (redis && waitTimeEngine) {
-        const waitTimeReconcilerStats = await this.waitTimeReconcilerWorker.run(redis, waitTimeEngine);
+        const waitTimeReconcilerStats = await this.waitTimeReconcilerWorker.run(
+          new WaitTimeRedisStore(redis),
+          waitTimeEngine
+        );
         this.aggregateStats(aggregateStats, waitTimeReconcilerStats);
       }
 
@@ -210,7 +217,7 @@ export class RecoveryOrchestrator {
 
     if (redis) {
       [waitTimeMismatches, redisMismatches] = await Promise.all([
-        this.waitTimeReconcilerWorker.getStats(redis),
+        this.waitTimeReconcilerWorker.getStats(new WaitTimeRedisStore(redis)),
         this.redisRepairService.getStats(redis)
       ]);
     } else {

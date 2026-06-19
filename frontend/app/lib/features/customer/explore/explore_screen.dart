@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/shop_providers.dart';
-import '../widgets/customer_nav_bar.dart';
-import '../widgets/shop_card.dart';
 
 class ExploreScreen extends ConsumerStatefulWidget {
   const ExploreScreen({super.key});
@@ -15,7 +14,6 @@ class ExploreScreen extends ConsumerStatefulWidget {
 }
 
 class _ExploreScreenState extends ConsumerState<ExploreScreen> {
-  int _currentIndex = 1;
   bool _isMapView = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -26,9 +24,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-focus search on load
     Future.delayed(const Duration(milliseconds: 100), () {
-      _searchFocusNode.requestFocus();
+      if (mounted) _searchFocusNode.requestFocus();
     });
   }
 
@@ -41,166 +38,145 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
-            Expanded(
-              child: Column(
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: BBSpacing.px20, vertical: BBSpacing.px16),
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: colors.bgSurface,
+                  borderRadius: BBRadius.md,
+                  border: Border.all(color: colors.borderSubtle),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(width: BBSpacing.px16),
+                    const Icon(Icons.search, size: 20, color: BBColors.brandPrimary),
+                    const SizedBox(width: BBSpacing.px12),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        onChanged: (value) {
+                          ref.read(searchQueryProvider.notifier).state = value;
+                        },
+                        style: BBTypography.bodyM.copyWith(color: colors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: 'Search barbers, shops, services...',
+                          hintStyle:
+                              BBTypography.bodyM.copyWith(color: colors.textSecondary),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: BBSpacing.px12),
+                    GestureDetector(
+                      onTap: _showFilterBottomSheet,
+                      child: Icon(Icons.tune, size: 20, color: colors.textSecondary),
+                    ),
+                    const SizedBox(width: BBSpacing.px16),
+                  ],
+                ),
+              ),
+            ),
+
+            // Filter chips
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
+              child: SizedBox(
+                height: 36,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _filters.length,
+                  itemBuilder: (context, index) {
+                    final filter = _filters[index];
+                    final isSelected = _selectedFilter == filter;
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          right: index < _filters.length - 1 ? BBSpacing.px8 : 0),
+                      child: GestureDetector(
+                        onTap: () => setState(() => _selectedFilter = filter),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: BBSpacing.px16, vertical: BBSpacing.px8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? BBColors.brandPrimary
+                                : colors.bgSurface,
+                            borderRadius: BBRadius.pill,
+                            border: isSelected
+                                ? null
+                                : Border.all(color: colors.borderSubtle),
+                          ),
+                          child: Text(
+                            filter,
+                            style: BBTypography.labelS.copyWith(
+                              color: isSelected
+                                  ? Colors.white
+                                  : colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: BBSpacing.px12),
+
+            // Map/List toggle
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  GestureDetector(
+                    onTap: () => setState(() => _isMapView = !_isMapView),
                     child: Container(
-                      height: 52,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: BBSpacing.px12, vertical: BBSpacing.px8),
                       decoration: BoxDecoration(
-                        color: BookBerPalette.bgSurface,
-                        borderRadius: BorderRadius.circular(12),
+                        color: colors.bgSurface,
+                        borderRadius: BBRadius.sm,
+                        border: Border.all(color: colors.borderSubtle),
                       ),
                       child: Row(
                         children: [
-                          const SizedBox(width: 16),
-                          const Icon(
-                            Icons.search,
-                            size: 20,
-                            color: BookBerPalette.primaryAccent,
+                          Icon(
+                            _isMapView ? Icons.list : Icons.map_outlined,
+                            size: 18,
+                            color: BBColors.brandPrimary,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              focusNode: _searchFocusNode,
-                              onChanged: (value) {
-                                ref.read(searchQueryProvider.notifier).state = value;
-                              },
-                              style: GoogleFonts.dmSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: BookBerPalette.textPrimary,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Search barbers, shops, services...',
-                                hintStyle: GoogleFonts.dmSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w400,
-                                  color: BookBerPalette.textSecondary,
-                                ),
-                                border: InputBorder.none,
-                              ),
-                            ),
+                          const SizedBox(width: BBSpacing.px8),
+                          Text(
+                            _isMapView ? 'List' : 'Map',
+                            style: BBTypography.labelS
+                                .copyWith(color: colors.textPrimary),
                           ),
-                          const SizedBox(width: 12),
-                          GestureDetector(
-                            onTap: () => _showFilterBottomSheet(),
-                            child: const Icon(
-                              Icons.tune,
-                              size: 20,
-                              color: BookBerPalette.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
                         ],
                       ),
                     ),
                   ),
-
-                  // Filter chips
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _filters.length,
-                        itemBuilder: (context, index) {
-                          final filter = _filters[index];
-                          final isSelected = _selectedFilter == filter;
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              right: index < _filters.length - 1 ? 12 : 0,
-                            ),
-                            child: GestureDetector(
-                              onTap: () => setState(() => _selectedFilter = filter),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? BookBerPalette.primaryAccent
-                                      : BookBerPalette.bgSurface,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  filter,
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: isSelected
-                                        ? BookBerPalette.bgPrimary
-                                        : BookBerPalette.textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Map/List toggle
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                      GestureDetector(
-                        onTap: () => setState(() => _isMapView = !_isMapView),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: BookBerPalette.bgSurface,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _isMapView ? Icons.list : Icons.map_outlined,
-                                size: 18,
-                                color: BookBerPalette.primaryAccent,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isMapView ? 'List' : 'Map',
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: BookBerPalette.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Content
-                  Expanded(
-                    child: _isMapView ? _buildMapView() : _buildListView(),
-                  ),
                 ],
               ),
             ),
-            // Bottom navigation
-            CustomerNavBar(
-              currentIndex: _currentIndex,
-              onTap: (index) {
-                setState(() => _currentIndex = index);
-              },
+
+            const SizedBox(height: BBSpacing.px12),
+
+            // Content
+            Expanded(
+              child: _isMapView ? _buildMapView(colors) : _buildListView(colors),
             ),
           ],
         ),
@@ -208,7 +184,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
     );
   }
 
-  Widget _buildListView() {
+  Widget _buildListView(BBColorTheme colors) {
     return Consumer(
       builder: (context, ref, _) {
         final query = ref.watch(searchQueryProvider);
@@ -219,131 +195,123 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
         return shopsAsync.when(
           data: (shops) {
             if (shops.isEmpty) {
-              return const Center(
-                child: Text('No shops found'),
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.store_mall_directory_outlined,
+                        size: 56, color: colors.textDisabled),
+                    const SizedBox(height: BBSpacing.px12),
+                    Text('No shops found',
+                        style: BBTypography.headingM
+                            .copyWith(color: colors.textPrimary)),
+                    const SizedBox(height: BBSpacing.px4),
+                    Text('Try a different search or filter',
+                        style: BBTypography.bodyM
+                            .copyWith(color: colors.textSecondary)),
+                  ],
+                ),
               );
             }
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
               child: ListView.builder(
                 itemCount: shops.length,
                 itemBuilder: (context, index) {
                   final shop = shops[index];
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: BBSpacing.px12),
                     child: GestureDetector(
                       onTap: () => context.go('/shop/${shop.id}'),
                       child: Container(
                         height: 100,
                         decoration: BoxDecoration(
-                          color: BookBerPalette.bgSurface,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: const Color(0x0FFFFFFF),
-                            width: 1,
-                          ),
+                          color: colors.bgSurface,
+                          borderRadius: BBRadius.card,
+                          border: Border.all(color: colors.borderSubtle),
                         ),
                         child: Row(
                           children: [
-                            // Image
+                            // Thumbnail
                             Container(
                               width: 80,
                               height: 80,
                               margin: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: BookBerPalette.bgElevated,
-                                borderRadius: BorderRadius.circular(12),
+                                color: colors.bgElevated,
+                                borderRadius: BBRadius.md,
                               ),
                               child: shop.imageUrl != null
                                   ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BBRadius.md,
                                       child: Image.network(
                                         shop.imageUrl!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Container();
-                                        },
+                                        errorBuilder: (_, __, ___) =>
+                                            const SizedBox.shrink(),
                                       ),
                                     )
-                                  : null,
+                                  : Icon(Icons.content_cut_rounded,
+                                      size: BBIconSize.lg,
+                                      color: colors.textDisabled),
                             ),
                             // Info
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Text(
                                       shop.name,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        color: BookBerPalette.textPrimary,
-                                      ),
+                                      style: BBTypography.headingS.copyWith(
+                                          color: colors.textPrimary),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: BBSpacing.px4),
                                     Row(
                                       children: [
-                                        const Icon(
-                                          Icons.star,
-                                          size: 14,
-                                          color: BookBerPalette.primaryAccent,
-                                        ),
-                                        const SizedBox(width: 4),
+                                        const Icon(Icons.star_rounded,
+                                            size: 13,
+                                            color: BBColors.brandSecondary),
+                                        const SizedBox(width: BBSpacing.px4),
                                         Text(
                                           shop.rating.toStringAsFixed(1),
-                                          style: GoogleFonts.dmSans(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: BookBerPalette.textPrimary,
-                                          ),
+                                          style: BBTypography.labelS.copyWith(
+                                              color: colors.textPrimary),
                                         ),
-                                        const SizedBox(width: 4),
                                         Text(
-                                          '(${shop.reviewCount})',
-                                          style: GoogleFonts.dmSans(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w400,
-                                            color: BookBerPalette.textSecondary,
-                                          ),
+                                          ' (${shop.reviewCount})',
+                                          style: BBTypography.bodyS.copyWith(
+                                              color: colors.textSecondary),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: BBSpacing.px4),
                                     Row(
                                       children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 12,
-                                          color: BookBerPalette.textSecondary,
-                                        ),
-                                        const SizedBox(width: 4),
+                                        Icon(Icons.location_on_outlined,
+                                            size: 12,
+                                            color: colors.textSecondary),
+                                        const SizedBox(width: BBSpacing.px4),
                                         Text(
                                           shop.distanceLabel,
-                                          style: GoogleFonts.dmSans(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w400,
-                                            color: BookBerPalette.textSecondary,
-                                          ),
+                                          style: BBTypography.bodyS.copyWith(
+                                              color: colors.textSecondary),
                                         ),
-                                        const SizedBox(width: 12),
-                                        const Icon(
-                                          Icons.access_time,
-                                          size: 12,
-                                          color: BookBerPalette.textSecondary,
-                                        ),
-                                        const SizedBox(width: 4),
+                                        const SizedBox(width: BBSpacing.px12),
+                                        Icon(Icons.access_time,
+                                            size: 12,
+                                            color: colors.textSecondary),
+                                        const SizedBox(width: BBSpacing.px4),
                                         Text(
                                           shop.waitTimeLabel,
-                                          style: GoogleFonts.dmSans(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w400,
-                                            color: BookBerPalette.textSecondary,
-                                          ),
+                                          style: BBTypography.bodyS.copyWith(
+                                              color: colors.textSecondary),
                                         ),
                                       ],
                                     ),
@@ -353,28 +321,24 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                             ),
                             // Book button
                             Padding(
-                              padding: const EdgeInsets.only(right: 16),
+                              padding: const EdgeInsets.only(right: BBSpacing.px12),
                               child: SizedBox(
-                                width: 80,
-                                height: 36,
+                                width: 72,
+                                height: 34,
                                 child: ElevatedButton(
-                                  onPressed: () => context.go('/shop/${shop.id}'),
+                                  onPressed: () =>
+                                      context.go('/shop/${shop.id}'),
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: BookBerPalette.primaryAccent,
-                                    foregroundColor: BookBerPalette.bgPrimary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
+                                    backgroundColor: BBColors.brandPrimary,
+                                    foregroundColor: Colors.white,
+                                    shape: const RoundedRectangleBorder(
+                                        borderRadius: BBRadius.pill),
                                     elevation: 0,
                                     padding: EdgeInsets.zero,
                                   ),
-                                  child: Text(
-                                    'Book',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
+                                  child: Text('Book',
+                                      style: BBTypography.labelS.copyWith(
+                                          color: Colors.white)),
                                 ),
                               ),
                             ),
@@ -387,56 +351,32 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
               ),
             );
           },
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          error: (error, stack) => Center(
-            child: Text('Error: $error'),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => Center(
+            child: Text('Error: $error',
+                style: BBTypography.bodyM.copyWith(color: colors.textSecondary)),
           ),
         );
       },
     );
   }
 
-  Widget _buildShopListTile(int index) {
-    // This method is no longer used, but kept for reference
-    return GestureDetector(
-      onTap: () => context.go('/shop/${index + 1}'),
-      child: Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: BookBerPalette.bgSurface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0x0FFFFFFF),
-            width: 1,
-          ),
-        ),
-        child: const SizedBox.shrink(),
-      ),
-    );
-  }
-
-  Widget _buildMapView() {
+  Widget _buildMapView(BBColorTheme colors) {
     return Container(
-      color: BookBerPalette.bgSurface,
-      child: const Center(
+      color: colors.bgSurface,
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.map_outlined,
-              size: 64,
-              color: BookBerPalette.textSecondary,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Google Maps integration',
-              style: TextStyle(
-                fontSize: 16,
-                color: BookBerPalette.textSecondary,
-              ),
-            ),
+            Icon(Icons.map_outlined, size: 64, color: colors.textDisabled),
+            const SizedBox(height: BBSpacing.px16),
+            Text('Map view coming soon',
+                style:
+                    BBTypography.headingM.copyWith(color: colors.textPrimary)),
+            const SizedBox(height: BBSpacing.px4),
+            Text('Browse shops in list view for now',
+                style:
+                    BBTypography.bodyM.copyWith(color: colors.textSecondary)),
           ],
         ),
       ),
@@ -448,222 +388,162 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _FilterBottomSheet(),
+      builder: (context) => const _FilterBottomSheet(),
     );
   }
 }
 
 class _FilterBottomSheet extends ConsumerWidget {
+  const _FilterBottomSheet();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final filters = ref.watch(shopFiltersProvider);
     final notifier = ref.read(shopFiltersProvider.notifier);
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        color: colors.bgSurface,
+        borderRadius: BBRadius.sheet,
       ),
       child: Column(
         children: [
-          // Handle bar
+          // Handle
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 12),
+            margin: const EdgeInsets.symmetric(vertical: BBSpacing.px12),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: BookBerPalette.textMuted,
-              borderRadius: BorderRadius.circular(2),
+              color: colors.border,
+              borderRadius: BBRadius.pill,
             ),
           ),
           // Title
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Filters',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
-                ),
+                Text('Filters',
+                    style: BBTypography.headingL
+                        .copyWith(color: colors.textPrimary)),
                 GestureDetector(
                   onTap: () => notifier.reset(),
-                  child: Text(
-                    'Reset',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textSecondary,
-                    ),
-                  ),
+                  child: Text('Reset',
+                      style: BBTypography.labelM
+                          .copyWith(color: colors.textSecondary)),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: BBSpacing.px24),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: BBSpacing.px24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Distance slider
-                  Text(
-                    'Distance',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  Text('Distance',
+                      style: BBTypography.labelM
+                          .copyWith(color: colors.textPrimary)),
+                  const SizedBox(height: BBSpacing.px12),
                   Slider(
                     value: filters.maxDistance,
                     min: 0,
                     max: 50,
                     divisions: 50,
-                    activeColor: BookBerPalette.primaryAccent,
-                    onChanged: (value) {
-                      notifier.updateMaxDistance(value);
-                    },
+                    activeColor: BBColors.brandPrimary,
+                    onChanged: (value) => notifier.updateMaxDistance(value),
                   ),
-                  Text(
-                    '${filters.maxDistance.toInt()} km',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  Text('${filters.maxDistance.toInt()} km',
+                      style: BBTypography.bodyS
+                          .copyWith(color: colors.textSecondary)),
+                  const SizedBox(height: BBSpacing.px24),
 
-                  // Min rating
-                  Text(
-                    'Minimum Rating',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  Text('Minimum Rating',
+                      style: BBTypography.labelM
+                          .copyWith(color: colors.textPrimary)),
+                  const SizedBox(height: BBSpacing.px12),
                   Row(
                     children: List.generate(5, (index) {
                       return GestureDetector(
                         onTap: () => notifier.updateMinRating(index + 1),
                         child: Icon(
                           index < (filters.minRating ?? 0)
-                              ? Icons.star
-                              : Icons.star_border,
-                          color: BookBerPalette.primaryAccent,
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: BBColors.brandSecondary,
                           size: 32,
                         ),
                       );
                     }),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: BBSpacing.px24),
 
-                  // Open Now toggle
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Open Now',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: BookBerPalette.textPrimary,
-                        ),
-                      ),
+                      Text('Open Now',
+                          style: BBTypography.labelM
+                              .copyWith(color: colors.textPrimary)),
                       Switch(
                         value: filters.openNow,
                         onChanged: (_) => notifier.toggleOpenNow(),
-                        activeColor: BookBerPalette.primaryAccent,
+                        activeColor: BBColors.brandPrimary,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: BBSpacing.px24),
 
-                  // Sort By
-                  Text(
-                    'Sort By',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  Text('Sort By',
+                      style: BBTypography.labelM
+                          .copyWith(color: colors.textPrimary)),
+                  const SizedBox(height: BBSpacing.px12),
                   ...['distance', 'rating', 'waitTime'].map((option) {
+                    final label = option == 'waitTime'
+                        ? 'Wait Time'
+                        : option[0].toUpperCase() + option.substring(1);
                     return GestureDetector(
                       onTap: () => notifier.updateSortBy(option),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding:
+                            const EdgeInsets.symmetric(vertical: BBSpacing.px12),
                         decoration: BoxDecoration(
                           border: Border(
-                            bottom: BorderSide(
-                              color: const Color(0x0FFFFFFF),
-                              width: 1,
-                            ),
-                          ),
+                              bottom: BorderSide(
+                                  color: colors.borderSubtle, width: 1)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              option[0].toUpperCase() +
-                                  option.substring(1).replaceAll(
-                                      RegExp(r'([A-Z])'), ' ${r'$1'}'),
-                              style: GoogleFonts.dmSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: BookBerPalette.textPrimary,
-                              ),
-                            ),
+                            Text(label,
+                                style: BBTypography.bodyL
+                                    .copyWith(color: colors.textPrimary)),
                             if (filters.sortBy == option)
-                              const Icon(
-                                Icons.check,
-                                color: BookBerPalette.primaryAccent,
-                                size: 20,
-                              ),
+                              const Icon(Icons.check_rounded,
+                                  color: BBColors.brandPrimary, size: 20),
                           ],
                         ),
                       ),
                     );
-                  }).toList(),
-                  const SizedBox(height: 24),
+                  }),
+                  const SizedBox(height: BBSpacing.px24),
                 ],
               ),
             ),
           ),
           // Apply button
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(BBSpacing.px24),
             child: SizedBox(
               width: double.infinity,
-              height: 56,
+              height: BBTouchTarget.button,
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: BookBerPalette.primaryAccent,
-                  foregroundColor: BookBerPalette.bgPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  elevation: 0,
-                ),
-                child: Text(
-                  'Apply Filters',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: const Text('Apply Filters'),
               ),
             ),
           ),

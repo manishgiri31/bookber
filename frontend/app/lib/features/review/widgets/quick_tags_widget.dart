@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../payment/providers/payment_providers.dart';
 
 class QuickTagsWidget extends ConsumerWidget {
@@ -9,10 +9,10 @@ class QuickTagsWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final formState = ref.watch(reviewFormProvider);
     final rating = formState.rating;
 
-    // Show tags only if rating is selected
     if (rating == 0) {
       return const SizedBox.shrink();
     }
@@ -27,43 +27,32 @@ class QuickTagsWidget extends ConsumerWidget {
       children: [
         Text(
           isPositiveRating ? 'What did you like?' : 'What went wrong?',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.labelL.copyWith(color: colors.textPrimary),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: BBSpacing.px12),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: BBSpacing.px8,
+          runSpacing: BBSpacing.px8,
           children: tags.map((tag) {
             final isSelected = formState.tags.contains(tag);
             return GestureDetector(
               onTap: () => ref.read(reviewFormProvider.notifier).toggleTag(tag),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                duration: BBMotion.fast,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.px16, vertical: BBSpacing.px10),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? BookBerPalette.primaryAccent.withValues(alpha: 0.12)
-                      : BookBerPalette.bgSurface,
-                  borderRadius: BorderRadius.circular(999),
+                  color: isSelected ? BBColors.brandPrimaryDim : colors.bgSurface,
+                  borderRadius: BBRadius.pill,
                   border: Border.all(
-                    color: isSelected
-                        ? BookBerPalette.primaryAccent
-                        : const Color(0x0FFFFFFF),
-                    width: 1,
+                    color: isSelected ? BBColors.brandPrimary : colors.borderSubtle,
                   ),
                 ),
                 child: Text(
                   tag,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 13,
+                  style: BBTypography.labelS.copyWith(
                     fontWeight: FontWeight.w500,
-                    color: isSelected
-                        ? BookBerPalette.primaryAccent
-                        : BookBerPalette.textSecondary,
+                    color: isSelected ? BBColors.brandPrimary : colors.textSecondary,
                   ),
                 ),
               ),

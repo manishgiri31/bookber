@@ -22,19 +22,24 @@ class BBColorPrimitives {
   static const Color neutral900 = Color(0xFFF5F5F7);
   static const Color neutral1000 = Color(0xFFFFFFFF);
 
-  // Teal — brand primary
-  static const Color teal50 = Color(0xFF003D38);
-  static const Color teal100 = Color(0xFF005A52);
-  static const Color teal200 = Color(0xFF007A6E);
-  static const Color teal300 = Color(0xFF009B8C);
-  static const Color teal400 = Color(0xFF00C2AE);
-  static const Color teal500 = Color(0xFF00E5C3);
-  static const Color teal600 = Color(0xFF33EBCD);
-  static const Color teal700 = Color(0xFF66F0D8);
-  static const Color teal800 = Color(0xFF99F5E3);
-  static const Color teal900 = Color(0xFFCCFAF1);
+  // Indigo — brand primary
+  static const Color indigo50  = Color(0xFF12093A);
+  static const Color indigo100 = Color(0xFF1C1057);
+  static const Color indigo200 = Color(0xFF2A1880);
+  static const Color indigo300 = Color(0xFF3D26B8);
+  static const Color indigo400 = Color(0xFF5540DB);
+  static const Color indigo500 = Color(0xFF7C63F5);
+  static const Color indigo600 = Color(0xFF9D85F7);
+  static const Color indigo700 = Color(0xFFBBA8FA);
+  static const Color indigo800 = Color(0xFFD8CBFC);
+  static const Color indigo900 = Color(0xFFF0ECFE);
 
-  // Coral — secondary accent
+  // Amber — secondary accent (premium gold)
+  static const Color amber400 = Color(0xFFD97706);
+  static const Color amber500 = Color(0xFFF59E0B);
+  static const Color amber600 = Color(0xFFFBBF24);
+
+  // Coral — kept for legacy references
   static const Color coral400 = Color(0xFFE84E1A);
   static const Color coral500 = Color(0xFFFF6B35);
   static const Color coral600 = Color(0xFFFF8A5C);
@@ -43,9 +48,6 @@ class BBColorPrimitives {
   static const Color green400 = Color(0xFF16A34A);
   static const Color green500 = Color(0xFF22C55E);
   static const Color green600 = Color(0xFF4ADE80);
-  static const Color amber400 = Color(0xFFD97706);
-  static const Color amber500 = Color(0xFFF59E0B);
-  static const Color amber600 = Color(0xFFFBBF24);
   static const Color red400 = Color(0xFFDC2626);
   static const Color red500 = Color(0xFFEF4444);
   static const Color red600 = Color(0xFFF87171);
@@ -71,17 +73,17 @@ class BBColors {
   static const Color bgOverlayLight = Color(0xFFE8E8EE);
 
   // Brand
-  static const Color brandPrimary = BBColorPrimitives.teal500;
-  static const Color brandPrimaryDim = Color(0x2600E5C3); // 15% opacity
-  static const Color brandPrimaryGlow = Color(0x4D00E5C3); // 30% opacity
-  static const Color brandSecondary = BBColorPrimitives.coral500;
+  static const Color brandPrimary = BBColorPrimitives.indigo500;
+  static const Color brandPrimaryDim = Color(0x267C63F5); // 15% opacity
+  static const Color brandPrimaryGlow = Color(0x4D7C63F5); // 30% opacity
+  static const Color brandSecondary = BBColorPrimitives.amber500;
 
   // Text — dark
   static const Color textPrimary = BBColorPrimitives.neutral900;
   static const Color textSecondary = BBColorPrimitives.neutral600;
   static const Color textDisabled = BBColorPrimitives.neutral400;
   static const Color textInverse = BBColorPrimitives.neutral50;
-  static const Color textBrand = BBColorPrimitives.teal500;
+  static const Color textBrand = BBColorPrimitives.indigo500;
 
   // Text — light
   static const Color textPrimaryLight = Color(0xFF0D0D0F);
@@ -92,7 +94,7 @@ class BBColors {
   static const Color borderSubtle = Color(0x14FFFFFF); // 8% white
   static const Color borderDefault = Color(0x1FFFFFFF); // 12% white
   static const Color borderStrong = Color(0x33FFFFFF); // 20% white
-  static const Color borderBrand = BBColorPrimitives.teal500;
+  static const Color borderBrand = BBColorPrimitives.indigo500;
 
   static const Color borderSubtleLight = Color(0x14000000);
   static const Color borderDefaultLight = Color(0x1F000000);

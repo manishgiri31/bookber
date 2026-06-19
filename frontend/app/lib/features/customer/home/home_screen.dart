@@ -10,6 +10,8 @@ import '../../../core/components/bb_skeleton.dart';
 import '../../../core/components/bb_status.dart';
 import '../../../core/components/bb_input.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../features/auth/domain/auth_state.dart';
+import '../../shops/domain/shop_models.dart';
 import '../providers/shop_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -65,7 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       headline: 'BookBer Members\nget 20% off',
       sub: 'Limited time offer',
       gradient: LinearGradient(
-        colors: [BBColors.brandPrimary, BBColorPrimitives.teal100],
+        colors: [BBColors.brandPrimary, BBColorPrimitives.indigo100],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
@@ -99,10 +101,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
-    final userName = authState.maybeWhen(
-      authenticated: (user) => user.fullName.split(' ').first,
-      orElse: () => '',
-    );
+    final userName = switch (authState) {
+      AuthAuthenticated(:final user) => user.name.split(' ').first,
+      _ => '',
+    };
 
     return Scaffold(
       backgroundColor: BBColors.bgCanvas,

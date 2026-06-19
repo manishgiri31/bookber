@@ -9,19 +9,11 @@ class AuthRepository {
 
   final DioClient _dio;
 
-  Future<ApiResult<AuthResponse>> login(
-    String email,
-    String password,
-    String role,
-  ) async {
+  Future<ApiResult<AuthResponse>> login(String identifier, String password) async {
     return ApiResult.guard(() async {
       final response = await _dio.post(
-        '/api/auth/login',
-        body: {
-          'email': email,
-          'password': password,
-          'role': role,
-        },
+        '/auth/login',
+        body: {'identifier': identifier, 'password': password},
       );
       return AuthResponse.fromJson(response as Map<String, dynamic>);
     });
@@ -29,24 +21,47 @@ class AuthRepository {
 
   Future<ApiResult<AuthResponse>> register(RegisterRequest req) async {
     return ApiResult.guard(() async {
-      final response = await _dio.post(
-        '/api/auth/register',
-        body: req.toJson(),
-      );
+      final response = await _dio.post('/auth/register', body: req.toJson());
       return AuthResponse.fromJson(response as Map<String, dynamic>);
     });
   }
 
   Future<ApiResult<UserProfile>> getMe() async {
     return ApiResult.guard(() async {
-      final response = await _dio.get('/api/auth/me');
-      return UserProfile.fromJson(response as Map<String, dynamic>);
+      final response = await _dio.get('/auth/me');
+      final data = response as Map<String, dynamic>;
+      final userData = data['user'] is Map<String, dynamic>
+          ? data['user'] as Map<String, dynamic>
+          : data;
+      return UserProfile.fromJson(userData);
+    });
+  }
+
+  Future<ApiResult<AuthResponse>> refresh(String refreshToken) async {
+    return ApiResult.guard(() async {
+      final response = await _dio.post(
+        '/auth/refresh',
+        body: {'refreshToken': refreshToken},
+      );
+      return AuthResponse.fromJson(response as Map<String, dynamic>);
     });
   }
 
   Future<ApiResult<void>> logout() async {
     return ApiResult.guard(() async {
-      await _dio.post('/api/auth/logout');
+      await _dio.post('/auth/logout');
+    });
+  }
+
+  Future<ApiResult<void>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    return ApiResult.guard(() async {
+      await _dio.patch('/auth/change-password', body: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      });
     });
   }
 }

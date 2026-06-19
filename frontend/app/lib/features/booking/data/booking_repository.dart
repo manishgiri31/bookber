@@ -19,8 +19,9 @@ class BookingRepository {
         'date': DateTime(date.year, date.month, date.day).toIso8601String().split('T').first,
         'duration': durationMinutes,
       };
-      final response = await _dioClient.get('/api/barbers/$barberId/slots', queryParams: queryParams);
-      final slots = (response['slots'] as List<dynamic>?)
+      final response = await _dioClient.get('/barbers/$barberId/slots', queryParams: queryParams);
+      final raw = response as Map<String, dynamic>? ?? {};
+      final slots = (raw['slots'] as List?)
               ?.whereType<Map<String, dynamic>>()
               .map(TimeSlot.fromJson)
               .toList() ??
@@ -30,44 +31,36 @@ class BookingRepository {
   }
 
   Future<ApiResult<Booking>> createBooking({
-    BookingFormState? formState,
+    required String shopId,
     String? barberId,
-    String? barberName,
-    List<ServiceItem>? services,
-    DateTime? scheduledAt,
+    List<String> serviceIds = const [],
+    bool walkIn = false,
   }) async {
     return ApiResult.guard(() async {
-      final form = formState;
       final body = <String, dynamic>{
-        'shopId': form?.shopId ?? '',
-        'barberId': form?.selectedBarberId ?? barberId,
-        'serviceIds': form?.selectedServiceIds ?? services?.map((service) => service.id).toList() ?? const <String>[],
-        'paymentMethod': form?.paymentMethod ?? 'cash',
-        'mode': form?.isJoinQueue == true ? 'queue' : 'appointment',
+        'shopId': shopId,
+        if (barberId != null) 'barberId': barberId,
+        'serviceIds': serviceIds,
+        'walkIn': walkIn,
       };
 
-      final slotTime = form?.selectedSlot?.startTime ?? scheduledAt;
-      if (slotTime != null) {
-        body['scheduledAt'] = slotTime.toIso8601String();
-      }
-
-      final response = await _dioClient.post('/api/bookings', body: body);
-      final bookingJson = response is Map<String, dynamic>
-          ? (response['booking'] as Map<String, dynamic>?) ?? response
-          : <String, dynamic>{};
-      return Booking.fromJson(bookingJson);
+      final response = await _dioClient.post('/bookings', body: body);
+      final data = response as Map<String, dynamic>? ?? {};
+      return Booking.fromJson(
+        data['booking'] is Map<String, dynamic> ? data['booking'] as Map<String, dynamic> : data,
+      );
     });
   }
 
   Future<ApiResult<List<Booking>>> getMyBookings() async {
     return ApiResult.guard(() async {
-      final response = await _dioClient.get('/api/bookings/my');
-      final bookings = (response['bookings'] as List<dynamic>?)
-              ?.whereType<Map<String, dynamic>>()
-              .map(Booking.fromJson)
-              .toList() ??
-          [];
-      return bookings;
+      final response = await _dioClient.get('/bookings/my');
+      final data = response as Map<String, dynamic>? ?? {};
+      final list = data['bookings'] as List? ?? data['data'] as List? ?? [];
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(Booking.fromJson)
+          .toList();
     });
   }
 
@@ -75,33 +68,33 @@ class BookingRepository {
 
   Future<ApiResult<List<ServiceItem>>> fetchServices(String shopId) async {
     return ApiResult.guard(() async {
-      final response = await _dioClient.get('/api/shops/$shopId/services');
-      final items = response is Map<String, dynamic>
-          ? (response['services'] as List<dynamic>?) ?? response['data'] as List<dynamic>? ?? const <dynamic>[]
-          : response is List<dynamic>
-              ? response
-              : const <dynamic>[];
-      return items.whereType<Map<String, dynamic>>().map(ServiceItem.fromJson).toList(growable: false);
+      final response = await _dioClient.get('/shops/$shopId/services');
+      final data = response as Map<String, dynamic>? ?? {};
+      final list = data['services'] as List? ?? data['data'] as List? ?? [];
+      return list
+          .whereType<Map<String, dynamic>>()
+          .map(ServiceItem.fromJson)
+          .toList();
     });
   }
 
   Future<ApiResult<Booking>> getBookingById(String bookingId) async {
     return ApiResult.guard(() async {
-      final response = await _dioClient.get('/api/bookings/$bookingId');
-      final bookingJson = response is Map<String, dynamic>
-          ? (response['booking'] as Map<String, dynamic>?) ?? response
-          : <String, dynamic>{};
-      return Booking.fromJson(bookingJson);
+      final response = await _dioClient.get('/bookings/$bookingId');
+      final data = response as Map<String, dynamic>? ?? {};
+      return Booking.fromJson(
+        data['booking'] is Map<String, dynamic> ? data['booking'] as Map<String, dynamic> : data,
+      );
     });
   }
 
   Future<ApiResult<void>> cancelBooking(String bookingId) async {
     return ApiResult.guard(() async {
-      await _dioClient.patch('/api/bookings/$bookingId/cancel');
+      await _dioClient.patch('/bookings/$bookingId/cancel');
     });
   }
 }
 
-final bookingRepositoryProvider = Provider<BookingRepository>((ref) {
-  return BookingRepository(ref.read(dioClientProvider));
-});
+final bookingRepositoryProvider = Provider<BookingRepository>(
+  (ref) => BookingRepository(ref.read(dioClientProvider)),
+);

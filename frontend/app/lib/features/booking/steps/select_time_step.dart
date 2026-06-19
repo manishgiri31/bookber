@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/models/bookber_models.dart' show TimeSlot;
 import '../widgets/booking_step_indicator.dart';
 import '../providers/booking_form_provider.dart';
@@ -16,23 +16,22 @@ class SelectTimeStep extends ConsumerStatefulWidget {
 class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final formState = ref.watch(bookingFormProvider);
     final selectedDate = formState.selectedDate ?? DateTime.now();
 
     return Column(
       children: [
-        // Step indicator
         const BookingStepIndicator(currentStep: 3),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // Book Slot / Join Queue toggle
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
-              borderRadius: BorderRadius.circular(999),
+              color: colors.bgElevated,
+              borderRadius: BBRadius.pill,
             ),
             padding: const EdgeInsets.all(4),
             child: Row(
@@ -41,23 +40,21 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                   child: GestureDetector(
                     onTap: () => ref.read(bookingFormProvider.notifier).toggleJoinQueue(),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: BBMotion.fast,
                       height: 40,
                       decoration: BoxDecoration(
                         color: !formState.isJoinQueue
-                            ? BookBerPalette.primaryAccent
+                            ? BBColors.brandPrimary
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BBRadius.pill,
                       ),
                       child: Center(
                         child: Text(
                           'Book Slot',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                          style: BBTypography.labelM.copyWith(
                             color: !formState.isJoinQueue
-                                ? BookBerPalette.bgPrimary
-                                : BookBerPalette.textSecondary,
+                                ? Colors.white
+                                : colors.textSecondary,
                           ),
                         ),
                       ),
@@ -68,23 +65,21 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                   child: GestureDetector(
                     onTap: () => ref.read(bookingFormProvider.notifier).toggleJoinQueue(),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
+                      duration: BBMotion.fast,
                       height: 40,
                       decoration: BoxDecoration(
                         color: formState.isJoinQueue
-                            ? BookBerPalette.primaryAccent
+                            ? BBColors.brandPrimary
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BBRadius.pill,
                       ),
                       child: Center(
                         child: Text(
                           'Join Queue',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                          style: BBTypography.labelM.copyWith(
                             color: formState.isJoinQueue
-                                ? BookBerPalette.bgPrimary
-                                : BookBerPalette.textSecondary,
+                                ? Colors.white
+                                : colors.textSecondary,
                           ),
                         ),
                       ),
@@ -95,105 +90,71 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // Content based on mode
         if (formState.isJoinQueue)
-          _buildJoinQueueContent(formState)
+          _buildJoinQueueContent(formState, colors)
         else
-          _buildBookSlotContent(selectedDate, formState),
+          _buildBookSlotContent(selectedDate, formState, colors),
       ],
     );
   }
 
-  Widget _buildJoinQueueContent(BookingFormState formState) {
+  Widget _buildJoinQueueContent(BookingFormState formState, BBColorTheme colors) {
     return Expanded(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Live wait time
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(BBSpacing.px32),
               decoration: BoxDecoration(
-                color: BookBerPalette.bgSurface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: const Color(0x0FFFFFFF),
-                  width: 1,
-                ),
+                color: colors.bgSurface,
+                borderRadius: BBRadius.xl,
+                border: Border.all(color: colors.borderSubtle),
               ),
               child: Column(
                 children: [
-                  const Icon(
-                    Icons.access_time,
-                    size: 48,
-                    color: BookBerPalette.primaryAccent,
-                  ),
-                  const SizedBox(height: 16),
+                  const Icon(Icons.access_time, size: 48, color: BBColors.brandPrimary),
+                  const SizedBox(height: BBSpacing.px16),
                   Text(
                     'Current wait',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.bodyM.copyWith(color: colors.textSecondary),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: BBSpacing.px8),
                   Text(
                     '~12 minutes',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: BookBerPalette.primaryAccent,
-                    ),
+                    style: BBTypography.numericXL.copyWith(color: BBColors.brandPrimary),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: BBSpacing.px16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.people,
-                        size: 20,
-                        color: BookBerPalette.textSecondary,
-                      ),
-                      const SizedBox(width: 8),
+                      Icon(Icons.people, size: 20, color: colors.textSecondary),
+                      const SizedBox(width: BBSpacing.px8),
                       Text(
                         "You'd be #4 in queue",
-                        style: GoogleFonts.dmSans(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: BookBerPalette.textPrimary,
-                        ),
+                        style: BBTypography.bodyL.copyWith(color: colors.textPrimary),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
-            // Join Queue button
+            const SizedBox(height: BBSpacing.px32),
             SizedBox(
               width: double.infinity,
-              height: 56,
+              height: BBTouchTarget.button,
               child: ElevatedButton(
                 onPressed: () => ref.read(bookingFormProvider.notifier).nextStep(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: BookBerPalette.primaryAccent,
-                  foregroundColor: BookBerPalette.bgPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+                  backgroundColor: BBColors.brandPrimary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                   elevation: 0,
                 ),
-                child: Text(
-                  'Join Queue Now',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+                child: Text('Join Queue Now', style: BBTypography.button),
               ),
             ),
           ],
@@ -202,21 +163,22 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
     );
   }
 
-  Widget _buildBookSlotContent(DateTime selectedDate, BookingFormState formState) {
+  Widget _buildBookSlotContent(
+      DateTime selectedDate, BookingFormState formState, BBColorTheme colors) {
     return Column(
       children: [
-        // Date picker row
         SizedBox(
           height: 60,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding:
+                const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
             itemCount: 7,
             itemBuilder: (context, index) {
               final date = DateTime.now().add(Duration(days: index));
               final isSelected = formState.selectedDate != null &&
                   _isSameDay(date, formState.selectedDate!);
-              final isPast = index == 0 && date.hour < 6; // Early morning considered past
+              final isPast = index == 0 && date.hour < 6;
 
               return Padding(
                 padding: EdgeInsets.only(right: index < 6 ? 12 : 0),
@@ -231,36 +193,36 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                     height: 56,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? BookBerPalette.primaryAccent
-                          : BookBerPalette.bgSurface,
-                      borderRadius: BorderRadius.circular(12),
+                          ? BBColors.brandPrimary
+                          : colors.bgSurface,
+                      borderRadius: BBRadius.md,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          index == 0 ? 'Today' : index == 1 ? 'Tomorrow' : _getDayName(date),
-                          style: GoogleFonts.dmSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
+                          index == 0
+                              ? 'Today'
+                              : index == 1
+                                  ? 'Tomorrow'
+                                  : _getDayName(date),
+                          style: BBTypography.caption.copyWith(
                             color: isSelected
-                                ? BookBerPalette.bgPrimary
+                                ? Colors.white
                                 : isPast
-                                    ? BookBerPalette.textMuted
-                                    : BookBerPalette.textSecondary,
+                                    ? colors.textDisabled
+                                    : colors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: BBSpacing.px4),
                         Text(
                           date.day.toString(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
+                          style: BBTypography.headingS.copyWith(
                             color: isSelected
-                                ? BookBerPalette.bgPrimary
+                                ? Colors.white
                                 : isPast
-                                    ? BookBerPalette.textMuted
-                                    : BookBerPalette.textPrimary,
+                                    ? colors.textDisabled
+                                    : colors.textPrimary,
                           ),
                         ),
                       ],
@@ -271,18 +233,17 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
             },
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // Time slots grid
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
             child: FutureBuilder<List<TimeSlot>>(
               future: _getTimeSlots(formState),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
-                    child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+                    child: CircularProgressIndicator(color: BBColors.brandPrimary),
                   );
                 }
 
@@ -290,10 +251,7 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                   return Center(
                     child: Text(
                       'Error loading time slots',
-                      style: GoogleFonts.dmSans(
-                        fontSize: 14,
-                        color: BookBerPalette.textSecondary,
-                      ),
+                      style: BBTypography.bodyM.copyWith(color: colors.textSecondary),
                     ),
                   );
                 }
@@ -321,15 +279,15 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                         decoration: BoxDecoration(
                           color: slot.isAvailable
                               ? isSelected
-                                  ? BookBerPalette.primaryAccent
-                                  : BookBerPalette.bgSurface
-                              : BookBerPalette.bgPrimary,
-                          borderRadius: BorderRadius.circular(12),
+                                  ? BBColors.brandPrimary
+                                  : colors.bgSurface
+                              : colors.bgCanvas,
+                          borderRadius: BBRadius.md,
                           border: Border.all(
                             color: slot.isAvailable
                                 ? isSelected
-                                    ? BookBerPalette.primaryAccent
-                                    : const Color(0x0FFFFFFF)
+                                    ? BBColors.brandPrimary
+                                    : colors.borderSubtle
                                 : Colors.transparent,
                             width: 1,
                           ),
@@ -339,14 +297,12 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                             Center(
                               child: Text(
                                 slot.time,
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                                style: BBTypography.labelM.copyWith(
                                   color: slot.isAvailable
                                       ? isSelected
-                                          ? BookBerPalette.bgPrimary
-                                          : BookBerPalette.textPrimary
-                                      : BookBerPalette.textMuted,
+                                          ? Colors.white
+                                          : colors.textPrimary
+                                      : colors.textDisabled,
                                   decoration: !slot.isAvailable
                                       ? TextDecoration.lineThrough
                                       : null,
@@ -363,14 +319,12 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: BookBerPalette.queueSafe,
-                                    borderRadius: BorderRadius.circular(999),
+                                    color: BBColors.success,
+                                    borderRadius: BBRadius.pill,
                                   ),
                                   child: Text(
                                     'Next',
-                                    style: GoogleFonts.dmSans(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
+                                    style: BBTypography.overline.copyWith(
                                       color: Colors.white,
                                     ),
                                   ),
@@ -387,63 +341,45 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
           ),
         ),
 
-        // Bottom section
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(BBSpacing.px20),
           decoration: BoxDecoration(
-            color: BookBerPalette.bgSurface,
-            border: Border(
-              top: BorderSide(
-                color: const Color(0x0FFFFFFF),
-                width: 1,
-              ),
-            ),
+            color: colors.bgSurface,
+            border: Border(top: BorderSide(color: colors.borderSubtle)),
           ),
           child: Row(
             children: [
-              // Back button
               Expanded(
                 child: TextButton(
-                  onPressed: () => ref.read(bookingFormProvider.notifier).previousStep(),
+                  onPressed: () =>
+                      ref.read(bookingFormProvider.notifier).previousStep(),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: BBSpacing.px14),
                   ),
                   child: Text(
                     'Back',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.button.copyWith(color: colors.textSecondary),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              // Continue button
+              const SizedBox(width: BBSpacing.px12),
               Expanded(
                 child: SizedBox(
-                  height: 56,
+                  height: BBTouchTarget.button,
                   child: ElevatedButton(
                     onPressed: formState.selectedTimeSlot != null
-                        ? () => ref.read(bookingFormProvider.notifier).nextStep()
+                        ? () =>
+                            ref.read(bookingFormProvider.notifier).nextStep()
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: BookBerPalette.primaryAccent,
-                      foregroundColor: BookBerPalette.bgPrimary,
-                      disabledBackgroundColor: BookBerPalette.bgElevated,
-                      disabledForegroundColor: BookBerPalette.textMuted,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
+                      backgroundColor: BBColors.brandPrimary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: colors.bgElevated,
+                      disabledForegroundColor: colors.textDisabled,
+                      shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text('Continue', style: BBTypography.button),
                   ),
                 ),
               ),
@@ -466,12 +402,6 @@ class _SelectTimeStepState extends ConsumerState<SelectTimeStep> {
   }
 
   Future<List<TimeSlot>> _getTimeSlots(BookingFormState formState) async {
-    // Use the provider
-    final barberId = formState.anyBarber ? 'any' : (formState.selectedBarberId ?? 'any');
-    final date = formState.selectedDate ?? DateTime.now();
-    
-    // This would normally use the provider, but for simplicity we'll call it directly
-    // In a real implementation, you'd use: ref.read(availableTimeSlotsProvider((barberId: barberId, date: date)))
     return [
       TimeSlot(time: '10:00 AM', isAvailable: true, isNextAvailable: true),
       TimeSlot(time: '10:30 AM', isAvailable: true),

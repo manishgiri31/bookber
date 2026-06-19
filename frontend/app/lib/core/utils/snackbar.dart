@@ -1,27 +1,62 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+
+import '../design/tokens.dart';
 
 class BookerSnackbar {
-  static void _show(BuildContext context, String message, {required Color borderColor, required IconData icon}) {
-    final snack = SnackBar(
-      backgroundColor: AppColors.bgSecondary,
-      content: Row(
-        children: [
-          Icon(icon, color: borderColor),
-          const SizedBox(width: 12),
-          Expanded(child: Text(message, style: const TextStyle(color: AppColors.textPrimary))),
-        ],
+  static void _show(
+    BuildContext context,
+    String message, {
+    required Color accentColor,
+    required IconData icon,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: BBColors.bgElevated,
+        content: Row(
+          children: [
+            Icon(icon, color: accentColor, size: BBIconSize.md),
+            const SizedBox(width: BBSpacing.px12),
+            Expanded(
+              child: Text(
+                message,
+                style: BBTypography.bodyM.copyWith(color: BBColors.textPrimary),
+              ),
+            ),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BBRadius.md),
+        margin: const EdgeInsets.all(BBSpacing.px16),
+        duration: const Duration(seconds: 3),
       ),
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.all(16),
     );
-
-    ScaffoldMessenger.of(context).showSnackBar(snack);
   }
 
-  static void success(BuildContext context, String message) => _show(context, message, borderColor: AppColors.success, icon: Icons.check_circle);
-  static void error(BuildContext context, String message) => _show(context, message, borderColor: AppColors.error, icon: Icons.error);
-  static void info(BuildContext context, String message) => _show(context, message, borderColor: AppColors.accentPrimary, icon: Icons.info);
-  static void warning(BuildContext context, String message) => _show(context, message, borderColor: AppColors.warning, icon: Icons.warning);
+  static void success(BuildContext context, String message) => _show(
+        context,
+        message,
+        accentColor: BBColors.success,
+        icon: Icons.check_circle_outline_rounded,
+      );
+
+  static void error(BuildContext context, String message) => _show(
+        context,
+        message,
+        accentColor: BBColors.error,
+        icon: Icons.error_outline_rounded,
+      );
+
+  static void info(BuildContext context, String message) => _show(
+        context,
+        message,
+        accentColor: BBColors.brandPrimary,
+        icon: Icons.info_outline_rounded,
+      );
+
+  static void warning(BuildContext context, String message) => _show(
+        context,
+        message,
+        accentColor: BBColors.warning,
+        icon: Icons.warning_amber_rounded,
+      );
 }

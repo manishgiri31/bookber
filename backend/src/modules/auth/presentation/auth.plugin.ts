@@ -16,7 +16,15 @@ const authPluginImpl: FastifyPluginCallback = (app: FastifyInstance, _opts, done
       throw app.httpErrors.unauthorized("Missing access token");
     }
 
-    request.user = app.jwt.verify<AccessTokenPayload>(token);
+    try {
+      request.user = app.jwt.verify<AccessTokenPayload>(token);
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code ?? "";
+      if (code.startsWith("FAST_JWT_")) {
+        throw app.httpErrors.unauthorized("Token expired or invalid");
+      }
+      throw err;
+    }
     return Promise.resolve();
   });
 

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
+import '../../../core/models/bookber_models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../providers/barber_providers.dart';
-import '../../../core/models/bookber_models.dart';
 import '../../barber_dashboard/presentation/barber_dashboard_controller.dart';
-import '../widgets/barber_bottom_nav.dart';
 
 class BarberScheduleScreen extends ConsumerStatefulWidget {
   const BarberScheduleScreen({super.key});
 
   @override
-  ConsumerState<BarberScheduleScreen> createState() => _BarberScheduleScreenState();
+  ConsumerState<BarberScheduleScreen> createState() =>
+      _BarberScheduleScreenState();
 }
 
 class _BarberScheduleScreenState extends ConsumerState<BarberScheduleScreen> {
@@ -20,36 +21,39 @@ class _BarberScheduleScreenState extends ConsumerState<BarberScheduleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
-            // Week View Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  BBSpacing.px20, BBSpacing.px20, BBSpacing.px20, 0),
+              child: Row(
+                children: [
+                  Text('Schedule',
+                      style: BBTypography.displayS
+                          .copyWith(color: colors.textPrimary)),
+                ],
+              ),
+            ),
+            const SizedBox(height: BBSpacing.px16),
             _WeekViewHeader(
               selectedDay: _selectedDay,
               onDaySelected: (day) => setState(() => _selectedDay = day),
             ),
-            const SizedBox(height: 24),
-
-            // Time Grid
-            Expanded(
-              child: _TimeGrid(selectedDay: _selectedDay),
-            ),
+            const SizedBox(height: BBSpacing.px16),
+            Expanded(child: _TimeGrid(selectedDay: _selectedDay)),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showWorkingHoursSheet(context),
-        backgroundColor: BookBerPalette.primaryAccent,
-        foregroundColor: BookBerPalette.bgPrimary,
+        backgroundColor: BBColors.brandPrimary,
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
-      ),
-      bottomNavigationBar: BarberBottomNav(
-        currentIndex: 2,
-        onTap: (index) {
-          // TODO: Navigate to respective screens
-        },
       ),
     );
   }
@@ -57,11 +61,8 @@ class _BarberScheduleScreenState extends ConsumerState<BarberScheduleScreen> {
   void _showWorkingHoursSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: BookBerPalette.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => _WorkingHoursSheet(),
+      isScrollControlled: true,
+      builder: (_) => _WorkingHoursSheet(),
     );
   }
 }
@@ -77,53 +78,50 @@ class _WeekViewHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final days = ['Today', 'Tomorrow', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return SizedBox(
       height: 60,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding:
+            const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
         itemCount: days.length,
         itemBuilder: (context, index) {
           final day = days[index];
           final isSelected = day == selectedDay;
 
           return Padding(
-            padding: EdgeInsets.only(right: index < days.length - 1 ? 12 : 0),
+            padding: EdgeInsets.only(
+                right: index < days.length - 1 ? BBSpacing.px12 : 0),
             child: GestureDetector(
               onTap: () => onDaySelected(day),
               child: Container(
                 width: 70,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? BookBerPalette.primaryAccent
-                      : BookBerPalette.bgSurface,
-                  borderRadius: BorderRadius.circular(12),
+                  color: isSelected ? BBColors.brandPrimary : colors.bgSurface,
+                  borderRadius: BBRadius.md,
+                  border: isSelected
+                      ? null
+                      : Border.all(color: colors.borderSubtle),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       day,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected
-                            ? BookBerPalette.bgPrimary
-                            : BookBerPalette.textSecondary,
+                      style: BBTypography.caption.copyWith(
+                        color: isSelected ? Colors.white : colors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: BBSpacing.px4),
                     Text(
                       '${5 + index}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected
-                            ? BookBerPalette.bgPrimary
-                            : BookBerPalette.textPrimary,
+                      style: BBTypography.headingM.copyWith(
+                        color:
+                            isSelected ? Colors.white : colors.textPrimary,
                       ),
                     ),
                   ],
@@ -144,18 +142,16 @@ class _TimeGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final scheduleAsync = ref.watch(barberScheduleProvider(selectedDay));
 
     return scheduleAsync.when(
       data: (bookings) => _TimeGridContent(bookings: bookings),
       loading: () => const Center(
-        child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
-      ),
-      error: (_, __) => const Center(
-        child: Text(
-          'Error loading schedule',
-          style: TextStyle(color: BookBerPalette.textSecondary),
-        ),
+          child: CircularProgressIndicator(color: BBColors.brandPrimary)),
+      error: (_, __) => Center(
+        child: Text('Error loading schedule',
+            style: BBTypography.bodyM.copyWith(color: colors.textSecondary)),
       ),
     );
   }
@@ -168,36 +164,31 @@ class _TimeGridContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hours = List.generate(12, (index) => '${9 + index}:00 ${index < 3 ? 'AM' : 'PM'}');
+    final hours = List.generate(
+        12, (i) => '${9 + i}:00 ${i < 3 ? 'AM' : 'PM'}');
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding:
+          const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
       itemCount: hours.length,
       itemBuilder: (context, index) {
-        final time = hours[index];
         final booking = index < bookings.length ? bookings[index] : null;
-
         return _TimeSlotRow(
-          time: time,
-          booking: index < bookings.length ? booking : null,
+          time: hours[index],
+          booking: booking,
           onTap: () {
-            if (booking != null) {
-              _showBookingDetailModal(context, booking);
-            }
+            if (booking != null) _showBookingDetail(context, booking);
           },
         );
       },
     );
   }
 
-  void _showBookingDetailModal(BuildContext context, BookingSlot booking) {
+  void _showBookingDetail(BuildContext context, BookingSlot booking) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: BookBerPalette.bgSurface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => _BookingDetailModal(booking: booking),
+      isScrollControlled: true,
+      builder: (_) => _BookingDetailModal(booking: booking),
     );
   }
 }
@@ -215,25 +206,19 @@ class _TimeSlotRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     return Container(
-      height: 80,
-      margin: const EdgeInsets.only(bottom: 8),
+      height: 76,
+      margin: const EdgeInsets.only(bottom: BBSpacing.px8),
       child: Row(
         children: [
-          // Time label
           SizedBox(
             width: 60,
-            child: Text(
-              time,
-              style: GoogleFonts.dmSans(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: BookBerPalette.textSecondary,
-              ),
-            ),
+            child: Text(time,
+                style: BBTypography.caption
+                    .copyWith(color: colors.textSecondary)),
           ),
-          const SizedBox(width: 12),
-          // Booking block or available slot
+          const SizedBox(width: BBSpacing.px12),
           Expanded(
             child: GestureDetector(
               onTap: onTap,
@@ -253,92 +238,66 @@ class _BookingBlock extends StatelessWidget {
 
   final BookingSlot booking;
 
+  static Color _color(BookingStatus status) => switch (status) {
+        BookingStatus.confirmed => BBColors.brandPrimary,
+        BookingStatus.inProgress => BBColors.warning,
+        BookingStatus.completed => BBColors.success,
+        BookingStatus.noShow => BBColors.error,
+      };
+
+  static String _label(BookingStatus status) => switch (status) {
+        BookingStatus.confirmed => 'Confirmed',
+        BookingStatus.inProgress => 'In Progress',
+        BookingStatus.completed => 'Completed',
+        BookingStatus.noShow => 'No-Show',
+      };
+
   @override
   Widget build(BuildContext context) {
-    Color statusColor;
-    String statusLabel;
-
-    switch (booking.status) {
-      case BookingStatus.confirmed:
-        statusColor = BookBerPalette.primaryAccent;
-        statusLabel = 'Confirmed';
-        break;
-      case BookingStatus.inProgress:
-        statusColor = BookBerPalette.warningAmber;
-        statusLabel = 'In Progress';
-        break;
-      case BookingStatus.completed:
-        statusColor = BookBerPalette.queueSafe;
-        statusLabel = 'Completed';
-        break;
-      case BookingStatus.noShow:
-        statusColor = BookBerPalette.urgentRed;
-        statusLabel = 'No-Show';
-        break;
-    }
+    final colors = context.bbColors;
+    final statusColor = _color(booking.status);
+    final statusLabel = _label(booking.status);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(BBSpacing.px12),
       decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: statusColor,
-          width: 1,
-        ),
+        color: statusColor.withValues(alpha: 0.1),
+        borderRadius: BBRadius.md,
+        border: Border.all(color: statusColor, width: 1),
       ),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  booking.customerName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  booking.service,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: BookBerPalette.textSecondary,
-                  ),
-                ),
+                Text(booking.customerName,
+                    style: BBTypography.headingS
+                        .copyWith(color: colors.textPrimary)),
+                const SizedBox(height: BBSpacing.px2),
+                Text(booking.service,
+                    style: BBTypography.bodyS
+                        .copyWith(color: colors.textSecondary)),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                '₹${booking.price}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: statusColor,
-                ),
-              ),
-              const SizedBox(height: 4),
+              Text('₹${booking.price}',
+                  style: BBTypography.headingS.copyWith(color: statusColor)),
+              const SizedBox(height: BBSpacing.px4),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.px8, vertical: BBSpacing.px2),
                 decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(999),
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BBRadius.pill,
                 ),
-                child: Text(
-                  statusLabel,
-                  style: GoogleFonts.dmSans(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
-                ),
+                child: Text(statusLabel,
+                    style: BBTypography.caption.copyWith(color: statusColor)),
               ),
             ],
           ),
@@ -351,196 +310,137 @@ class _BookingBlock extends StatelessWidget {
 class _AvailableSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     return Container(
       decoration: BoxDecoration(
-        color: BookBerPalette.bgElevated.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0x0FFFFFFF),
-          width: 1,
-        ),
+        color: colors.bgSurface,
+        borderRadius: BBRadius.md,
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Center(
-        child: Text(
-          'Available',
-          style: GoogleFonts.dmSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: BookBerPalette.textMuted,
-          ),
-        ),
+        child: Text('Available',
+            style: BBTypography.labelS.copyWith(color: colors.textDisabled)),
       ),
     );
   }
 }
 
-class _BookingDetailModal extends StatelessWidget {
+class _BookingDetailModal extends ConsumerWidget {
   const _BookingDetailModal({required this.booking});
 
   final BookingSlot booking;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: const EdgeInsets.all(BBSpacing.px24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: BookBerPalette.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          Text(
-            'Booking Details',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Customer info
+          Text('Booking Details',
+              style: BBTypography.headingL.copyWith(color: colors.textPrimary)),
+          const SizedBox(height: BBSpacing.px24),
           Row(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
-                  color: BookBerPalette.bgElevated,
-                  borderRadius: BorderRadius.circular(999),
+                  color: BBColors.brandPrimaryDim,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    booking.customerName.isNotEmpty
+                        ? booking.customerName[0].toUpperCase()
+                        : '?',
+                    style: BBTypography.headingL
+                        .copyWith(color: BBColors.brandPrimary),
+                  ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: BBSpacing.px16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      booking.customerName,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      booking.service,
-                      style: GoogleFonts.dmSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: BookBerPalette.textSecondary,
-                      ),
-                    ),
+                    Text(booking.customerName,
+                        style: BBTypography.headingM
+                            .copyWith(color: colors.textPrimary)),
+                    Text(booking.service,
+                        style: BBTypography.bodyM
+                            .copyWith(color: colors.textSecondary)),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Time and price
+          const SizedBox(height: BBSpacing.px24),
           Row(
             children: [
               Expanded(
-                child: _DetailItem(
-                  label: 'Time',
-                  value: booking.time,
-                ),
-              ),
+                  child: _DetailItem(
+                      label: 'Time', value: booking.time, colors: colors)),
               Expanded(
-                child: _DetailItem(
-                  label: 'Duration',
-                  value: '${booking.duration} min',
-                ),
-              ),
+                  child: _DetailItem(
+                      label: 'Duration',
+                      value: '${booking.duration} min',
+                      colors: colors)),
               Expanded(
-                child: _DetailItem(
-                  label: 'Price',
-                  value: '₹${booking.price}',
-                ),
-              ),
+                  child: _DetailItem(
+                      label: 'Price',
+                      value: '₹${booking.price}',
+                      colors: colors)),
             ],
           ),
-          const SizedBox(height: 32),
-
-          // Action buttons
+          const SizedBox(height: BBSpacing.px24),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // TODO: Call customer
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Phone calling feature coming soon')),
+                    );
                   },
                   icon: const Icon(Icons.phone_outlined, size: 18),
-                  label: Text(
-                    'Call',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: BookBerPalette.textPrimary,
-                    side: BorderSide(color: const Color(0x0FFFFFFF)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
+                  label: const Text('Call'),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: BBSpacing.px12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Mark complete
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: BookBerPalette.primaryAccent,
-                    foregroundColor: BookBerPalette.bgPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Complete',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Complete'),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: BBSpacing.px12),
           SizedBox(
             width: double.infinity,
             child: TextButton(
-              onPressed: () {
-                // TODO: Cancel booking
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await ref
+                      .read(barberDashboardControllerProvider.notifier)
+                      .updateQueueEntryStatus(booking.id, 'CANCELLED');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Booking cancelled')),
+                    );
+                  }
+                } catch (_) {}
               },
-              child: Text(
-                'Cancel Booking',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: BookBerPalette.urgentRed,
-                ),
-              ),
+              style: TextButton.styleFrom(foregroundColor: BBColors.error),
+              child: const Text('Cancel Booking'),
             ),
           ),
+          const SizedBox(height: BBSpacing.px8),
         ],
       ),
     );
@@ -551,145 +451,112 @@ class _DetailItem extends StatelessWidget {
   const _DetailItem({
     required this.label,
     required this.value,
+    required this.colors,
   });
 
   final String label;
   final String value;
+  final BBColorTheme colors;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.dmSans(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: BookBerPalette.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: BookBerPalette.textPrimary,
-          ),
-        ),
+        Text(label,
+            style: BBTypography.caption.copyWith(color: colors.textSecondary)),
+        const SizedBox(height: BBSpacing.px4),
+        Text(value,
+            style: BBTypography.headingS.copyWith(color: colors.textPrimary)),
       ],
     );
   }
 }
 
-class _WorkingHoursSheet extends StatelessWidget {
+class _WorkingHoursSheet extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: BBSpacing.px24,
+        right: BBSpacing.px24,
+        top: BBSpacing.px8,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
           Center(
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: BookBerPalette.textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
+              margin: const EdgeInsets.only(bottom: BBSpacing.px16),
+              decoration:
+                  BoxDecoration(color: colors.border, borderRadius: BBRadius.pill),
             ),
           ),
-          Text(
-            'Add Working Hours',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Day multi-select
-          Text(
-            'Select Days',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: BookBerPalette.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 12),
+          Text('Add Working Hours',
+              style: BBTypography.headingL.copyWith(color: colors.textPrimary)),
+          const SizedBox(height: BBSpacing.px20),
+          Text('Select Days',
+              style: BBTypography.labelM.copyWith(color: colors.textPrimary)),
+          const SizedBox(height: BBSpacing.px12),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) {
-              return _DayChip(day: day);
-            }).toList(),
+            spacing: BBSpacing.px8,
+            runSpacing: BBSpacing.px8,
+            children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                .map((day) => _DayChip(day: day))
+                .toList(),
           ),
-          const SizedBox(height: 24),
-
-          // Time pickers
+          const SizedBox(height: BBSpacing.px24),
           Row(
             children: [
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Start Time',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: BookBerPalette.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    Text('Start Time',
+                        style: BBTypography.labelM
+                            .copyWith(color: colors.textPrimary)),
+                    const SizedBox(height: BBSpacing.px8),
                     Container(
                       height: 48,
                       decoration: BoxDecoration(
-                        color: BookBerPalette.bgElevated,
-                        borderRadius: BorderRadius.circular(12),
+                        color: colors.bgElevated,
+                        borderRadius: BBRadius.md,
+                        border: Border.all(color: colors.borderSubtle),
                       ),
-                      child: const Center(
-                        child: Text(
-                          '9:00 AM',
-                          style: TextStyle(color: BookBerPalette.textPrimary),
-                        ),
+                      child: Center(
+                        child: Text('9:00 AM',
+                            style: BBTypography.bodyM
+                                .copyWith(color: colors.textPrimary)),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: BBSpacing.px16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'End Time',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: BookBerPalette.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    Text('End Time',
+                        style: BBTypography.labelM
+                            .copyWith(color: colors.textPrimary)),
+                    const SizedBox(height: BBSpacing.px8),
                     Container(
                       height: 48,
                       decoration: BoxDecoration(
-                        color: BookBerPalette.bgElevated,
-                        borderRadius: BorderRadius.circular(12),
+                        color: colors.bgElevated,
+                        borderRadius: BBRadius.md,
+                        border: Border.all(color: colors.borderSubtle),
                       ),
-                      child: const Center(
-                        child: Text(
-                          '8:00 PM',
-                          style: TextStyle(color: BookBerPalette.textPrimary),
-                        ),
+                      child: Center(
+                        child: Text('8:00 PM',
+                            style: BBTypography.bodyM
+                                .copyWith(color: colors.textPrimary)),
                       ),
                     ),
                   ],
@@ -697,48 +564,48 @@ class _WorkingHoursSheet extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 32),
-
-          // Save button
+          const SizedBox(height: BBSpacing.px24),
           SizedBox(
             width: double.infinity,
-            height: 56,
+            height: BBTouchTarget.button,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // Save basic working hours for all days (wired)
-                final user = ProviderScope.containerOf(context).read(currentUserProvider);
+                final user = ProviderScope.containerOf(context)
+                    .read(currentUserProvider);
                 final barberId = user?.id ?? '';
                 final hours = [
-                  for (final d in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'])
-                    WorkingHour(day: d, startTime: '09:00', endTime: '20:00', isActive: true),
+                  for (final d in [
+                    'Mon','Tue','Wed','Thu','Fri','Sat','Sun'
+                  ])
+                    WorkingHour(
+                        day: d,
+                        startTime: '09:00',
+                        endTime: '20:00',
+                        isActive: true),
                 ];
                 if (barberId.isNotEmpty) {
-                  ProviderScope.containerOf(context).read(barberDashboardControllerProvider.notifier).saveWorkingHours(barberId, hours).then((res) {
-                    ProviderScope.containerOf(context).read(workingHoursProvider);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Working hours saved')));
+                  ProviderScope.containerOf(context)
+                      .read(barberDashboardControllerProvider.notifier)
+                      .saveWorkingHours(barberId, hours)
+                      .then((_) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Working hours saved')));
+                    }
                   }).catchError((e) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Failed to save: $e')));
+                    }
                   });
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: BookBerPalette.primaryAccent,
-                foregroundColor: BookBerPalette.bgPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Save',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: const Text('Save'),
             ),
           ),
+          const SizedBox(height: BBSpacing.px24),
         ],
       ),
     );
@@ -759,27 +626,24 @@ class _DayChipState extends State<_DayChip> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     return GestureDetector(
       onTap: () => setState(() => _isSelected = !_isSelected),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+            horizontal: BBSpacing.px16, vertical: BBSpacing.px10),
         decoration: BoxDecoration(
-          color: _isSelected
-              ? BookBerPalette.primaryAccent.withValues(alpha: 0.12)
-              : BookBerPalette.bgElevated,
-          borderRadius: BorderRadius.circular(999),
+          color: _isSelected ? BBColors.brandPrimaryDim : colors.bgElevated,
+          borderRadius: BBRadius.pill,
           border: Border.all(
-            color: _isSelected ? BookBerPalette.primaryAccent : const Color(0x0FFFFFFF),
-            width: 1,
+            color: _isSelected ? BBColors.brandPrimary : colors.borderSubtle,
           ),
         ),
         child: Text(
           widget.day,
-          style: GoogleFonts.dmSans(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: _isSelected ? BookBerPalette.primaryAccent : BookBerPalette.textSecondary,
+          style: BBTypography.labelS.copyWith(
+            color: _isSelected ? BBColors.brandPrimary : colors.textSecondary,
           ),
         ),
       ),

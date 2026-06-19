@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/models/bookber_models.dart';
 import '../../../core/network/api_result.dart';
 import 'providers/payment_providers.dart';
@@ -27,9 +27,8 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      ref.read(paymentControllerProvider.notifier).init(widget.bookingId);
-    });
+    Future.microtask(
+        () => ref.read(paymentControllerProvider.notifier).init(widget.bookingId));
   }
 
   @override
@@ -43,50 +42,56 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final formState = ref.watch(paymentFormProvider);
     final bookingAsync = ref.watch(bookingDetailsProvider(widget.bookingId));
     final paymentAsync = ref.watch(paymentControllerProvider);
     final isPaying = paymentAsync.isLoading;
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       appBar: AppBar(
-        backgroundColor: BookBerPalette.bgPrimary,
-        elevation: 0,
+        backgroundColor: colors.bgCanvas,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: BookBerPalette.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded,
+              size: BBIconSize.md, color: colors.textPrimary),
           onPressed: () => context.pop(),
         ),
+        title: Text('Payment',
+            style: BBTypography.headingL.copyWith(color: colors.textPrimary)),
       ),
       body: bookingAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) => _ErrorState(message: error.toString()),
+        error: (error, _) => Center(
+          child: Padding(
+            padding: BBSpacing.pagePadding,
+            child: Text(error.toString(),
+                textAlign: TextAlign.center,
+                style: BBTypography.bodyM.copyWith(color: colors.textSecondary)),
+          ),
+        ),
         data: (booking) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: BBSpacing.px8),
                 _Header(booking: booking),
-                const SizedBox(height: 32),
+                const SizedBox(height: BBSpacing.px24),
                 _ReceiptCard(booking: booking),
-                const SizedBox(height: 32),
-                Text(
-                  'Payment Method',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: BBSpacing.px24),
+                Text('Payment Method',
+                    style: BBTypography.headingM
+                        .copyWith(color: colors.textPrimary)),
+                const SizedBox(height: BBSpacing.px12),
                 const PaymentMethodCard(
                   method: PaymentMethod.cash,
                   title: 'Cash',
                   subtitle: 'Pay the barber directly',
                   icon: Icons.payments_outlined,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: BBSpacing.px10),
                 const PaymentMethodCard(
                   method: PaymentMethod.upi,
                   title: 'UPI',
@@ -94,10 +99,13 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   icon: Icons.qr_code_scanner_outlined,
                 ),
                 if (formState.selectedMethod == PaymentMethod.upi) ...[
-                  const SizedBox(height: 16),
-                  _TextInput(controller: _upiController, hintText: 'Enter UPI ID'),
+                  const SizedBox(height: BBSpacing.px12),
+                  TextField(
+                    controller: _upiController,
+                    decoration: const InputDecoration(labelText: 'UPI ID'),
+                  ),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: BBSpacing.px10),
                 const PaymentMethodCard(
                   method: PaymentMethod.card,
                   title: 'Card',
@@ -105,27 +113,27 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                   icon: Icons.credit_card_outlined,
                 ),
                 if (formState.selectedMethod == PaymentMethod.card) ...[
-                  const SizedBox(height: 16),
-                  _TextInput(
+                  const SizedBox(height: BBSpacing.px12),
+                  TextField(
                     controller: _cardNumberController,
-                    hintText: 'Card number',
+                    decoration: const InputDecoration(labelText: 'Card number'),
                     keyboardType: TextInputType.number,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: BBSpacing.px10),
                   Row(
                     children: [
                       Expanded(
-                        child: _TextInput(
+                        child: TextField(
                           controller: _cardExpiryController,
-                          hintText: 'MM/YY',
+                          decoration: const InputDecoration(labelText: 'MM/YY'),
                           keyboardType: TextInputType.number,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: BBSpacing.px12),
                       Expanded(
-                        child: _TextInput(
+                        child: TextField(
                           controller: _cardCvvController,
-                          hintText: 'CVV',
+                          decoration: const InputDecoration(labelText: 'CVV'),
                           keyboardType: TextInputType.number,
                           obscureText: true,
                         ),
@@ -133,14 +141,14 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                     ],
                   ),
                 ],
-                const SizedBox(height: 12),
+                const SizedBox(height: BBSpacing.px10),
                 const PaymentMethodCard(
                   method: PaymentMethod.wallet,
                   title: 'Wallet',
                   subtitle: 'Pay from BookBer Wallet',
                   icon: Icons.account_balance_wallet_outlined,
                 ),
-                const SizedBox(height: 100),
+                const SizedBox(height: 120),
               ],
             ),
           );
@@ -148,7 +156,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       ),
       bottomNavigationBar: bookingAsync.maybeWhen(
         data: (booking) => _PayButton(
-          amount: booking.finalAmount > 0 ? booking.finalAmount : booking.totalAmount,
+          amount: booking.finalAmount > 0
+              ? booking.finalAmount
+              : booking.totalAmount,
           isLoading: isPaying,
           onPressed: isPaying ? null : () => _handlePayment(context),
         ),
@@ -159,10 +169,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
   Future<void> _handlePayment(BuildContext context) async {
     final method = ref.read(paymentFormProvider).selectedMethod.apiValue;
-    final result = await ref.read(paymentControllerProvider.notifier).confirmPayment(
-          widget.bookingId,
-          method,
-        );
+    final result = await ref
+        .read(paymentControllerProvider.notifier)
+        .confirmPayment(widget.bookingId, method);
 
     if (!mounted) return;
     if (result case ApiError<Payment>(:final message)) {
@@ -180,41 +189,26 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+              horizontal: BBSpacing.px12, vertical: BBSpacing.px6),
           decoration: BoxDecoration(
-            color: BookBerPalette.queueSafe.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
+            color: BBColors.successDim,
+            borderRadius: BBRadius.pill,
           ),
-          child: Text(
-            'Service Complete',
-            style: GoogleFonts.dmSans(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: BookBerPalette.queueSafe,
-            ),
-          ),
+          child: Text('Service Complete',
+              style: BBTypography.labelS.copyWith(color: BBColors.success)),
         ),
-        const SizedBox(height: 16),
-        Text(
-          booking.shopName,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: BookBerPalette.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'with ${booking.barberName}',
-          style: GoogleFonts.dmSans(
-            fontSize: 14,
-            color: BookBerPalette.textSecondary,
-          ),
-        ),
+        const SizedBox(height: BBSpacing.px12),
+        Text(booking.shopName,
+            style: BBTypography.displayS.copyWith(color: colors.textPrimary)),
+        const SizedBox(height: BBSpacing.px4),
+        Text('with ${booking.barberName}',
+            style: BBTypography.bodyM.copyWith(color: colors.textSecondary)),
       ],
     );
   }
@@ -227,39 +221,38 @@ class _ReceiptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final total = booking.totalAmount;
     final discount = booking.discountAmount;
-    final finalAmount = booking.finalAmount > 0 ? booking.finalAmount : total - discount;
+    final finalAmount =
+        booking.finalAmount > 0 ? booking.finalAmount : total - discount;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: BBSpacing.cardPadding,
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
-        borderRadius: BorderRadius.circular(12),
+        color: colors.bgSurface,
+        borderRadius: BBRadius.card,
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Receipt',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: BookBerPalette.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...booking.services.map((service) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ReceiptRow(label: service.name, value: ''),
-            );
-          }),
-          const Divider(color: BookBerPalette.bgElevated),
+          Text('Receipt',
+              style: BBTypography.headingM.copyWith(color: colors.textPrimary)),
+          const SizedBox(height: BBSpacing.px12),
+          ...booking.services.map((s) => Padding(
+                padding: const EdgeInsets.only(bottom: BBSpacing.px8),
+                child: _ReceiptRow(label: s.name, value: ''),
+              )),
+          Divider(height: 1, color: colors.borderSubtle),
+          const SizedBox(height: BBSpacing.px8),
           _ReceiptRow(label: 'Subtotal', value: _money(total)),
-          if (discount > 0) _ReceiptRow(label: 'BookBer discount', value: '-${_money(discount)}'),
-          const SizedBox(height: 8),
-          _ReceiptRow(label: 'Total', value: _money(finalAmount), isTotal: true),
+          if (discount > 0)
+            _ReceiptRow(
+                label: 'Discount', value: '−${_money(discount)}'),
+          const SizedBox(height: BBSpacing.px8),
+          _ReceiptRow(
+              label: 'Total', value: _money(finalAmount), isTotal: true),
         ],
       ),
     );
@@ -279,63 +272,17 @@ class _ReceiptRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            label,
-            style: GoogleFonts.dmSans(
-              fontSize: isTotal ? 16 : 14,
-              fontWeight: isTotal ? FontWeight.w700 : FontWeight.w400,
-              color: isTotal ? BookBerPalette.textPrimary : BookBerPalette.textSecondary,
-            ),
-          ),
-        ),
-        Text(
-          value,
-          style: GoogleFonts.dmSans(
-            fontSize: isTotal ? 16 : 14,
-            fontWeight: isTotal ? FontWeight.w700 : FontWeight.w500,
-            color: isTotal ? BookBerPalette.textPrimary : BookBerPalette.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TextInput extends StatelessWidget {
-  const _TextInput({
-    required this.controller,
-    required this.hintText,
-    this.keyboardType,
-    this.obscureText = false,
-  });
-
-  final TextEditingController controller;
-  final String hintText;
-  final TextInputType? keyboardType;
-  final bool obscureText;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        style: GoogleFonts.dmSans(fontSize: 14, color: BookBerPalette.textPrimary),
-        decoration: InputDecoration(
-          hintText: hintText,
-          hintStyle: GoogleFonts.dmSans(fontSize: 14, color: BookBerPalette.textSecondary),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
+    final colors = context.bbColors;
+    final style = isTotal
+        ? BBTypography.headingS.copyWith(color: colors.textPrimary)
+        : BBTypography.bodyM.copyWith(color: colors.textSecondary);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: BBSpacing.px4),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: style)),
+          Text(value, style: style),
+        ],
       ),
     );
   }
@@ -354,39 +301,27 @@ class _PayButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: BookBerPalette.bgSurface,
-        border: Border(top: BorderSide(color: Color(0x0FFFFFFF))),
+      padding: const EdgeInsets.all(BBSpacing.px20),
+      decoration: BoxDecoration(
+        color: colors.bgSurface,
+        border: Border(top: BorderSide(color: colors.borderSubtle)),
       ),
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
-          height: 56,
+          height: BBTouchTarget.button,
           child: ElevatedButton(
             onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: BookBerPalette.primaryAccent,
-              foregroundColor: BookBerPalette.bgPrimary,
-              disabledBackgroundColor: BookBerPalette.bgElevated,
-              disabledForegroundColor: BookBerPalette.textMuted,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              elevation: 0,
-            ),
             child: isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: BookBerPalette.bgPrimary,
-                    ),
+                        strokeWidth: 2, color: Colors.white),
                   )
-                : Text(
-                    'Pay ${_money(amount)}',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                  ),
+                : Text('Pay ${_money(amount)}'),
           ),
         ),
       ),
@@ -394,24 +329,4 @@ class _PayButton extends StatelessWidget {
   }
 }
 
-class _ErrorState extends StatelessWidget {
-  const _ErrorState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Text(
-          message,
-          textAlign: TextAlign.center,
-          style: GoogleFonts.dmSans(color: BookBerPalette.textSecondary),
-        ),
-      ),
-    );
-  }
-}
-
-String _money(double value) => 'Rs ${value.toStringAsFixed(0)}';
+String _money(double value) => '₹${value.toStringAsFixed(0)}';

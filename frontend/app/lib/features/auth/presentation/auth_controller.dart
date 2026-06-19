@@ -1,8 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_result.dart';
-import '../../../app/router/app_router.dart';
 import '../../../core/models/bookber_models.dart';
 import '../../../core/storage/app_storage.dart';
 import '../data/auth_repository.dart';
@@ -26,13 +24,12 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     state = const AuthLoading();
 
-    final result = await _repository.login(email, password, role.value);
+    final result = await _repository.login(email, password);
     if (result is ApiSuccess<AuthResponse>) {
       final authResponse = result.data;
       await _storage.saveTokens(authResponse.accessToken, authResponse.refreshToken);
       await _storage.saveUser(authResponse.user.toJson());
       state = AuthAuthenticated(authResponse.user);
-      _navigateByRole(authResponse.user.role);
       return;
     }
 
@@ -48,7 +45,6 @@ class AuthController extends StateNotifier<AuthState> {
       await _storage.saveTokens(authResponse.accessToken, authResponse.refreshToken);
       await _storage.saveUser(authResponse.user.toJson());
       state = AuthAuthenticated(authResponse.user);
-      _navigateByRole(authResponse.user.role);
       return;
     }
 
@@ -59,19 +55,19 @@ class AuthController extends StateNotifier<AuthState> {
     try {
       await _repository.logout();
     } catch (_) {
-      // Ignore logout failure; session must still be cleared locally.
+      // Ignore server error — session must still be cleared locally.
     }
 
     await _storage.clear();
     state = const AuthInitial();
-    _redirectToLogin();
+    // GoRouter will detect AuthInitial and redirect to /login via authRedirect.
   }
 
   Future<void> checkAuth({bool navigate = true}) async {
     state = const AuthLoading();
 
     final accessToken = await _storage.getAccessToken();
-    if (accessToken == null) {
+    if (accessToken == null || accessToken.isEmpty) {
       state = const AuthInitial();
       return;
     }
@@ -81,40 +77,11 @@ class AuthController extends StateNotifier<AuthState> {
       final user = result.data;
       await _storage.saveUser(user.toJson());
       state = AuthAuthenticated(user);
-      if (navigate) {
-        _navigateByRole(user.role);
-      }
       return;
     }
 
-    if (result is ApiError<UserProfile> && result.code == 'SESSION_EXPIRED') {
-      state = const AuthInitial();
-      return;
-    }
-
+    // Token invalid or expired — clear storage.
+    await _storage.clearTokens();
     state = const AuthInitial();
-  }
-
-  void _navigateByRole(String role) {
-    final context = appRouterKey.currentContext;
-    if (context == null) return;
-
-    if (role == 'barber') {
-      GoRouter.of(context).go('/barber');
-      return;
-    }
-
-    if (role == 'admin') {
-      GoRouter.of(context).go('/admin');
-      return;
-    }
-
-    GoRouter.of(context).go('/home');
-  }
-
-  void _redirectToLogin() {
-    final context = appRouterKey.currentContext;
-    if (context == null) return;
-    GoRouter.of(context).go('/login');
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import 'providers/booking_form_provider.dart';
 import 'steps/select_service_step.dart';
 import 'steps/select_barber_step.dart';
@@ -29,24 +30,20 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final formState = ref.watch(bookingFormProvider);
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       appBar: AppBar(
-        backgroundColor: BookBerPalette.bgPrimary,
-        elevation: 0,
+        backgroundColor: colors.bgCanvas,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: BookBerPalette.textPrimary),
+          icon: Icon(Icons.close, color: colors.textPrimary),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Book Appointment',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: BookBerPalette.textPrimary,
-          ),
+          style: BBTypography.headingM.copyWith(color: colors.textPrimary),
         ),
       ),
       body: Column(

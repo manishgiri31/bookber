@@ -31,6 +31,7 @@ import { errorHandler } from "./shared/errors/error-handler.js";
 import { prismaPlugin } from "./shared/prisma/prisma.plugin.js";
 import { redisPlugin } from "./shared/redis/redis.plugin.js";
 import { registerRoutes, type RouteDefinition } from "./shared/app/route-registry.js";
+import { barberRoutes } from "./modules/barber/presentation/barber.routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   console.log("Creating Fastify instance...");
@@ -120,6 +121,21 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authPlugin);
   console.log("✓ Auth plugin registered");
 
+  app.addContentTypeParser("application/json", { parseAs: "string" }, (_req, body, done) => {
+    const str = body as string;
+    if (!str || str.trim() === "") {
+      done(null, null);
+      return;
+    }
+    try {
+      done(null, JSON.parse(str));
+    } catch (_err) {
+      const error = new SyntaxError("Invalid JSON body") as SyntaxError & { statusCode: number };
+      error.statusCode = 400;
+      done(error, undefined);
+    }
+  });
+
   console.log("Setting error handler...");
   app.setErrorHandler(errorHandler);
   console.log("✓ Error handler set");
@@ -133,6 +149,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     { plugin: paymentRoutes, prefix: "" },
     { plugin: reviewRoutes, prefix: "" },
     { plugin: notificationRoutes, prefix: "" },
+    { plugin: barberRoutes, prefix: "/api" },
   ];
 
   await registerRoutes(app, routes);

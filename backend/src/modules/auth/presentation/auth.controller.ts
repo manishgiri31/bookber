@@ -30,14 +30,22 @@ export class AuthController {
       ...(dto.phoneNumber !== undefined ? { phoneNumber: dto.phoneNumber } : {})
     });
     this.setCookies(reply, result.tokens);
-    return reply.status(201).send({ user: result.user });
+    return reply.status(201).send({
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    });
   };
 
   login = async (request: FastifyRequest, reply: FastifyReply) => {
     const dto = loginSchema.parse(request.body);
     const result = await this.authService.login(dto);
     this.setCookies(reply, result.tokens);
-    return reply.send({ user: result.user });
+    return reply.send({
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    });
   };
 
   refresh = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -49,7 +57,11 @@ export class AuthController {
       parsed.refreshToken !== undefined ? { refreshToken: parsed.refreshToken } : {}
     );
     this.setCookies(reply, result.tokens);
-    return reply.send({ user: result.user });
+    return reply.send({
+      user: result.user,
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+    });
   };
 
   logout = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -62,6 +74,15 @@ export class AuthController {
     );
     reply.clearCookie(env.ACCESS_TOKEN_COOKIE_NAME, cookieOptions());
     reply.clearCookie(env.REFRESH_TOKEN_COOKIE_NAME, cookieOptions());
+    return reply.send({ ok: true });
+  };
+
+  changePassword = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { currentPassword, newPassword } = (request.body as { currentPassword: string; newPassword: string }) ?? {};
+    if (!currentPassword || !newPassword) {
+      return reply.status(400).send({ message: "currentPassword and newPassword are required" });
+    }
+    await this.authService.changePassword(request.user.sub, { currentPassword, newPassword });
     return reply.send({ ok: true });
   };
 

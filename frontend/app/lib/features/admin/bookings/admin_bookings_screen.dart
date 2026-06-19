@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/admin_providers.dart';
-import '../widgets/admin_bottom_nav.dart';
 
 class AdminBookingsScreen extends ConsumerStatefulWidget {
   const AdminBookingsScreen({super.key});
@@ -20,7 +20,7 @@ class _AdminBookingsScreenState extends ConsumerState<AdminBookingsScreen> {
     final bookingsAsync = ref.watch(adminBookingsProvider);
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: context.bbColors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -32,7 +32,7 @@ class _AdminBookingsScreenState extends ConsumerState<AdminBookingsScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: BookBerPalette.textPrimary,
+                  color: context.bbColors.textPrimary,
                 ),
               ),
             ),
@@ -92,23 +92,23 @@ class _AdminBookingsScreenState extends ConsumerState<AdminBookingsScreen> {
               child: Container(
                 height: 40,
                 decoration: BoxDecoration(
-                  color: BookBerPalette.bgSurface,
+                  color: context.bbColors.bgSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
                     const SizedBox(width: 16),
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 18,
-                      color: BookBerPalette.textSecondary,
+                      color: context.bbColors.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       'Select date range',
-                      style: GoogleFonts.dmSans(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: BookBerPalette.textSecondary,
+                        color: context.bbColors.textSecondary,
                       ),
                     ),
                   ],
@@ -121,25 +121,19 @@ class _AdminBookingsScreenState extends ConsumerState<AdminBookingsScreen> {
             Expanded(
               child: bookingsAsync.when(
                 data: (bookings) => _BookingList(bookings: bookings),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: BBColors.brandPrimary),
                 ),
-                error: (_, __) => const Center(
+                error: (_, __) => Center(
                   child: Text(
                     'Error loading bookings',
-                    style: TextStyle(color: BookBerPalette.textSecondary),
+                    style: TextStyle(color: context.bbColors.textSecondary),
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AdminBottomNav(
-        currentIndex: 3,
-        onTap: (index) {
-          // TODO: Navigate to respective screens
-        },
       ),
     );
   }
@@ -165,20 +159,20 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? BookBerPalette.primaryAccent.withValues(alpha: 0.12)
-              : BookBerPalette.bgSurface,
+              ? BBColors.brandPrimary.withValues(alpha: 0.12)
+              : context.bbColors.bgSurface,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? BookBerPalette.primaryAccent : const Color(0x0FFFFFFF),
+            color: isSelected ? BBColors.brandPrimary : const Color(0x0FFFFFFF),
             width: 1,
           ),
         ),
         child: Text(
           label,
-          style: GoogleFonts.dmSans(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? BookBerPalette.primaryAccent : BookBerPalette.textSecondary,
+            color: isSelected ? BBColors.brandPrimary : context.bbColors.textSecondary,
           ),
         ),
       ),
@@ -216,23 +210,23 @@ class _BookingAdminTile extends StatelessWidget {
 
     switch (booking.status) {
       case BookingStatus.confirmed:
-        statusColor = BookBerPalette.primaryAccent;
+        statusColor = BBColors.brandPrimary;
         statusLabel = 'Confirmed';
         break;
       case BookingStatus.inProgress:
-        statusColor = BookBerPalette.warningAmber;
+        statusColor = BBColors.warning;
         statusLabel = 'In Progress';
         break;
       case BookingStatus.completed:
-        statusColor = BookBerPalette.queueSafe;
+        statusColor = BBColors.success;
         statusLabel = 'Completed';
         break;
       case BookingStatus.cancelled:
-        statusColor = BookBerPalette.textMuted;
+        statusColor = context.bbColors.textDisabled;
         statusLabel = 'Cancelled';
         break;
       case BookingStatus.noShow:
-        statusColor = BookBerPalette.urgentRed;
+        statusColor = BBColors.error;
         statusLabel = 'No-Show';
         break;
     }
@@ -241,7 +235,7 @@ class _BookingAdminTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -251,10 +245,10 @@ class _BookingAdminTile extends StatelessWidget {
             children: [
               Text(
                 '#${booking.id.split('_').last}',
-                style: GoogleFonts.dmSans(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: BookBerPalette.textMuted,
+                  color: context.bbColors.textDisabled,
                 ),
               ),
               const Spacer(),
@@ -266,7 +260,7 @@ class _BookingAdminTile extends StatelessWidget {
                 ),
                 child: Text(
                   statusLabel,
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: statusColor,
@@ -287,16 +281,16 @@ class _BookingAdminTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
+                        color: context.bbColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       booking.shopName,
-                      style: GoogleFonts.dmSans(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
-                        color: BookBerPalette.textSecondary,
+                        color: context.bbColors.textSecondary,
                       ),
                     ),
                   ],
@@ -311,16 +305,16 @@ class _BookingAdminTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: BookBerPalette.primaryAccent,
+                      color: BBColors.brandPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     booking.service,
-                    style: GoogleFonts.dmSans(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textSecondary,
+                      color: context.bbColors.textSecondary,
                     ),
                   ),
                 ],
@@ -330,33 +324,33 @@ class _BookingAdminTile extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.access_time,
                 size: 14,
-                color: BookBerPalette.textSecondary,
+                color: context.bbColors.textSecondary,
               ),
               const SizedBox(width: 4),
               Text(
                 _formatDateTime(booking.scheduledAt),
-                style: GoogleFonts.dmSans(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: BookBerPalette.textSecondary,
+                  color: context.bbColors.textSecondary,
                 ),
               ),
               const SizedBox(width: 16),
-              const Icon(
+              Icon(
                 Icons.person,
                 size: 14,
-                color: BookBerPalette.textSecondary,
+                color: context.bbColors.textSecondary,
               ),
               const SizedBox(width: 4),
               Text(
                 booking.barberName,
-                style: GoogleFonts.dmSans(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: BookBerPalette.textSecondary,
+                  color: context.bbColors.textSecondary,
                 ),
               ),
             ],

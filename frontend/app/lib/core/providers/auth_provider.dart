@@ -13,15 +13,9 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   );
 });
 
-final authStateProvider = StreamProvider<AuthState>((ref) async* {
-  final controller = ref.watch(authControllerProvider.notifier);
-
-  await controller.checkAuth(navigate: false);
-  yield ref.read(authControllerProvider);
-
-  await for (final state in controller.stream) {
-    yield state;
-  }
+// Simple derived provider — no side-effects, no checkAuth calls.
+final authStateProvider = Provider<AuthState>((ref) {
+  return ref.watch(authControllerProvider);
 });
 
 final currentUserProvider = Provider<UserProfile?>((ref) {

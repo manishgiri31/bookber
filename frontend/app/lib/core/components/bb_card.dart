@@ -112,7 +112,7 @@ class BBGradientCard extends StatelessWidget {
     super.key,
     required this.child,
     this.gradient = const LinearGradient(
-      colors: [BBColors.brandPrimary, BBColorPrimitives.teal200],
+      colors: [BBColors.brandPrimary, BBColorPrimitives.indigo200],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),

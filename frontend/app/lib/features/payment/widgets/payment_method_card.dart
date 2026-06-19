@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/payment_providers.dart';
 
 class PaymentMethodCard extends ConsumerWidget {
@@ -20,91 +20,70 @@ class PaymentMethodCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final formState = ref.watch(paymentFormProvider);
     final isSelected = formState.selectedMethod == method;
 
     return GestureDetector(
       onTap: () => ref.read(paymentFormProvider.notifier).selectPaymentMethod(method),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(BBSpacing.px16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? BookBerPalette.primaryAccent.withValues(alpha: 0.08)
-              : BookBerPalette.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? BBColors.brandPrimaryDim : colors.bgSurface,
+          borderRadius: BBRadius.md,
           border: Border.all(
-            color: isSelected
-                ? BookBerPalette.primaryAccent
-                : const Color(0x0FFFFFFF),
+            color: isSelected ? BBColors.brandPrimary : colors.borderSubtle,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            // Icon
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: isSelected
-                    ? BookBerPalette.primaryAccent.withValues(alpha: 0.12)
-                    : BookBerPalette.bgElevated,
-                borderRadius: BorderRadius.circular(12),
+                color: isSelected ? BBColors.brandPrimaryDim : colors.bgElevated,
+                borderRadius: BBRadius.md,
               ),
               child: Icon(
                 icon,
                 size: 24,
-                color: isSelected
-                    ? BookBerPalette.primaryAccent
-                    : BookBerPalette.textSecondary,
+                color: isSelected ? BBColors.brandPrimary : colors.textSecondary,
               ),
             ),
-            const SizedBox(width: 16),
-            // Title and subtitle
+            const SizedBox(width: BBSpacing.px16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: BBTypography.bodyL.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: BBSpacing.px4),
                   Text(
                     subtitle,
-                    style: GoogleFonts.dmSans(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.bodyS.copyWith(color: colors.textSecondary),
                   ),
                 ],
               ),
             ),
-            // Radio
             Container(
               width: 24,
               height: 24,
               decoration: BoxDecoration(
-                color: isSelected ? BookBerPalette.primaryAccent : Colors.transparent,
+                color: isSelected ? BBColors.brandPrimary : Colors.transparent,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected
-                      ? BookBerPalette.primaryAccent
-                      : BookBerPalette.textMuted,
+                  color: isSelected ? BBColors.brandPrimary : colors.textDisabled,
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? const Icon(
-                      Icons.check,
-                      size: 16,
-                      color: BookBerPalette.bgPrimary,
-                    )
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
                   : null,
             ),
           ],

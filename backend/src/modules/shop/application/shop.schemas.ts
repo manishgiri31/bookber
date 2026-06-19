@@ -56,21 +56,21 @@ export const updateChairSchema = createChairSchema.partial().extend({
 });
 
 export const shopSearchSchema = z.object({
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   query: z.string().optional(),
   city: z.string().optional(),
-  isActive: z.boolean().optional(),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
-  radiusKm: z.number().min(0.1).max(100).optional()
+  isActive: z.coerce.boolean().optional(),
+  latitude: z.coerce.number().min(-90).max(90).optional(),
+  longitude: z.coerce.number().min(-180).max(180).optional(),
+  radiusKm: z.coerce.number().min(0.1).max(100).optional()
 });
 
 export const serviceSearchSchema = z.object({
-  page: z.number().int().min(1).default(1),
-  limit: z.number().int().min(1).max(100).default(20),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
   query: z.string().optional(),
-  isActive: z.boolean().optional()
+  isActive: z.coerce.boolean().optional()
 });
 
 export type CreateShopDto = z.infer<typeof createShopSchema>;

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'tokens.dart';
@@ -19,6 +20,7 @@ class BBTheme {
     final bgCanvas = isDark ? BBColors.bgCanvas : BBColors.bgCanvasLight;
     final bgSurface = isDark ? BBColors.bgSurface : BBColors.bgSurfaceLight;
     final bgElevated = isDark ? BBColors.bgElevated : BBColors.bgElevatedLight;
+    final bgOverlay = isDark ? BBColors.bgOverlay : BBColors.bgOverlayLight;
     final textPrimary = isDark ? BBColors.textPrimary : BBColors.textPrimaryLight;
     final textSecondary = isDark ? BBColors.textSecondary : BBColors.textSecondaryLight;
     final borderColor = isDark ? BBColors.borderDefault : BBColors.borderDefaultLight;
@@ -281,6 +283,9 @@ class BBTheme {
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
         },
       ),
+
+      // Theme extension for dark-mode-aware color access via context.bbColors
+      extensions: [isDark ? BBColorTheme.dark : BBColorTheme.light],
     );
   }
 }

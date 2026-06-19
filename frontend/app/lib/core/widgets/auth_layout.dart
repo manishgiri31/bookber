@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../app/theme/design_system.dart';
+
+import '../design/theme.dart';
+import '../design/tokens.dart';
 
 class AuthLayout extends StatelessWidget {
   const AuthLayout({
@@ -16,65 +17,60 @@ class AuthLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            left: BBSpacing.px24,
+            right: BBSpacing.px24,
+            top: BBSpacing.px24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + BBSpacing.px24,
           ),
           child: Column(
             children: [
-              // Logo and brand name
+              // Logo
               Center(
                 child: Column(
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: BookBerPalette.primaryAccent,
-                        borderRadius: BorderRadius.circular(12),
+                        color: BBColors.brandPrimary,
+                        borderRadius: BBRadius.md,
                       ),
                       child: Center(
                         child: Text(
                           'B',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: BookBerPalette.bgPrimary,
+                          style: BBTypography.displayS.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: BBSpacing.px12),
                     Text(
                       'BookBer',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
-                      ),
+                      style: BBTypography.headingL.copyWith(
+                          color: colors.textPrimary),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-              
-              // Glassmorphism card
+              const SizedBox(height: BBSpacing.px32),
+
+              // Card
               Container(
-                padding: const EdgeInsets.all(24),
+                padding: BBSpacing.cardPadding,
                 decoration: BoxDecoration(
-                  color: const Color(0x0AFFFFFF),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: const Color(0x0FFFFFFF),
-                    width: 1,
-                  ),
+                  color: colors.bgSurface,
+                  borderRadius: BBRadius.card,
+                  border: Border.all(color: colors.borderSubtle),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,24 +78,18 @@ class AuthLayout extends StatelessWidget {
                     if (title != null) ...[
                       Text(
                         title!,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: BookBerPalette.textPrimary,
-                        ),
+                        style: BBTypography.displayS
+                            .copyWith(color: colors.textPrimary),
                       ),
                       if (subtitle != null) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: BBSpacing.px8),
                         Text(
                           subtitle!,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: BookBerPalette.textSecondary,
-                          ),
+                          style: BBTypography.bodyM
+                              .copyWith(color: colors.textSecondary),
                         ),
                       ],
-                      const SizedBox(height: 24),
+                      const SizedBox(height: BBSpacing.px24),
                     ],
                     child,
                   ],

@@ -4,6 +4,7 @@ import '../../../core/models/bookber_models.dart';
 import '../../../core/network/api_result.dart';
 import '../data/booking_repository.dart';
 import '../domain/booking_flow_state.dart';
+import '../providers/booking_form_provider.dart';
 
 class BookingFlowController extends Notifier<BookingFlowState> {
   @override
@@ -82,10 +83,9 @@ class BookingFlowController extends Notifier<BookingFlowState> {
     final repo = ref.read(bookingRepositoryProvider);
     state = state.copyWith(isBooking: true, optimisticStatus: 'CONFIRMING');
     final result = await repo.createBooking(
+      shopId: ref.read(bookingFormProvider).shopId,
       barberId: barber.id,
-      barberName: barber.name,
-      services: state.selectedServices,
-      scheduledAt: state.selectedTimeSlot,
+      serviceIds: state.selectedServices.map((s) => s.id).toList(),
     );
 
     if (result is ApiSuccess<Booking>) {

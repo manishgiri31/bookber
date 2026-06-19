@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../app/theme/design_system.dart';
+
+import '../design/theme.dart';
+import '../design/tokens.dart';
 
 class AuthInputField extends StatefulWidget {
   const AuthInputField({
@@ -46,6 +46,7 @@ class _AuthInputFieldState extends State<AuthInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     final hasError = widget.errorText != null;
 
     return Column(
@@ -54,30 +55,29 @@ class _AuthInputFieldState extends State<AuthInputField> {
         Container(
           height: widget.maxLines == 1 ? 56 : null,
           decoration: BoxDecoration(
-            color: BookBerPalette.bgSurface,
-            borderRadius: BorderRadius.circular(12),
+            color: colors.bgSurface,
+            borderRadius: BBRadius.md,
             border: Border.all(
               color: _isFocused
-                  ? BookBerPalette.primaryAccent
+                  ? BBColors.brandPrimary
                   : hasError
-                      ? BookBerPalette.urgentRed
-                      : const Color(0x0FFFFFFF),
-              width: 1,
+                      ? BBColors.error
+                      : colors.border,
+              width: _isFocused ? 1.5 : 1,
             ),
             boxShadow: _isFocused
                 ? [
                     BoxShadow(
-                      color: BookBerPalette.primaryAccent.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
+                      color: BBColors.brandPrimaryGlow,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
                   ]
                 : null,
           ),
           child: FocusScope(
-            onFocusChange: (hasFocus) {
-              setState(() => _isFocused = hasFocus);
-            },
+            onFocusChange: (hasFocus) =>
+                setState(() => _isFocused = hasFocus),
             child: TextField(
               controller: widget.controller,
               obscureText: widget.obscureText,
@@ -86,49 +86,29 @@ class _AuthInputFieldState extends State<AuthInputField> {
               maxLines: widget.maxLines,
               maxLength: widget.maxLength,
               onSubmitted: widget.onSubmitted,
-              style: GoogleFonts.dmSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-                color: BookBerPalette.textPrimary,
-              ),
+              style: BBTypography.bodyL.copyWith(color: colors.textPrimary),
               decoration: InputDecoration(
                 labelText: widget.label,
-                labelStyle: GoogleFonts.dmSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: _isFocused
-                      ? BookBerPalette.primaryAccent
-                      : BookBerPalette.textSecondary,
+                labelStyle: BBTypography.bodyM.copyWith(
+                  color: _isFocused ? BBColors.brandPrimary : colors.textSecondary,
                 ),
-                floatingLabelStyle: GoogleFonts.dmSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: _isFocused
-                      ? BookBerPalette.primaryAccent
-                      : BookBerPalette.textSecondary,
+                floatingLabelStyle: BBTypography.labelM.copyWith(
+                  color: _isFocused ? BBColors.brandPrimary : colors.textSecondary,
                 ),
                 prefixIcon: widget.prefixIcon != null
-                    ? Icon(
-                        widget.prefixIcon,
-                        color: BookBerPalette.primaryAccent,
-                        size: 20,
-                      )
+                    ? Icon(widget.prefixIcon,
+                        color: BBColors.brandPrimary, size: BBIconSize.sm)
                     : null,
                 suffixIcon: widget.suffixIcon != null
                     ? IconButton(
-                        icon: Icon(
-                          widget.suffixIcon,
-                          color: BookBerPalette.textSecondary,
-                          size: 20,
-                        ),
+                        icon: Icon(widget.suffixIcon,
+                            color: colors.textSecondary, size: BBIconSize.sm),
                         onPressed: widget.onSuffixIconPressed,
                       )
                     : null,
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
+                    horizontal: BBSpacing.px16, vertical: BBSpacing.px16),
                 counterText: '',
               ),
               onChanged: widget.onChanged,
@@ -136,16 +116,12 @@ class _AuthInputFieldState extends State<AuthInputField> {
           ),
         ),
         if (widget.errorText != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: BBSpacing.px6),
           Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsets.only(left: BBSpacing.px4),
             child: Text(
               widget.errorText!,
-              style: GoogleFonts.dmSans(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: BookBerPalette.urgentRed,
-              ),
+              style: BBTypography.labelS.copyWith(color: BBColors.error),
             ),
           ),
         ],

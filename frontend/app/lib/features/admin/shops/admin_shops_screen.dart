@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/admin_providers.dart';
-import '../widgets/admin_bottom_nav.dart';
 
 class AdminShopsScreen extends ConsumerStatefulWidget {
   const AdminShopsScreen({super.key});
@@ -27,7 +27,7 @@ class _AdminShopsScreenState extends ConsumerState<AdminShopsScreen> {
     final shopsAsync = ref.watch(adminShopsProvider);
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: context.bbColors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -39,7 +39,7 @@ class _AdminShopsScreenState extends ConsumerState<AdminShopsScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: BookBerPalette.textPrimary,
+                  color: context.bbColors.textPrimary,
                 ),
               ),
             ),
@@ -54,26 +54,26 @@ class _AdminShopsScreenState extends ConsumerState<AdminShopsScreen> {
                     child: Container(
                       height: 48,
                       decoration: BoxDecoration(
-                        color: BookBerPalette.bgSurface,
+                        color: context.bbColors.bgSurface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: GoogleFonts.dmSans(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: BookBerPalette.textPrimary,
+                          color: context.bbColors.textPrimary,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Search shops...',
-                          hintStyle: GoogleFonts.dmSans(
+                          hintStyle: TextStyle(
                             fontSize: 14,
-                            color: BookBerPalette.textSecondary,
+                            color: context.bbColors.textSecondary,
                           ),
                           border: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: BookBerPalette.textSecondary,
+                            color: context.bbColors.textSecondary,
                           ),
                         ),
                       ),
@@ -84,20 +84,20 @@ class _AdminShopsScreenState extends ConsumerState<AdminShopsScreen> {
                     height: 48,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: BookBerPalette.bgSurface,
+                      color: context.bbColors.bgSurface,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedFilter,
                         underline: const SizedBox.shrink(),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.filter_list,
-                          color: BookBerPalette.textSecondary,
+                          color: context.bbColors.textSecondary,
                         ),
-                        style: GoogleFonts.dmSans(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: BookBerPalette.textPrimary,
+                          color: context.bbColors.textPrimary,
                         ),
                         items: ['All', 'Active', 'Inactive', 'Pending'].map((filter) {
                           return DropdownMenuItem(
@@ -120,25 +120,19 @@ class _AdminShopsScreenState extends ConsumerState<AdminShopsScreen> {
             Expanded(
               child: shopsAsync.when(
                 data: (shops) => _ShopList(shops: shops),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: BBColors.brandPrimary),
                 ),
-                error: (_, __) => const Center(
+                error: (_, __) => Center(
                   child: Text(
                     'Error loading shops',
-                    style: TextStyle(color: BookBerPalette.textSecondary),
+                    style: TextStyle(color: context.bbColors.textSecondary),
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AdminBottomNav(
-        currentIndex: 1,
-        onTap: (index) {
-          // TODO: Navigate to respective screens
-        },
       ),
     );
   }
@@ -174,15 +168,15 @@ class _ShopAdminTile extends ConsumerWidget {
 
     switch (shop.status) {
       case ShopStatus.active:
-        statusColor = BookBerPalette.queueSafe;
+        statusColor = BBColors.success;
         statusLabel = 'Active';
         break;
       case ShopStatus.inactive:
-        statusColor = BookBerPalette.textMuted;
+        statusColor = context.bbColors.textDisabled;
         statusLabel = 'Inactive';
         break;
       case ShopStatus.pending:
-        statusColor = BookBerPalette.warningAmber;
+        statusColor = BBColors.warning;
         statusLabel = 'Pending';
         break;
     }
@@ -191,7 +185,7 @@ class _ShopAdminTile extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -208,7 +202,7 @@ class _ShopAdminTile extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
+                        color: context.bbColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -220,7 +214,7 @@ class _ShopAdminTile extends ConsumerWidget {
                       ),
                       child: Text(
                         statusLabel,
-                        style: GoogleFonts.dmSans(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: statusColor,
@@ -232,42 +226,42 @@ class _ShopAdminTile extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   shop.city,
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
-                    color: BookBerPalette.textSecondary,
+                    color: context.bbColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 14,
-                      color: BookBerPalette.textSecondary,
+                      color: context.bbColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '${shop.todayBookings} today',
-                      style: GoogleFonts.dmSans(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: BookBerPalette.textSecondary,
+                        color: context.bbColors.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Icon(
+                    Icon(
                       Icons.star,
                       size: 14,
-                      color: BookBerPalette.warningAmber,
+                      color: BBColors.warning,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       shop.rating.toStringAsFixed(1),
-                      style: GoogleFonts.dmSans(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: BookBerPalette.textPrimary,
+                        color: context.bbColors.textPrimary,
                       ),
                     ),
                   ],
@@ -284,7 +278,7 @@ class _ShopAdminTile extends ConsumerWidget {
                     value ? 'active' : 'inactive',
                   );
             },
-            activeColor: BookBerPalette.queueSafe,
+            activeColor: BBColors.success,
           ),
         ],
       ),

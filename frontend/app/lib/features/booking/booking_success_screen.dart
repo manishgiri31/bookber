@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 
 class BookingSuccessScreen extends ConsumerStatefulWidget {
   const BookingSuccessScreen({super.key});
@@ -47,16 +48,17 @@ class _BookingSuccessScreenState extends ConsumerState<BookingSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: colors.bgCanvas,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Animated checkmark
                 SizedBox(
                   width: 120,
                   height: 120,
@@ -67,113 +69,87 @@ class _BookingSuccessScreenState extends ConsumerState<BookingSuccessScreen>
                         painter: _CheckmarkPainter(
                           circleProgress: _circleAnimation.value,
                           checkProgress: _checkAnimation.value,
+                          color: BBColors.brandPrimary,
                         ),
                       );
                     },
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: BBSpacing.px32),
 
-                // Success text
                 Text(
                   'Booking Confirmed!',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: BookBerPalette.textPrimary,
-                  ),
+                  style: BBTypography.displayS.copyWith(color: colors.textPrimary),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: BBSpacing.px8),
 
-                // Reference number
                 Text(
                   'BK-2024-001234',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: BookBerPalette.primaryAccent,
+                  style: BBTypography.labelL.copyWith(
+                    color: BBColors.brandPrimary,
                     letterSpacing: 2,
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: BBSpacing.px48),
 
-                // Appointment summary card
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(24),
+                  padding: BBSpacing.cardPadding,
                   decoration: BoxDecoration(
-                    color: BookBerPalette.bgSurface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0x0FFFFFFF),
-                      width: 1,
-                    ),
+                    color: colors.bgSurface,
+                    borderRadius: BBRadius.card,
+                    border: Border.all(color: colors.borderSubtle),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Shop
                       Row(
                         children: [
                           Container(
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: BookBerPalette.bgElevated,
-                              borderRadius: BorderRadius.circular(12),
+                              color: colors.bgElevated,
+                              borderRadius: BBRadius.md,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: BBSpacing.px12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Style Studio',
-                                  style: TextStyle(
-                                    fontSize: 16,
+                                  style: BBTypography.bodyL.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: BookBerPalette.textPrimary,
+                                    color: colors.textPrimary,
                                   ),
                                 ),
                                 Text(
                                   '123 Main Street, Ludhiana',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w400,
-                                    color: BookBerPalette.textSecondary,
-                                  ),
+                                  style: BBTypography.bodyS.copyWith(
+                                      color: colors.textSecondary),
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      const Divider(color: Color(0x0FFFFFFF)),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: BBSpacing.px16),
+                      Divider(color: colors.borderSubtle),
+                      const SizedBox(height: BBSpacing.px16),
 
-                      // Services
                       Text(
                         'Services',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: BookBerPalette.textSecondary,
-                        ),
+                        style: BBTypography.labelS.copyWith(color: colors.textSecondary),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: BBSpacing.px8),
                       Text(
                         'Haircut, Beard Trim',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: BookBerPalette.textPrimary,
-                        ),
+                        style: BBTypography.bodyM.copyWith(color: colors.textPrimary),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: BBSpacing.px16),
 
-                      // Date & Time
                       Row(
                         children: [
                           Expanded(
@@ -182,20 +158,14 @@ class _BookingSuccessScreenState extends ConsumerState<BookingSuccessScreen>
                               children: [
                                 Text(
                                   'Date',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: BookBerPalette.textSecondary,
-                                  ),
+                                  style: BBTypography.labelS.copyWith(
+                                      color: colors.textSecondary),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: BBSpacing.px4),
                                 Text(
                                   'Jun 5, 2024',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: BookBerPalette.textPrimary,
-                                  ),
+                                  style: BBTypography.bodyM.copyWith(
+                                      color: colors.textPrimary),
                                 ),
                               ],
                             ),
@@ -206,20 +176,14 @@ class _BookingSuccessScreenState extends ConsumerState<BookingSuccessScreen>
                               children: [
                                 Text(
                                   'Time',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: BookBerPalette.textSecondary,
-                                  ),
+                                  style: BBTypography.labelS.copyWith(
+                                      color: colors.textSecondary),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: BBSpacing.px4),
                                 Text(
                                   '2:30 PM',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: BookBerPalette.textPrimary,
-                                  ),
+                                  style: BBTypography.bodyM.copyWith(
+                                      color: colors.textPrimary),
                                 ),
                               ],
                             ),
@@ -229,77 +193,51 @@ class _BookingSuccessScreenState extends ConsumerState<BookingSuccessScreen>
                     ],
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: BBSpacing.px32),
 
-                // Add to Calendar button
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: BBTouchTarget.button,
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      // TODO: Add to calendar
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Calendar integration coming soon!'),
+                        ),
+                      );
                     },
                     icon: const Icon(Icons.calendar_month_outlined),
-                    label: Text(
-                      'Add to Calendar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    label: Text('Add to Calendar', style: BBTypography.button),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: BookBerPalette.primaryAccent,
-                      side: BorderSide(
-                        color: BookBerPalette.primaryAccent,
-                        width: 1,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
+                      foregroundColor: BBColors.brandPrimary,
+                      side: const BorderSide(color: BBColors.brandPrimary),
+                      shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: BBSpacing.px16),
 
-                // Track Queue button
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: BBTouchTarget.button,
                   child: ElevatedButton(
-                    onPressed: () {
-                      context.go('/queue/BK-2024-001234');
-                    },
+                    onPressed: () => context.go('/queue/BK-2024-001234'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: BookBerPalette.primaryAccent,
-                      foregroundColor: BookBerPalette.bgPrimary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
+                      backgroundColor: BBColors.brandPrimary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'Track Queue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text('Track Queue', style: BBTypography.button),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: BBSpacing.px16),
 
-                // Back to Home button
                 TextButton(
-                  onPressed: () {
-                    context.go('/home');
-                  },
+                  onPressed: () => context.go('/home'),
                   child: Text(
                     'Back to Home',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.labelM.copyWith(color: colors.textSecondary),
                   ),
                 ),
               ],
@@ -315,50 +253,47 @@ class _CheckmarkPainter extends CustomPainter {
   _CheckmarkPainter({
     required this.circleProgress,
     required this.checkProgress,
+    required this.color,
   });
 
   final double circleProgress;
   final double checkProgress;
+  final Color color;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 8;
 
-    // Draw circle
     final circlePaint = Paint()
-      ..color = BookBerPalette.primaryAccent
+      ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
 
     if (circleProgress > 0) {
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
-        -1.5708, // Start from top
-        6.28318 * circleProgress, // Full circle
+        -1.5708,
+        6.28318 * circleProgress,
         false,
         circlePaint,
       );
     }
 
-    // Draw checkmark
     if (checkProgress > 0) {
       final checkPaint = Paint()
-        ..color = BookBerPalette.primaryAccent
+        ..color = color
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round;
 
-      final path = Path();
       final checkSize = radius * 0.6;
-      
-      // Scale the checkmark based on animation
       final scale = checkProgress;
-      
-      // Checkmark path
-      path.moveTo(center.dx - checkSize * 0.3 * scale, center.dy);
-      path.lineTo(center.dx - checkSize * 0.1 * scale, center.dy + checkSize * 0.2 * scale);
-      path.lineTo(center.dx + checkSize * 0.3 * scale, center.dy - checkSize * 0.2 * scale);
+
+      final path = Path()
+        ..moveTo(center.dx - checkSize * 0.3 * scale, center.dy)
+        ..lineTo(center.dx - checkSize * 0.1 * scale, center.dy + checkSize * 0.2 * scale)
+        ..lineTo(center.dx + checkSize * 0.3 * scale, center.dy - checkSize * 0.2 * scale);
 
       canvas.drawPath(path, checkPaint);
     }

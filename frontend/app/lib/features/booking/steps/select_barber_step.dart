@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../../../core/models/bookber_models.dart' show Barber;
 import '../widgets/booking_step_indicator.dart';
 import '../providers/booking_form_provider.dart';
@@ -11,33 +11,27 @@ class SelectBarberStep extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
     final formState = ref.watch(bookingFormProvider);
     final barbersAsync = ref.watch(availableBarbersProvider(formState.shopId));
 
     return Column(
       children: [
-        // Step indicator
         const BookingStepIndicator(currentStep: 2),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // "Any Available Barber" card
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
           child: GestureDetector(
             onTap: () => ref.read(bookingFormProvider.notifier).selectAnyBarber(),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(BBSpacing.px16),
               decoration: BoxDecoration(
-                color: formState.anyBarber
-                    ? BookBerPalette.primaryAccent.withValues(alpha: 0.08)
-                    : BookBerPalette.bgSurface,
-                borderRadius: BorderRadius.circular(12),
+                color: formState.anyBarber ? BBColors.brandPrimaryDim : colors.bgSurface,
+                borderRadius: BBRadius.md,
                 border: Border.all(
-                  color: formState.anyBarber
-                      ? BookBerPalette.primaryAccent
-                      : const Color(0x0FFFFFFF),
+                  color: formState.anyBarber ? BBColors.brandPrimary : colors.borderSubtle,
                   width: formState.anyBarber ? 2 : 1,
-                  style: formState.anyBarber ? BorderStyle.solid : BorderStyle.none,
                 ),
               ),
               child: Row(
@@ -46,146 +40,110 @@ class SelectBarberStep extends ConsumerWidget {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: BookBerPalette.bgElevated,
+                      color: colors.bgElevated,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Icon(
-                      Icons.person_outline,
-                      size: 28,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    child: Icon(Icons.person_outline, size: 28, color: colors.textSecondary),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: BBSpacing.px16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Any Available Barber',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 16,
+                          style: BBTypography.bodyL.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: BookBerPalette.textPrimary,
+                            color: colors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: BBSpacing.px4),
                         Text(
                           'Let us assign the best available',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: BookBerPalette.textSecondary,
-                          ),
+                          style: BBTypography.bodyS.copyWith(color: colors.textSecondary),
                         ),
                       ],
                     ),
                   ),
                   if (formState.anyBarber)
-                    const Icon(
-                      Icons.check_circle,
-                      color: BookBerPalette.primaryAccent,
-                      size: 24,
-                    ),
+                    const Icon(Icons.check_circle, color: BBColors.brandPrimary, size: 24),
                 ],
               ),
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: BBSpacing.px24),
 
-        // Barber cards
         Expanded(
           child: barbersAsync.when(
             data: (barbers) {
               return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
                 itemCount: barbers.length,
                 itemBuilder: (context, index) {
                   final barber = barbers[index];
                   final isSelected = formState.selectedBarberId == barber.id;
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: BBSpacing.px16),
                     child: _BarberCard(
                       barber: barber,
                       isSelected: isSelected,
-                      onTap: () => ref.read(bookingFormProvider.notifier).selectBarber(barber.id),
+                      onTap: () =>
+                          ref.read(bookingFormProvider.notifier).selectBarber(barber.id),
                     ),
                   );
                 },
               );
             },
             loading: () => const Center(
-              child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+              child: CircularProgressIndicator(color: BBColors.brandPrimary),
             ),
             error: (error, stack) => Center(
               child: Text(
                 'Error loading barbers',
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
-                  color: BookBerPalette.textSecondary,
-                ),
+                style: BBTypography.bodyM.copyWith(color: colors.textSecondary),
               ),
             ),
           ),
         ),
 
-        // Bottom section
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(BBSpacing.px20),
           decoration: BoxDecoration(
-            color: BookBerPalette.bgSurface,
-            border: Border(
-              top: BorderSide(
-                color: const Color(0x0FFFFFFF),
-                width: 1,
-              ),
-            ),
+            color: colors.bgSurface,
+            border: Border(top: BorderSide(color: colors.borderSubtle)),
           ),
           child: Row(
             children: [
-              // Back button
               Expanded(
                 child: TextButton(
                   onPressed: () => ref.read(bookingFormProvider.notifier).previousStep(),
                   style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: BBSpacing.px14),
                   ),
                   child: Text(
                     'Back',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: BookBerPalette.textSecondary,
-                    ),
+                    style: BBTypography.button.copyWith(color: colors.textSecondary),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              // Continue button
+              const SizedBox(width: BBSpacing.px12),
               Expanded(
                 child: SizedBox(
-                  height: 56,
+                  height: BBTouchTarget.button,
                   child: ElevatedButton(
                     onPressed: formState.anyBarber || formState.selectedBarberId != null
                         ? () => ref.read(bookingFormProvider.notifier).nextStep()
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: BookBerPalette.primaryAccent,
-                      foregroundColor: BookBerPalette.bgPrimary,
-                      disabledBackgroundColor: BookBerPalette.bgElevated,
-                      disabledForegroundColor: BookBerPalette.textMuted,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
+                      backgroundColor: BBColors.brandPrimary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: colors.bgElevated,
+                      disabledForegroundColor: colors.textDisabled,
+                      shape: RoundedRectangleBorder(borderRadius: BBRadius.pill),
                       elevation: 0,
                     ),
-                    child: Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: Text('Continue', style: BBTypography.button),
                   ),
                 ),
               ),
@@ -210,36 +168,32 @@ class _BarberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(BBSpacing.px16),
         decoration: BoxDecoration(
-          color: isSelected
-              ? BookBerPalette.primaryAccent.withValues(alpha: 0.08)
-              : BookBerPalette.bgSurface,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? BBColors.brandPrimaryDim : colors.bgSurface,
+          borderRadius: BBRadius.md,
           border: Border.all(
-            color: isSelected
-                ? BookBerPalette.primaryAccent
-                : const Color(0x0FFFFFFF),
+            color: isSelected ? BBColors.brandPrimary : colors.borderSubtle,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            // Avatar
             Stack(
               children: [
                 Container(
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: BookBerPalette.bgElevated,
+                    color: colors.bgElevated,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
-                // Availability indicator
                 Positioned(
                   bottom: 0,
                   right: 0,
@@ -247,21 +201,15 @@ class _BarberCard extends StatelessWidget {
                     width: 16,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: barber.isAvailable
-                          ? BookBerPalette.queueSafe
-                          : BookBerPalette.textMuted,
+                      color: barber.isAvailable ? BBColors.success : colors.textDisabled,
                       shape: BoxShape.circle,
-                      border: Border.all(
-                        color: BookBerPalette.bgSurface,
-                        width: 2,
-                      ),
+                      border: Border.all(color: colors.bgSurface, width: 2),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(width: 16),
-            // Info
+            const SizedBox(width: BBSpacing.px16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,82 +218,55 @@ class _BarberCard extends StatelessWidget {
                     children: [
                       Text(
                         barber.name,
-                        style: GoogleFonts.dmSans(
-                          fontSize: 16,
+                        style: BBTypography.bodyL.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: BookBerPalette.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.star,
-                        size: 14,
-                        color: BookBerPalette.primaryAccent,
-                      ),
+                      const SizedBox(width: BBSpacing.px8),
+                      Icon(Icons.star, size: 14, color: BBColors.brandSecondary),
                       const SizedBox(width: 2),
                       Text(
                         barber.rating.toStringAsFixed(1),
-                        style: GoogleFonts.dmSans(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: BookBerPalette.textPrimary,
-                        ),
+                        style: BBTypography.bodyS.copyWith(color: colors.textPrimary),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  // Specializations
+                  const SizedBox(height: BBSpacing.px8),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: BBSpacing.px8,
+                    runSpacing: BBSpacing.px8,
                     children: barber.specializations.take(3).map((spec) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: BBSpacing.px8, vertical: BBSpacing.px4),
                         decoration: BoxDecoration(
-                          color: BookBerPalette.bgElevated,
-                          borderRadius: BorderRadius.circular(999),
+                          color: colors.bgElevated,
+                          borderRadius: BBRadius.pill,
                         ),
                         child: Text(
                           spec,
-                          style: GoogleFonts.dmSans(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: BookBerPalette.textSecondary,
-                          ),
+                          style: BBTypography.caption.copyWith(color: colors.textSecondary),
                         ),
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 8),
-                  // Next available time
+                  const SizedBox(height: BBSpacing.px8),
                   Row(
                     children: [
-                      const Icon(
-                        Icons.access_time,
-                        size: 14,
-                        color: BookBerPalette.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
+                      Icon(Icons.access_time, size: 14, color: colors.textSecondary),
+                      const SizedBox(width: BBSpacing.px4),
                       Text(
                         'Next: ${barber.nextAvailableTime}',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: BookBerPalette.textSecondary,
-                        ),
+                        style: BBTypography.caption.copyWith(color: colors.textSecondary),
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            // Checkmark
             if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: BookBerPalette.primaryAccent,
-                size: 24,
-              ),
+              const Icon(Icons.check_circle, color: BBColors.brandPrimary, size: 24),
           ],
         ),
       ),

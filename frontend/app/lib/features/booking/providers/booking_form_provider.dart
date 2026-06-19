@@ -9,7 +9,7 @@ class BookingFormState {
   const BookingFormState({
     this.shopId = '',
     this.shopName = '',
-    this.selectedServices = const <ShopService>[],
+    this.selectedServices = const <ServiceItem>[],
     this.selectedBarberId,
     this.anyBarber = false,
     this.selectedDate,
@@ -22,7 +22,7 @@ class BookingFormState {
 
   final String shopId;
   final String shopName;
-  final List<ShopService> selectedServices;
+  final List<ServiceItem> selectedServices;
   final String? selectedBarberId;
   final bool anyBarber;
   final DateTime? selectedDate;
@@ -35,7 +35,7 @@ class BookingFormState {
   BookingFormState copyWith({
     String? shopId,
     String? shopName,
-    List<ShopService>? selectedServices,
+    List<ServiceItem>? selectedServices,
     String? selectedBarberId,
     bool? anyBarber,
     DateTime? selectedDate,
@@ -89,7 +89,7 @@ class BookingFormNotifier extends StateNotifier<BookingFormState> {
     state = state.copyWith(shopId: shopId, shopName: shopName, currentStep: 1);
   }
 
-  void toggleService(ShopService service) {
+  void toggleService(ServiceItem service) {
     final services = [...state.selectedServices];
     final index = services.indexWhere((item) => item.id == service.id);
     if (index >= 0) {

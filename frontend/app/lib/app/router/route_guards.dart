@@ -20,9 +20,8 @@ String? authRedirect(BuildContext context, GoRouterState state) {
 
   final isPublic = publicRoutes.contains(state.matchedLocation);
 
-  if (isLoading && state.matchedLocation != RoutePaths.splash) {
-    return RoutePaths.splash;
-  }
+  // During loading stay put — let the current screen show its own spinner.
+  if (isLoading) return null;
 
   if (!isAuth && !isPublic) {
     return RoutePaths.login;
@@ -31,6 +30,7 @@ String? authRedirect(BuildContext context, GoRouterState state) {
   if (isAuth) {
     final user = authState.user;
 
+    // Authenticated user on a public screen (except splash) → send to role home.
     if (isPublic && state.matchedLocation != RoutePaths.splash) {
       return user.role == 'barber'
           ? RoutePaths.barberHome
@@ -39,10 +39,10 @@ String? authRedirect(BuildContext context, GoRouterState state) {
               : RoutePaths.home;
     }
 
+    // Wrong-role guards
     if (state.matchedLocation.startsWith('/barber') && user.role != 'barber') {
       return RoutePaths.home;
     }
-
     if (state.matchedLocation.startsWith('/admin') && user.role != 'admin') {
       return RoutePaths.home;
     }

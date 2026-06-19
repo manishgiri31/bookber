@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../app/theme/design_system.dart';
+
+import '../../../core/design/theme.dart';
+import '../../../core/design/tokens.dart';
 import '../providers/admin_providers.dart';
-import '../widgets/admin_bottom_nav.dart';
 
 class AdminUsersScreen extends ConsumerStatefulWidget {
   const AdminUsersScreen({super.key});
@@ -20,7 +20,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
     final usersAsync = ref.watch(adminUsersProvider(_selectedTab.toLowerCase()));
 
     return Scaffold(
-      backgroundColor: BookBerPalette.bgPrimary,
+      backgroundColor: context.bbColors.bgCanvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -32,7 +32,7 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: BookBerPalette.textPrimary,
+                  color: context.bbColors.textPrimary,
                 ),
               ),
             ),
@@ -63,25 +63,19 @@ class _AdminUsersScreenState extends ConsumerState<AdminUsersScreen> {
             Expanded(
               child: usersAsync.when(
                 data: (users) => _UserList(users: users),
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: BookBerPalette.primaryAccent),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: BBColors.brandPrimary),
                 ),
-                error: (_, __) => const Center(
+                error: (_, __) => Center(
                   child: Text(
                     'Error loading users',
-                    style: TextStyle(color: BookBerPalette.textSecondary),
+                    style: TextStyle(color: context.bbColors.textSecondary),
                   ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: AdminBottomNav(
-        currentIndex: 2,
-        onTap: (index) {
-          // TODO: Navigate to respective screens
-        },
       ),
     );
   }
@@ -107,20 +101,20 @@ class _TabButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? BookBerPalette.primaryAccent.withValues(alpha: 0.12)
+              ? BBColors.brandPrimary.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? BookBerPalette.primaryAccent : const Color(0x0FFFFFFF),
+            color: isSelected ? BBColors.brandPrimary : const Color(0x0FFFFFFF),
             width: 1,
           ),
         ),
         child: Text(
           label,
-          style: GoogleFonts.dmSans(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-            color: isSelected ? BookBerPalette.primaryAccent : BookBerPalette.textSecondary,
+            color: isSelected ? BBColors.brandPrimary : context.bbColors.textSecondary,
           ),
         ),
       ),
@@ -158,15 +152,15 @@ class _UserAdminTile extends ConsumerWidget {
 
     switch (user.status) {
       case UserStatus.active:
-        statusColor = BookBerPalette.queueSafe;
+        statusColor = BBColors.success;
         statusLabel = 'Active';
         break;
       case UserStatus.suspended:
-        statusColor = BookBerPalette.urgentRed;
+        statusColor = BBColors.error;
         statusLabel = 'Suspended';
         break;
       case UserStatus.flagged:
-        statusColor = BookBerPalette.warningAmber;
+        statusColor = BBColors.warning;
         statusLabel = 'Flagged';
         break;
     }
@@ -175,7 +169,7 @@ class _UserAdminTile extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: BookBerPalette.bgSurface,
+        color: context.bbColors.bgSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -185,7 +179,7 @@ class _UserAdminTile extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: BookBerPalette.bgElevated,
+              color: context.bbColors.bgElevated,
               borderRadius: BorderRadius.circular(999),
             ),
           ),
@@ -202,7 +196,7 @@ class _UserAdminTile extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: BookBerPalette.textPrimary,
+                        color: context.bbColors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -214,7 +208,7 @@ class _UserAdminTile extends ConsumerWidget {
                       ),
                       child: Text(
                         statusLabel,
-                        style: GoogleFonts.dmSans(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: statusColor,
@@ -226,19 +220,19 @@ class _UserAdminTile extends ConsumerWidget {
                 const SizedBox(height: 4),
                 Text(
                   user.email,
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w400,
-                    color: BookBerPalette.textSecondary,
+                    color: context.bbColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Joined ${_formatDate(user.joinDate)}',
-                  style: GoogleFonts.dmSans(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
-                    color: BookBerPalette.textMuted,
+                    color: context.bbColors.textDisabled,
                   ),
                 ),
               ],
@@ -246,7 +240,7 @@ class _UserAdminTile extends ConsumerWidget {
           ),
           // Actions
           IconButton(
-            icon: const Icon(Icons.more_vert, color: BookBerPalette.textSecondary),
+            icon: Icon(Icons.more_vert, color: context.bbColors.textSecondary),
             onPressed: () async {
               final nextStatus = user.status == UserStatus.suspended ? 'active' : 'suspended';
               await ref.read(adminActionsProvider.notifier).updateUserStatus(user.id, nextStatus);
