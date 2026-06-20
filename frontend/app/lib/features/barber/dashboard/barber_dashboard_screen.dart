@@ -445,6 +445,15 @@ class _QuickActions extends StatelessWidget {
                 onTap: () => context.go('/barber/bookings'),
               ),
             ),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.bar_chart_rounded,
+                label: 'Analytics',
+                color: BBColors.success,
+                onTap: () => context.go('/barber/analytics'),
+              ),
+            ),
           ],
         ),
       ],

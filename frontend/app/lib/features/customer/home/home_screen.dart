@@ -6,11 +6,13 @@ import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
 import '../../../core/providers/location_provider.dart';
+import '../../../core/providers/notifications_provider.dart';
 import '../../../core/widgets/bb_empty_state.dart';
 import '../../../core/widgets/bb_error_widget.dart';
 import '../../../core/widgets/bb_loading.dart';
 import '../../auth/data/auth_provider.dart';
 import '../../shared/domain/shop_models.dart';
+import 'discovery_provider.dart';
 import 'home_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -58,86 +60,66 @@ class HomeScreen extends ConsumerWidget {
               // Active booking banner
               _ActiveBookingBanner(),
 
+              // Discovery: nearby shops (geolocation API)
+              _NearbySection(),
+
+              // Discovery: top-rated shops
+              _TopRatedSection(),
+
               if (homeState.isLoading)
-                const SliverFillRemaining(
-                  child: Center(child: BBLoader()),
-                )
+                const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.md))
               else if (homeState.error != null)
-                SliverFillRemaining(
-                  child: BBErrorWidget(
-                    error: homeState.error!,
-                    onRetry: () =>
-                        ref.read(homeProvider.notifier).refresh(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: BBSpacing.pageHorizontal),
+                    child: BBErrorWidget(
+                      error: homeState.error!,
+                      onRetry: () =>
+                          ref.read(homeProvider.notifier).refresh(),
+                    ),
                   ),
                 )
-              else ...[
-                if (homeState.shops.isNotEmpty) ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: BBSpacing.pageHorizontal,
-                      ),
-                      child: _SectionHeader(
-                        title: 'Nearby Shops',
-                        onSeeAll: () => context.go('/shops'),
-                      ),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: BBSpacing.md)),
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 220,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: BBSpacing.pageHorizontal,
-                        ),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: homeState.shops.take(8).length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(width: BBSpacing.md),
-                        itemBuilder: (ctx, i) =>
-                            _ShopCard(shop: homeState.shops[i]),
-                      ),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: BBSpacing.xl)),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: BBSpacing.pageHorizontal,
-                      ),
-                      child: _SectionHeader(title: 'All Shops'),
-                    ),
-                  ),
-                  const SliverToBoxAdapter(
-                      child: SizedBox(height: BBSpacing.md)),
-                  SliverPadding(
+              else if (homeState.shops.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: BBSpacing.pageHorizontal,
                     ),
-                    sliver: SliverList.separated(
-                      itemCount: homeState.shops.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: BBSpacing.sm),
-                      itemBuilder: (ctx, i) =>
-                          _ShopListTile(shop: homeState.shops[i]),
+                    child: _SectionHeader(
+                      title: 'All Shops',
+                      onSeeAll: () => context.go('/shops'),
                     ),
                   ),
-                ] else
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: const BBEmptyState(
-                      title: 'No shops nearby',
-                      subtitle:
-                          'We couldn\'t find any barber shops in your area.',
+                ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: BBSpacing.md)),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.pageHorizontal,
+                  ),
+                  sliver: SliverList.separated(
+                    itemCount: homeState.shops.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: BBSpacing.sm),
+                    itemBuilder: (ctx, i) =>
+                        _ShopListTile(shop: homeState.shops[i]),
+                  ),
+                ),
+              ] else if (!homeState.isLoading)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                        horizontal: BBSpacing.pageHorizontal),
+                    child: BBEmptyState(
+                      title: 'No shops yet',
+                      subtitle: 'Check back soon — shops are being added.',
                       icon: Icons.store_outlined,
                     ),
                   ),
-                const SliverToBoxAdapter(
-                    child: SizedBox(height: BBSpacing.xxl)),
-              ],
+                ),
+              const SliverToBoxAdapter(
+                  child: SizedBox(height: BBSpacing.xxl)),
             ],
           ),
         ),
@@ -146,14 +128,16 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   const _Header({this.userName});
   final String? userName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.bbColors;
     final first = userName?.split(' ').first ?? 'there';
+    final unread = ref.watch(
+        notificationsProvider.select((s) => s.unreadCount));
     return Row(
       children: [
         Expanded(
@@ -176,6 +160,57 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
+        GestureDetector(
+          onTap: () {
+            ref.read(notificationsProvider.notifier).markAllRead();
+            context.push('/notifications');
+          },
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: colors.surfaceVariant,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.border),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    size: 20,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ),
+              if (unread > 0)
+                Positioned(
+                  top: -3,
+                  right: -3,
+                  child: Container(
+                    width: 17,
+                    height: 17,
+                    decoration: const BoxDecoration(
+                      color: BBColors.amber,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        unread > 9 ? '9+' : '$unread',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: BBSpacing.sm),
         GestureDetector(
           onTap: () => context.push('/profile'),
           child: Container(
@@ -391,6 +426,81 @@ class _ActiveBookingBanner extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Discovery sections ───────────────────────────────────────────────────────
+
+class _NearbySection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final nearbyAsync = ref.watch(nearbyShopsProvider);
+    final shops = nearbyAsync.valueOrNull ?? [];
+    if (shops.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.pageHorizontal),
+            child: _SectionHeader(title: 'Nearby'),
+          ),
+          const SizedBox(height: BBSpacing.md),
+          SizedBox(
+            height: 220,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: BBSpacing.pageHorizontal),
+              scrollDirection: Axis.horizontal,
+              itemCount: shops.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(width: BBSpacing.md),
+              itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
+            ),
+          ),
+          const SizedBox(height: BBSpacing.xl),
+        ],
+      ),
+    );
+  }
+}
+
+class _TopRatedSection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final topAsync = ref.watch(topRatedShopsProvider);
+    final shops = topAsync.valueOrNull ?? [];
+    if (shops.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.pageHorizontal),
+            child: _SectionHeader(
+              title: 'Top Rated',
+              onSeeAll: () => context.go('/shops'),
+            ),
+          ),
+          const SizedBox(height: BBSpacing.md),
+          SizedBox(
+            height: 220,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: BBSpacing.pageHorizontal),
+              scrollDirection: Axis.horizontal,
+              itemCount: shops.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(width: BBSpacing.md),
+              itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
+            ),
+          ),
+          const SizedBox(height: BBSpacing.xl),
+        ],
       ),
     );
   }

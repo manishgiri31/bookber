@@ -13,7 +13,10 @@ import '../../features/auth/data/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/barber/analytics/analytics_screen.dart';
 import '../../features/barber/barber_shell.dart';
+import '../../features/customer/notifications/notifications_screen.dart';
+import '../../features/customer/payment/checkout_screen.dart';
 import '../../features/barber/bookings/barber_bookings_screen.dart';
 import '../../features/barber/dashboard/barber_dashboard_screen.dart';
 import '../../features/barber/profile/barber_profile_screen.dart';
@@ -112,6 +115,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/reviews',
         builder: (_, _) => const MyReviewsScreen(),
       ),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, _) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: '/checkout',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return CheckoutScreen(
+            bookingId: extra['bookingId']?.toString() ?? '',
+            amount: (extra['amount'] as num?)?.toDouble() ?? 0.0,
+            shopName: extra['shopName']?.toString() ?? '',
+            serviceName: extra['serviceName']?.toString() ?? '',
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payments/history',
+        builder: (_, _) => const PaymentHistoryScreen(),
+      ),
 
       // Barber shell
       ShellRoute(
@@ -130,6 +153,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/barber/profile',
               builder: (_, _) => const BarberProfileScreen()),
+          GoRoute(
+              path: '/barber/analytics',
+              builder: (_, _) => const BarberAnalyticsScreen()),
         ],
       ),
 

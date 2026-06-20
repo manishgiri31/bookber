@@ -26,6 +26,18 @@ import { buildPaymentDependencies } from "./modules/payment/payment.container.js
 import { paymentRoutes } from "./modules/payment/presentation/payment.routes.js";
 import { buildReviewDependencies } from "./modules/review/review.container.js";
 import { reviewRoutes } from "./modules/review/presentation/review.routes.js";
+import { buildGeolocationDependencies } from "./modules/geolocation/geolocation.container.js";
+import { geolocationRoutes } from "./modules/geolocation/presentation/geolocation.routes.js";
+import { buildAdminDependencies } from "./modules/admin/admin.container.js";
+import { adminRoutes } from "./modules/admin/presentation/admin.routes.js";
+import { buildWalletDependencies } from "./modules/wallet/wallet.container.js";
+import { walletRoutes } from "./modules/wallet/presentation/wallet.routes.js";
+import { buildLoyaltyDependencies } from "./modules/loyalty/loyalty.container.js";
+import { loyaltyRoutes } from "./modules/loyalty/presentation/loyalty.routes.js";
+import { buildReferralDependencies } from "./modules/referral/referral.container.js";
+import { referralRoutes } from "./modules/referral/presentation/referral.routes.js";
+import { buildCouponDependencies } from "./modules/coupon/coupon.container.js";
+import { couponRoutes } from "./modules/coupon/presentation/coupon.routes.js";
 import type { SocketEventPublisher } from "./shared/socket/socket.publisher.js";
 import { errorHandler } from "./shared/errors/error-handler.js";
 import { prismaPlugin } from "./shared/prisma/prisma.plugin.js";
@@ -52,6 +64,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   const analyticsDeps = buildAnalyticsContainer();
   const paymentDeps = buildPaymentDependencies(app);
   const reviewDeps = buildReviewDependencies(app);
+  const geoDeps = buildGeolocationDependencies(app);
+  const adminDeps = buildAdminDependencies(app);
+  const walletDeps = buildWalletDependencies();
+  const loyaltyDeps = buildLoyaltyDependencies();
+  const referralDeps = buildReferralDependencies();
+  const couponDeps = buildCouponDependencies();
   console.log("✓ Dependency containers built");
 
   app.decorate("authDeps", authDeps);
@@ -62,6 +80,12 @@ export async function buildApp(): Promise<FastifyInstance> {
   app.decorate("analyticsDeps", analyticsDeps);
   app.decorate("paymentDeps", paymentDeps);
   app.decorate("reviewDeps", reviewDeps);
+  app.decorate("geoDeps", geoDeps);
+  app.decorate("adminDeps", adminDeps);
+  app.decorate("walletDeps", walletDeps);
+  app.decorate("loyaltyDeps", loyaltyDeps);
+  app.decorate("referralDeps", referralDeps);
+  app.decorate("couponDeps", couponDeps);
 
   console.log("Registering prisma plugin...");
   await app.register(prismaPlugin);
@@ -150,6 +174,12 @@ export async function buildApp(): Promise<FastifyInstance> {
     { plugin: reviewRoutes, prefix: "" },
     { plugin: notificationRoutes, prefix: "" },
     { plugin: barberRoutes, prefix: "/api" },
+    { plugin: geolocationRoutes, prefix: "" },
+    { plugin: adminRoutes, prefix: "" },
+    { plugin: walletRoutes, prefix: "" },
+    { plugin: loyaltyRoutes, prefix: "" },
+    { plugin: referralRoutes, prefix: "" },
+    { plugin: couponRoutes, prefix: "" },
   ];
 
   await registerRoutes(app, routes);
@@ -171,6 +201,12 @@ declare module "fastify" {
     analyticsDeps: ReturnType<typeof buildAnalyticsContainer>;
     paymentDeps: ReturnType<typeof buildPaymentDependencies>;
     reviewDeps: ReturnType<typeof buildReviewDependencies>;
+    geoDeps: ReturnType<typeof buildGeolocationDependencies>;
+    adminDeps: ReturnType<typeof buildAdminDependencies>;
+    walletDeps: ReturnType<typeof buildWalletDependencies>;
+    loyaltyDeps: ReturnType<typeof buildLoyaltyDependencies>;
+    referralDeps: ReturnType<typeof buildReferralDependencies>;
+    couponDeps: ReturnType<typeof buildCouponDependencies>;
     prisma: import("@prisma/client").PrismaClient;
     redis: import("ioredis").Redis | null;
     socketPublisher: SocketEventPublisher;

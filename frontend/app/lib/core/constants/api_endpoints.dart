@@ -62,4 +62,45 @@ abstract final class ApiEndpoints {
   // Notifications
   static const String notificationTokens = '/notifications/tokens';
   static String revokeToken(String token) => '/notifications/tokens/$token';
+
+  // Payments
+  static const String payments = '/payments';
+  static String paymentById(String id) => '/payments/$id';
+  static const String paymentHistory = '/payments/history';
+  static const String processPayment = '/payments/process';
+  static const String refundPayment = '/payments/refund';
+  static const String razorpayOrder = '/payments/razorpay/order';
+  static const String razorpayVerify = '/payments/razorpay/verify';
+
+  // Discovery / Geolocation
+  static const String nearbyShops = '/geolocation/nearby';
+  static const String topRatedShops = '/geolocation/top-rated';
+  static const String searchGeolocation = '/geolocation/search';
+  static const String mapMarkers = '/geolocation/markers';
+  static String shopsByCity(String city) => '/geolocation/city/$city';
+
+  // Admin
+  static const String adminDashboard = '/admin/dashboard';
+  static const String adminAnalyticsOverview = '/admin/analytics/overview';
+  static const String adminAnalyticsBookings = '/admin/analytics/bookings';
+  static const String adminAnalyticsEarnings = '/admin/analytics/earnings';
+  static const String adminBarbers = '/admin/barbers';
+  static const String adminModerationAction = '/admin/moderation/action';
+  static const String adminActiveQueues = '/admin/queues/active';
+
+  // Wallet
+  static const String walletBalance = '/wallet/balance';
+  static const String walletTransactions = '/wallet/transactions';
+  static const String walletTopUp = '/wallet/topup';
+
+  // Loyalty
+  static const String loyaltyAccount = '/loyalty/account';
+  static const String loyaltyTransactions = '/loyalty/transactions';
+
+  // Referral
+  static const String referralCode = '/referral/code';
+  static const String referralStatus = '/referral/status';
+
+  // Coupons
+  static const String validateCoupon = '/coupons/validate';
 }

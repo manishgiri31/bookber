@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/notifications_provider.dart';
 import '../../../core/providers/providers.dart';
 import '../domain/auth_models.dart';
 import 'auth_repository.dart';
@@ -51,9 +52,12 @@ class AuthNotifier extends Notifier<AuthState> {
     state = const AuthLoading();
     try {
       final user = await _repo.restoreSession();
-      state = user != null
-          ? AuthAuthenticated(user)
-          : const AuthUnauthenticated();
+      if (user != null) {
+        state = AuthAuthenticated(user);
+        _registerFcm();
+      } else {
+        state = const AuthUnauthenticated();
+      }
     } catch (_) {
       state = const AuthUnauthenticated();
     }
@@ -66,6 +70,7 @@ class AuthNotifier extends Notifier<AuthState> {
         LoginRequest(email: email.trim(), password: password),
       );
       state = AuthAuthenticated(user);
+      _registerFcm();
       return true;
     } catch (e) {
       state = AuthError(e.toString());
@@ -92,6 +97,7 @@ class AuthNotifier extends Notifier<AuthState> {
         ),
       );
       state = AuthAuthenticated(user);
+      _registerFcm();
       return true;
     } catch (e) {
       state = AuthError(e.toString());
@@ -100,8 +106,13 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    await ref.read(notificationsProvider.notifier).revokeToken();
     await _repo.logout();
     state = const AuthUnauthenticated();
+  }
+
+  void _registerFcm() {
+    ref.read(notificationsProvider.notifier).registerToken();
   }
 
   void clearError() {

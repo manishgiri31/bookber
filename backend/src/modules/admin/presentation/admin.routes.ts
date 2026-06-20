@@ -4,8 +4,13 @@ import { AdminController } from "./admin.controller.js";
 export const adminRoutes: FastifyPluginAsync = async (app) => {
   const controller = new AdminController(app.adminDeps.service);
 
-  // All admin routes require ADMIN role
+  // All admin routes require authentication + ADMIN role
   app.addHook("onRequest", async (request, reply) => {
+    try {
+      await app.authenticate(request);
+    } catch {
+      return reply.status(401).send({ error: "Unauthorized" });
+    }
     const user = request.user as any;
     if (!user || user.role !== "ADMIN") {
       return reply.status(403).send({ error: "Forbidden - Admin access required" });

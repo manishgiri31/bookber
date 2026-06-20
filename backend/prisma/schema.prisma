@@ -26,6 +26,11 @@ model User {
   ownedShops          Shop[]              @relation("ShopOwner")
   deviceTokens        DeviceToken[]
   rebookingReminders  RebookingReminder[]
+  wallet              Wallet?
+  loyaltyAccount      LoyaltyAccount?
+  referralsGiven      Referral[]          @relation("ReferrerUser")
+  referralsReceived   Referral[]          @relation("RefereeUser")
+  couponRedemptions   CouponRedemption[]
 
   @@index([role])
   @@index([email])
@@ -515,4 +520,140 @@ enum Platform {
   IOS
   ANDROID
   WEB
+}
+
+// ─── Wallet ───────────────────────────────────────────────────────────────────
+
+model Wallet {
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  balance      Float               @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([userId])
+}
+
+model WalletTransaction {
+  id        String                @id @default(cuid())
+  walletId  String
+  amount    Float
+  type      WalletTransactionType
+  reason    String
+  refId     String?
+  createdAt DateTime              @default(now())
+  wallet    Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+}
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+}
+
+// ─── Loyalty ──────────────────────────────────────────────────────────────────
+
+model LoyaltyAccount {
+  id           String               @id @default(cuid())
+  userId       String               @unique
+  points       Int                  @default(0)
+  tier         LoyaltyTier          @default(BRONZE)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions LoyaltyTransaction[]
+
+  @@index([userId])
+}
+
+model LoyaltyTransaction {
+  id               String      @id @default(cuid())
+  loyaltyAccountId String
+  points           Int
+  type             LoyaltyTransactionType
+  reason           String
+  refId            String?
+  createdAt        DateTime    @default(now())
+  account          LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id], onDelete: Cascade)
+
+  @@index([loyaltyAccountId])
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum LoyaltyTransactionType {
+  EARN
+  REDEEM
+  EXPIRE
+  ADJUSTMENT
+}
+
+// ─── Referral ─────────────────────────────────────────────────────────────────
+
+model Referral {
+  id            String         @id @default(cuid())
+  referrerId    String
+  refereeId     String?
+  code          String         @unique
+  status        ReferralStatus @default(PENDING)
+  rewardGranted Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  referrer      User           @relation("ReferrerUser", fields: [referrerId], references: [id])
+  referee       User?          @relation("RefereeUser", fields: [refereeId], references: [id])
+
+  @@index([referrerId])
+  @@index([code])
+}
+
+enum ReferralStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+// ─── Coupon ───────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id              String             @id @default(cuid())
+  code            String             @unique
+  type            CouponType
+  value           Float
+  maxRedemptions  Int                @default(1)
+  usedCount       Int                @default(0)
+  minAmount       Float              @default(0)
+  expiresAt       DateTime?
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  redemptions     CouponRedemption[]
+
+  @@index([code])
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  userId    String
+  bookingId String?
+  discount  Float
+  createdAt DateTime @default(now())
+  coupon    Coupon   @relation(fields: [couponId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([couponId])
+  @@index([userId])
+}
+
+enum CouponType {
+  PERCENT
+  FLAT
 }
