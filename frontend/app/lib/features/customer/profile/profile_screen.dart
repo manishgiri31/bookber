@@ -7,46 +7,42 @@ import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
 import '../../../core/widgets/bb_button.dart';
 import '../../auth/data/auth_provider.dart';
-import '../dashboard/barber_provider.dart';
 
-class BarberProfileScreen extends ConsumerWidget {
-  const BarberProfileScreen({super.key});
+class ProfileScreen extends ConsumerWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
     final colors = context.bbColors;
-    final dash = ref.watch(barberDashProvider);
-    final profile = dash.profile;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(title: const Text('My Profile')),
+      appBar: AppBar(title: const Text('Profile')),
       body: ListView(
         padding: const EdgeInsets.symmetric(
           horizontal: BBSpacing.pageHorizontal,
           vertical: BBSpacing.pageVertical,
         ),
         children: [
-          // Avatar
+          // Avatar + name
           Center(
             child: Column(
               children: [
                 Container(
-                  width: 88,
-                  height: 88,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
                     color: BBColors.amber.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: BBColors.amber.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
                   ),
                   child: Center(
                     child: Text(
-                      profile?.name.isNotEmpty == true
-                          ? profile!.name[0].toUpperCase()
-                          : 'B',
+                      user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
                       style: BBTypography.textTheme.displaySmall?.copyWith(
                         color: BBColors.amber,
                         fontWeight: FontWeight.w700,
@@ -56,7 +52,7 @@ class BarberProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: BBSpacing.md),
                 Text(
-                  profile?.name ?? '—',
+                  user.name,
                   style: BBTypography.textTheme.headlineMedium?.copyWith(
                     color: colors.text,
                   ),
@@ -64,109 +60,68 @@ class BarberProfileScreen extends ConsumerWidget {
                 const SizedBox(height: BBSpacing.xs),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 3),
+                      horizontal: BBSpacing.sm, vertical: 3),
                   decoration: BoxDecoration(
                     color: BBColors.amber.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(BBRadius.full),
                   ),
                   child: Text(
-                    'BARBER',
+                    user.role.toUpperCase(),
                     style: BBTypography.textTheme.labelSmall?.copyWith(
                       color: BBColors.amber,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-
-                // Availability pill
-                if (profile != null) ...[
-                  const SizedBox(height: BBSpacing.sm),
-                  GestureDetector(
-                    onTap: () => ref
-                        .read(barberDashProvider.notifier)
-                        .toggleAvailability(),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: profile.isAvailable
-                            ? BBColors.success.withValues(alpha: 0.12)
-                            : colors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(BBRadius.full),
-                        border: Border.all(
-                          color: profile.isAvailable
-                              ? BBColors.success.withValues(alpha: 0.4)
-                              : colors.border,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: BoxDecoration(
-                              color: profile.isAvailable
-                                  ? BBColors.success
-                                  : colors.textTertiary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            profile.isAvailable ? 'Available' : 'Away',
-                            style: BBTypography.textTheme.labelMedium
-                                ?.copyWith(
-                              color: profile.isAvailable
-                                  ? BBColors.success
-                                  : colors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
           const SizedBox(height: BBSpacing.xl),
 
-          if (profile != null)
-            _Section(
-              title: 'Work',
-              items: [
-                _InfoItem(
-                  icon: Icons.store_outlined,
-                  label: 'Shop',
-                  value: profile.shopName,
-                ),
-                _InfoItem(
-                  icon: Icons.location_on_outlined,
-                  label: 'Address',
-                  value: profile.shopAddress,
-                ),
-                if (profile.email != null)
-                  _InfoItem(
-                    icon: Icons.mail_outline_rounded,
-                    label: 'Email',
-                    value: profile.email!,
-                  ),
-              ],
-            ),
+          // Info section
+          _Section(
+            title: 'Account',
+            children: [
+              _InfoRow(
+                icon: Icons.mail_outline_rounded,
+                label: 'Email',
+                value: user.email,
+              ),
+              _InfoRow(
+                icon: Icons.phone_outlined,
+                label: 'Phone',
+                value: user.phone.isNotEmpty ? user.phone : 'Not set',
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.base),
+
+          _Section(
+            title: 'Activity',
+            children: [
+              _ActionRow(
+                icon: Icons.history_rounded,
+                label: 'Booking History',
+                onTap: () => context.push('/bookings'),
+              ),
+              _ActionRow(
+                icon: Icons.star_outline_rounded,
+                label: 'My Reviews',
+                onTap: () => context.push('/reviews'),
+              ),
+            ],
+          ),
           const SizedBox(height: BBSpacing.base),
 
           _Section(
             title: 'Settings',
-            items: [
-              _ActionItem(
+            children: [
+              _ActionRow(
                 icon: Icons.lock_outline_rounded,
                 label: 'Change Password',
                 onTap: () => context.push('/change-password'),
               ),
-              _ActionItem(
+              _ActionRow(
                 icon: Icons.dark_mode_outlined,
                 label: 'Appearance',
                 onTap: () => context.push('/settings'),
@@ -178,7 +133,7 @@ class BarberProfileScreen extends ConsumerWidget {
           BBButton(
             label: 'Sign Out',
             variant: BBButtonVariant.destructive,
-            onPressed: () => _signOut(context, ref),
+            onPressed: () => _confirmSignOut(context, ref),
             icon: Icons.logout_rounded,
           ),
           const SizedBox(height: BBSpacing.base),
@@ -187,7 +142,7 @@ class BarberProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _signOut(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -215,9 +170,9 @@ class BarberProfileScreen extends ConsumerWidget {
 }
 
 class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.items});
+  const _Section({required this.title, required this.children});
   final String title;
-  final List<Widget> items;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +181,8 @@ class _Section extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: BBSpacing.sm),
+          padding: const EdgeInsets.only(
+              left: BBSpacing.xs, bottom: BBSpacing.sm),
           child: Text(
             title.toUpperCase(),
             style: BBTypography.textTheme.labelSmall?.copyWith(
@@ -243,11 +199,11 @@ class _Section extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
-            children: items
+            children: children
                 .expand(
                   (c) => [
                     c,
-                    if (c != items.last)
+                    if (c != children.last)
                       Divider(
                         color: colors.border,
                         height: 1,
@@ -263,8 +219,8 @@ class _Section extends StatelessWidget {
   }
 }
 
-class _InfoItem extends StatelessWidget {
-  const _InfoItem({
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
@@ -310,8 +266,8 @@ class _InfoItem extends StatelessWidget {
   }
 }
 
-class _ActionItem extends StatelessWidget {
-  const _ActionItem({
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -337,12 +293,16 @@ class _ActionItem extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: BBTypography.textTheme.bodyMedium
-                    ?.copyWith(color: colors.text),
+                style: BBTypography.textTheme.bodyMedium?.copyWith(
+                  color: colors.text,
+                ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
-                size: 14, color: colors.textTertiary),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: colors.textTertiary,
+            ),
           ],
         ),
       ),

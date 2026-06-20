@@ -1,8 +1,8 @@
 name: frontend
-description: "A new Flutter project."
+description: "BookBer - Premium Barber Booking"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: ^3.11.5
@@ -13,56 +13,42 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  # State Management
   flutter_riverpod: ^2.6.1
   hooks_riverpod: ^2.6.1
   flutter_hooks: ^0.21.3+1
-  riverpod_annotation: ^2.6.1
 
+  # Navigation
   go_router: ^13.2.0
 
+  # Network
   dio: ^5.4.1
-  retrofit: ^4.1.0
   socket_io_client: ^3.1.4
 
+  # Firebase
   firebase_core: ^4.9.0
   firebase_messaging: ^16.2.2
 
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
-
-  geolocator: ^14.0.2
-  google_maps_flutter: ^2.6.0
-  flutter_map: ^8.3.0
-  latlong2: ^0.9.1
-
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # Storage
   flutter_secure_storage: ^9.0.0
   shared_preferences: ^2.2.3
 
-  google_fonts: ^6.2.1
+  # UI
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   fl_chart: ^0.67.0
-  lottie: ^3.1.0
+  flutter_animate: ^4.5.0
+  gap: ^3.0.1
 
+  # Utilities
   intl: ^0.20.2
-  image_picker: ^1.0.7
   url_launcher: ^6.2.5
-  permission_handler: ^12.0.1
-  vibration: ^3.1.8
+  geolocator: ^12.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^6.0.0
-
-  build_runner: ^2.4.9
-  riverpod_generator: ^2.4.0
-  retrofit_generator: ^8.1.0
-  freezed: ^2.5.2
-  json_serializable: ^6.7.6
 
 flutter:
   uses-material-design: true
@@ -73,12 +59,4 @@ flutter:
       - asset: assets/fonts/Satoshi-Medium.otf
         weight: 500
       - asset: assets/fonts/Satoshi-Bold.otf
-        weight: 700
-
-  - family: DM Sans
-    fonts:
-      - asset: assets/fonts/DMSans-Regular.ttf
-      - asset: assets/fonts/DMSans-Medium.ttf
-        weight: 500
-      - asset: assets/fonts/DMSans-Bold.ttf
         weight: 700

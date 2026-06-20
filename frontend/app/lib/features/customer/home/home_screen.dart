@@ -1,709 +1,256 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/design/tokens.dart';
-import '../../../core/components/bb_card.dart';
-import '../../../core/components/bb_skeleton.dart';
-import '../../../core/components/bb_status.dart';
-import '../../../core/components/bb_input.dart';
-import '../../../core/providers/auth_provider.dart';
-import '../../../features/auth/domain/auth_state.dart';
-import '../../shops/domain/shop_models.dart';
-import '../providers/shop_providers.dart';
+import '../../../core/design/bb_colors.dart';
+import '../../../core/design/bb_tokens.dart';
+import '../../../core/design/bb_typography.dart';
+import '../../../core/providers/location_provider.dart';
+import '../../../core/widgets/bb_empty_state.dart';
+import '../../../core/widgets/bb_error_widget.dart';
+import '../../../core/widgets/bb_loading.dart';
+import '../../auth/data/auth_provider.dart';
+import '../../shared/domain/shop_models.dart';
+import 'home_provider.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  final _scrollController = ScrollController();
-  final _promoController = PageController();
-  int _promoPage = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _startPromoAutoScroll();
-    // Keep status bar light on dark bg
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    _promoController.dispose();
-    super.dispose();
-  }
-
-  void _startPromoAutoScroll() {
-    Future.delayed(const Duration(seconds: 4), () {
-      if (!mounted) return;
-      final next = (_promoPage + 1) % _promoItems.length;
-      _promoController.animateToPage(
-        next,
-        duration: BBMotion.slow,
-        curve: BBMotion.smooth,
-      );
-      _startPromoAutoScroll();
-    });
-  }
-
-  String get _greeting {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
-  static const _promoItems = [
-    _PromoItem(
-      headline: 'BookBer Members\nget 20% off',
-      sub: 'Limited time offer',
-      gradient: LinearGradient(
-        colors: [BBColors.brandPrimary, BBColorPrimitives.indigo100],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      ctaLabel: 'Book now',
-      textColor: BBColorPrimitives.neutral50,
-    ),
-    _PromoItem(
-      headline: 'New shops\nnear you',
-      sub: '14 new barbershops this week',
-      gradient: LinearGradient(
-        colors: [BBColorPrimitives.neutral150, BBColorPrimitives.neutral200],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      ctaLabel: 'Explore',
-      textColor: BBColorPrimitives.neutral900,
-    ),
-    _PromoItem(
-      headline: 'Skip the wait\nwith BookBer',
-      sub: 'Real-time queue tracking',
-      gradient: LinearGradient(
-        colors: [BBColorPrimitives.coral400, BBColorPrimitives.coral500],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      ctaLabel: 'Learn more',
-      textColor: BBColorPrimitives.neutral50,
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = ref.watch(authControllerProvider);
-    final userName = switch (authState) {
-      AuthAuthenticated(:final user) => user.name.split(' ').first,
-      _ => '',
-    };
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final homeState = ref.watch(homeProvider);
+    final colors = context.bbColors;
 
     return Scaffold(
-      backgroundColor: BBColors.bgCanvas,
-      body: CustomScrollView(
-        controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // ── App bar ──────────────────────────────────────
-          SliverToBoxAdapter(
-            child: _HomeAppBar(greeting: _greeting, userName: userName),
-          ),
-
-          // ── Search ───────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
-              BBSpacing.px20, BBSpacing.px4, BBSpacing.px20, BBSpacing.px20,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: BBSearchField(
-                hint: 'Search barbers, shops, services...',
-                onTap: () => context.push('/search'),
-              ),
-            ),
-          ),
-
-          // ── Promo carousel ───────────────────────────────
-          SliverToBoxAdapter(
-            child: _PromoCarousel(
-              items: _promoItems,
-              controller: _promoController,
-              currentPage: _promoPage,
-              onPageChanged: (i) => setState(() => _promoPage = i),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.px32)),
-
-          // ── Quick filters ────────────────────────────────
-          SliverToBoxAdapter(
-            child: _ServiceFilterRow(
-              onFilter: (service) {
-                context.push('/search?service=$service');
-              },
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.px32)),
-
-          // ── Nearby shops ─────────────────────────────────
-          SliverToBoxAdapter(
-            child: BBSectionHeader(
-              title: 'Nearby Shops',
-              action: 'See all',
-              onActionTap: () => context.push('/explore'),
-              padding: const EdgeInsets.fromLTRB(
-                BBSpacing.px20, 0, BBSpacing.px20, BBSpacing.px16,
-              ),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 272,
-              child: ref.watch(nearbyShopsProvider('Ludhiana')).when(
-                data: (shops) => _ShopHorizontalList(shops: shops),
-                loading: () => const _ShopHorizontalSkeleton(),
-                error: (e, _) => _ShopsError(onRetry: () => ref.invalidate(nearbyShopsProvider)),
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.px32)),
-
-          // ── Open now ─────────────────────────────────────
-          SliverToBoxAdapter(
-            child: BBSectionHeader(
-              title: 'Open Now',
-              action: 'See all',
-              onActionTap: () => context.push('/explore?filter=open'),
-              padding: const EdgeInsets.fromLTRB(
-                BBSpacing.px20, 0, BBSpacing.px20, BBSpacing.px16,
-              ),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: ref.watch(nearbyShopsProvider('Ludhiana')).when(
-              data: (shops) {
-                final open = shops.where((s) => s.isOpen).toList();
-                return open.isEmpty
-                    ? const _NoOpenShops()
-                    : _OpenShopsList(shops: open);
-              },
-              loading: () => const _OpenShopsListSkeleton(),
-              error: (_, __) => const SizedBox.shrink(),
-            ),
-          ),
-
-          // ── Bottom padding ────────────────────────────────
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// APP BAR
-// ─────────────────────────────────────────────────────────────
-
-class _HomeAppBar extends StatelessWidget {
-  const _HomeAppBar({required this.greeting, required this.userName});
-
-  final String greeting;
-  final String userName;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          BBSpacing.px20, BBSpacing.px16, BBSpacing.px20, BBSpacing.px8,
-        ),
-        child: Row(
-          children: [
-            // Greeting
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    userName.isNotEmpty ? '$greeting, $userName' : greeting,
-                    style: BBTypography.displayS,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      backgroundColor: colors.background,
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: BBColors.amber,
+          backgroundColor: colors.surface,
+          onRefresh: () => ref.read(homeProvider.notifier).refresh(),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    BBSpacing.pageHorizontal,
+                    BBSpacing.base,
+                    BBSpacing.pageHorizontal,
+                    0,
                   ),
-                  const SizedBox(height: BBSpacing.px4),
-                  // Location pill
-                  GestureDetector(
-                    onTap: () {/* TODO: location picker */},
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.location_on_outlined,
-                          size: BBIconSize.sm,
-                          color: BBColors.brandPrimary,
-                        ),
-                        const SizedBox(width: BBSpacing.px4),
-                        Text('Ludhiana, Punjab', style: BBTypography.bodyM),
-                        const SizedBox(width: BBSpacing.px4),
-                        const Icon(
-                          Icons.keyboard_arrow_down,
-                          size: BBIconSize.sm,
-                          color: BBColors.textDisabled,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Notification
-            _NotificationButton(onTap: () => context.push('/notifications')),
-            const SizedBox(width: BBSpacing.px10),
-            // Avatar
-            GestureDetector(
-              onTap: () => context.push('/profile'),
-              child: Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: BBColors.brandPrimaryDim,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: BBColors.brandPrimary, width: 1.5),
-                ),
-                child: const Icon(
-                  Icons.person_outline,
-                  size: BBIconSize.md,
-                  color: BBColors.brandPrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: BBColors.bgSurface,
-              borderRadius: BBRadius.md,
-              border: Border.all(color: BBColors.borderSubtle, width: 1),
-            ),
-            child: const Icon(
-              Icons.notifications_outlined,
-              size: BBIconSize.md,
-              color: BBColors.textPrimary,
-            ),
-          ),
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: BBColors.brandPrimary,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// PROMO CAROUSEL
-// ─────────────────────────────────────────────────────────────
-
-class _PromoItem {
-  const _PromoItem({
-    required this.headline,
-    required this.sub,
-    required this.gradient,
-    required this.ctaLabel,
-    required this.textColor,
-  });
-
-  final String headline;
-  final String sub;
-  final Gradient gradient;
-  final String ctaLabel;
-  final Color textColor;
-}
-
-class _PromoCarousel extends StatelessWidget {
-  const _PromoCarousel({
-    required this.items,
-    required this.controller,
-    required this.currentPage,
-    required this.onPageChanged,
-  });
-
-  final List<_PromoItem> items;
-  final PageController controller;
-  final int currentPage;
-  final ValueChanged<int> onPageChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 168,
-          child: PageView.builder(
-            controller: controller,
-            onPageChanged: onPageChanged,
-            itemCount: items.length,
-            itemBuilder: (context, i) {
-              final item = items[i];
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
-                child: BBGradientCard(
-                  gradient: item.gradient,
-                  borderRadius: BBRadius.xxl,
-                  child: Stack(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            item.headline,
-                            style: BBTypography.displayM.copyWith(
-                              color: item.textColor,
-                              height: 1.15,
-                            ),
-                          ),
-                          const SizedBox(height: BBSpacing.px6),
-                          Text(
-                            item.sub,
-                            style: BBTypography.bodyM.copyWith(
-                              color: item.textColor.withValues(alpha: 0.7),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: BBSpacing.px14,
-                            vertical: BBSpacing.px8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: item.textColor.withValues(alpha: 0.15),
-                            borderRadius: BBRadius.pill,
-                          ),
-                          child: Text(
-                            item.ctaLabel,
-                            style: BBTypography.buttonS.copyWith(color: item.textColor),
-                          ),
-                        ),
-                      ),
+                      _Header(userName: user?.name),
+                      const SizedBox(height: BBSpacing.xl),
+                      _SearchBar(),
+                      const SizedBox(height: BBSpacing.base),
                     ],
                   ),
                 ),
-              );
-            },
+              ),
+
+              // Location permission nudge
+              _LocationNudge(),
+
+              // Active booking banner
+              _ActiveBookingBanner(),
+
+              if (homeState.isLoading)
+                const SliverFillRemaining(
+                  child: Center(child: BBLoader()),
+                )
+              else if (homeState.error != null)
+                SliverFillRemaining(
+                  child: BBErrorWidget(
+                    error: homeState.error!,
+                    onRetry: () =>
+                        ref.read(homeProvider.notifier).refresh(),
+                  ),
+                )
+              else ...[
+                if (homeState.shops.isNotEmpty) ...[
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: BBSpacing.pageHorizontal,
+                      ),
+                      child: _SectionHeader(
+                        title: 'Nearby Shops',
+                        onSeeAll: () => context.go('/shops'),
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                      child: SizedBox(height: BBSpacing.md)),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 220,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: BBSpacing.pageHorizontal,
+                        ),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: homeState.shops.take(8).length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(width: BBSpacing.md),
+                        itemBuilder: (ctx, i) =>
+                            _ShopCard(shop: homeState.shops[i]),
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                      child: SizedBox(height: BBSpacing.xl)),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: BBSpacing.pageHorizontal,
+                      ),
+                      child: _SectionHeader(title: 'All Shops'),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(
+                      child: SizedBox(height: BBSpacing.md)),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BBSpacing.pageHorizontal,
+                    ),
+                    sliver: SliverList.separated(
+                      itemCount: homeState.shops.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: BBSpacing.sm),
+                      itemBuilder: (ctx, i) =>
+                          _ShopListTile(shop: homeState.shops[i]),
+                    ),
+                  ),
+                ] else
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: const BBEmptyState(
+                      title: 'No shops nearby',
+                      subtitle:
+                          'We couldn\'t find any barber shops in your area.',
+                      icon: Icons.store_outlined,
+                    ),
+                  ),
+                const SliverToBoxAdapter(
+                    child: SizedBox(height: BBSpacing.xxl)),
+              ],
+            ],
           ),
         ),
-        const SizedBox(height: BBSpacing.px12),
-        // Page dots
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(items.length, (i) {
-            final active = i == currentPage;
-            return AnimatedContainer(
-              duration: BBMotion.normal,
-              curve: BBMotion.smooth,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 20 : 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: active ? BBColors.brandPrimary : BBColors.bgElevated,
-                borderRadius: BBRadius.pill,
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({this.userName});
+  final String? userName;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final first = userName?.split(' ').first ?? 'there';
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Good ${_greeting()},',
+                style: BBTypography.textTheme.bodyLarge?.copyWith(
+                  color: colors.textSecondary,
+                ),
               ),
-            );
-          }),
+              Text(
+                first,
+                style: BBTypography.textTheme.displaySmall?.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => context.push('/profile'),
+          child: Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: BBColors.amber.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: BBColors.amber.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                (userName?.isNotEmpty == true)
+                    ? userName![0].toUpperCase()
+                    : '?',
+                style: BBTypography.textTheme.titleLarge?.copyWith(
+                  color: BBColors.amber,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
+
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'morning';
+    if (h < 17) return 'afternoon';
+    return 'evening';
+  }
 }
 
-// ─────────────────────────────────────────────────────────────
-// SERVICE FILTER ROW
-// ─────────────────────────────────────────────────────────────
-
-class _ServiceFilterRow extends StatefulWidget {
-  const _ServiceFilterRow({required this.onFilter});
-
-  final ValueChanged<String> onFilter;
-
-  @override
-  State<_ServiceFilterRow> createState() => _ServiceFilterRowState();
-}
-
-class _ServiceFilterRowState extends State<_ServiceFilterRow> {
-  String? _selected;
-
-  static const _filters = [
-    ('Haircut', Icons.content_cut),
-    ('Beard', Icons.face),
-    ('Shave', Icons.spa_outlined),
-    ('Fade', Icons.gradient),
-    ('Kids', Icons.child_care),
-    ('Color', Icons.palette_outlined),
-  ];
-
+class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
-        itemCount: _filters.length,
-        separatorBuilder: (_, __) => const SizedBox(width: BBSpacing.px8),
-        itemBuilder: (context, i) {
-          final (label, icon) = _filters[i];
-          final isSelected = _selected == label;
-          return GestureDetector(
-            onTap: () {
-              setState(() => _selected = isSelected ? null : label);
-              if (!isSelected) widget.onFilter(label);
-            },
-            child: AnimatedContainer(
-              duration: BBMotion.fast,
-              padding: const EdgeInsets.symmetric(
-                horizontal: BBSpacing.px14,
-                vertical: BBSpacing.px8,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected ? BBColors.brandPrimary : BBColors.bgSurface,
-                borderRadius: BBRadius.pill,
-                border: Border.all(
-                  color: isSelected ? BBColors.brandPrimary : BBColors.borderSubtle,
-                  width: 1,
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: () => context.push('/shops'),
+      child: Container(
+        height: 50,
+        padding: const EdgeInsets.symmetric(horizontal: BBSpacing.base),
+        decoration: BoxDecoration(
+          color: colors.surfaceVariant,
+          borderRadius: BorderRadius.circular(BBRadius.md),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.search_rounded,
+                size: 20, color: colors.textTertiary),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: Text(
+                'Search barber shops...',
+                style: BBTypography.textTheme.bodyLarge?.copyWith(
+                  color: colors.textTertiary,
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    size: BBIconSize.sm,
-                    color: isSelected ? BBColorPrimitives.neutral50 : BBColors.textSecondary,
-                  ),
-                  const SizedBox(width: BBSpacing.px6),
-                  Text(
-                    label,
-                    style: BBTypography.labelM.copyWith(
-                      color: isSelected ? BBColorPrimitives.neutral50 : BBColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: colors.border,
+                borderRadius: BorderRadius.circular(BBRadius.sm),
               ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// NEARBY SHOPS HORIZONTAL LIST
-// ─────────────────────────────────────────────────────────────
-
-class _ShopHorizontalList extends StatelessWidget {
-  const _ShopHorizontalList({required this.shops});
-
-  final List<ShopSummary> shops;
-
-  @override
-  Widget build(BuildContext context) {
-    if (shops.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(BBSpacing.px20),
-          child: Text('No shops nearby', style: BBTypography.bodyM),
-        ),
-      );
-    }
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
-      itemCount: shops.length,
-      separatorBuilder: (_, __) => const SizedBox(width: BBSpacing.px12),
-      itemBuilder: (context, i) {
-        // Stagger entrance
-        return _AnimatedShopCard(shop: shops[i], index: i);
-      },
-    );
-  }
-}
-
-class _AnimatedShopCard extends StatefulWidget {
-  const _AnimatedShopCard({required this.shop, required this.index});
-
-  final ShopSummary shop;
-  final int index;
-
-  @override
-  State<_AnimatedShopCard> createState() => _AnimatedShopCardState();
-}
-
-class _AnimatedShopCardState extends State<_AnimatedShopCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _ctrl;
-  late final Animation<double> _slide;
-  late final Animation<double> _opacity;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(vsync: this, duration: BBMotion.slow);
-    _slide = Tween<double>(begin: 20, end: 0).animate(
-      CurvedAnimation(parent: _ctrl, curve: BBMotion.enter),
-    );
-    _opacity = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _ctrl, curve: BBMotion.enter),
-    );
-
-    Future.delayed(BBMotion.stagger(widget.index), () {
-      if (mounted) _ctrl.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (_, child) => Transform.translate(
-        offset: Offset(_slide.value, 0),
-        child: Opacity(opacity: _opacity.value, child: child),
-      ),
-      child: _ShopCard(
-        shop: widget.shop,
-        onTap: () => context.push('/shop/${widget.shop.id}'),
-      ),
-    );
-  }
-}
-
-class _ShopCard extends StatelessWidget {
-  const _ShopCard({required this.shop, required this.onTap});
-
-  final ShopSummary shop;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 196,
-        decoration: BoxDecoration(
-          color: BBColors.bgSurface,
-          borderRadius: BBRadius.card,
-          border: Border.all(color: BBColors.borderSubtle, width: 1),
-          boxShadow: BBElevation.low,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image
-            SizedBox(
-              height: 120,
-              width: double.infinity,
-              child: shop.imageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: shop.imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: BBColors.bgElevated),
-                      errorWidget: (_, __, ___) => _ShopImagePlaceholder(name: shop.name),
-                    )
-                  : _ShopImagePlaceholder(name: shop.name),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(BBSpacing.px12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    shop.name,
-                    style: BBTypography.headingS,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: BBSpacing.px6),
-
-                  // Rating + distance row
-                  Row(
-                    children: [
-                      BBRatingBadge(rating: shop.rating, reviewCount: shop.reviewCount),
-                      const Spacer(),
-                      Text(shop.distanceLabel, style: BBTypography.bodyS),
-                    ],
-                  ),
-                  const SizedBox(height: BBSpacing.px10),
-
-                  // Status row
-                  Row(
-                    children: [
-                      if (shop.isOpen)
-                        BBStatusPill(
-                          type: BBStatusType.open,
-                          label: 'Open',
-                          showPulse: true,
-                        )
-                      else
-                        const BBStatusPill(type: BBStatusType.closed, label: 'Closed'),
-                      const Spacer(),
-                      if (shop.waitMinutes != null)
-                        BBWaitBadge(minutes: shop.waitMinutes!),
-                    ],
-                  ),
-                ],
+              child: Text(
+                'Search',
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: colors.textTertiary,
+                ),
               ),
             ),
           ],
@@ -713,20 +260,57 @@ class _ShopCard extends StatelessWidget {
   }
 }
 
-class _ShopImagePlaceholder extends StatelessWidget {
-  const _ShopImagePlaceholder({required this.name});
-
-  final String name;
-
+class _LocationNudge extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: BBColors.bgElevated,
-      child: Center(
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : 'B',
-          style: BBTypography.displayL.copyWith(
-            color: BBColors.brandPrimary.withValues(alpha: 0.5),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locationAsync = ref.watch(locationProvider);
+    // Only show nudge when we know location is unavailable (not loading)
+    if (locationAsync.isLoading || locationAsync.valueOrNull != null) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          BBSpacing.pageHorizontal,
+          0,
+          BBSpacing.pageHorizontal,
+          BBSpacing.md,
+        ),
+        child: GestureDetector(
+          onTap: () => ref.read(locationProvider.notifier).refresh(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: BBSpacing.base,
+              vertical: BBSpacing.sm,
+            ),
+            decoration: BoxDecoration(
+              color: BBColors.info.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(BBRadius.md),
+              border: Border.all(
+                  color: BBColors.info.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.location_off_rounded,
+                    size: 16, color: BBColors.info),
+                const SizedBox(width: BBSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Enable location to see nearby shops',
+                    style: BBTypography.textTheme.bodySmall?.copyWith(
+                      color: BBColors.info,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Enable',
+                  style: BBTypography.textTheme.labelSmall?.copyWith(
+                    color: BBColors.info,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -734,170 +318,323 @@ class _ShopImagePlaceholder extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
-// SKELETON STATES
-// ─────────────────────────────────────────────────────────────
-
-class _ShopHorizontalSkeleton extends StatelessWidget {
-  const _ShopHorizontalSkeleton();
-
+class _ActiveBookingBanner extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: BBSpacing.px20),
-      itemCount: 4,
-      separatorBuilder: (_, __) => const SizedBox(width: BBSpacing.px12),
-      itemBuilder: (_, __) => const ShopCardSkeleton(),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// OPEN NOW LIST
-// ─────────────────────────────────────────────────────────────
-
-class _OpenShopsList extends StatelessWidget {
-  const _OpenShopsList({required this.shops});
-
-  final List<ShopSummary> shops;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: shops.take(4).map((shop) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BBSpacing.px20, 0, BBSpacing.px20, BBSpacing.px12,
-          ),
-          child: BBCard(
-            onTap: () => context.push('/shop/${shop.id}'),
-            padding: const EdgeInsets.all(BBSpacing.px14),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(activeBookingsProvider);
+    final bookings = async.valueOrNull ?? [];
+    if (bookings.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+    final booking = bookings.first;
+    final colors = context.bbColors;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          BBSpacing.pageHorizontal,
+          0,
+          BBSpacing.pageHorizontal,
+          BBSpacing.base,
+        ),
+        child: GestureDetector(
+          onTap: () => context.push('/queue/${booking.id}'),
+          child: Container(
+            padding: const EdgeInsets.all(BBSpacing.base),
+            decoration: BoxDecoration(
+              color: BBColors.amber.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(BBRadius.lg),
+              border: Border.all(
+                  color: BBColors.amber.withValues(alpha: 0.3)),
+            ),
             child: Row(
               children: [
-                // Thumbnail
-                ClipRRect(
-                  borderRadius: BBRadius.md,
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: shop.imageUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: shop.imageUrl!,
-                            fit: BoxFit.cover,
-                            placeholder: (_, __) => Container(color: BBColors.bgElevated),
-                            errorWidget: (_, __, ___) =>
-                                Container(color: BBColors.bgElevated),
-                          )
-                        : Container(
-                            color: BBColors.bgElevated,
-                            child: Icon(
-                              Icons.store,
-                              size: BBIconSize.lg,
-                              color: BBColors.brandPrimary.withValues(alpha: 0.5),
-                            ),
-                          ),
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: BBColors.amber.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.queue_rounded,
+                    size: 18,
+                    color: BBColors.amber,
                   ),
                 ),
-                const SizedBox(width: BBSpacing.px14),
-
-                // Info
+                const SizedBox(width: BBSpacing.md),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        shop.name,
-                        style: BBTypography.headingS,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        'Active booking at ${booking.shopName}',
+                        style: BBTypography.textTheme.labelLarge?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      const SizedBox(height: BBSpacing.px4),
-                      Row(
-                        children: [
-                          BBRatingBadge(rating: shop.rating),
-                          const SizedBox(width: BBSpacing.px8),
-                          Text('·', style: BBTypography.bodyS),
-                          const SizedBox(width: BBSpacing.px8),
-                          Text(shop.distanceLabel, style: BBTypography.bodyS),
-                        ],
+                      Text(
+                        'Tap to track your queue position',
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
-
-                // Wait time
-                if (shop.waitMinutes != null) ...[
-                  const SizedBox(width: BBSpacing.px8),
-                  BBWaitBadge(minutes: shop.waitMinutes!),
-                ],
-
-                const SizedBox(width: BBSpacing.px8),
                 const Icon(
-                  Icons.chevron_right,
-                  size: BBIconSize.md,
-                  color: BBColors.textDisabled,
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: BBColors.amber,
                 ),
               ],
             ),
           ),
-        );
-      }).toList(),
-    );
-  }
-}
-
-class _OpenShopsListSkeleton extends StatelessWidget {
-  const _OpenShopsListSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return BBSkeletonList(
-      itemCount: 3,
-      itemBuilder: (_) => const ListItemSkeleton(),
-    );
-  }
-}
-
-class _NoOpenShops extends StatelessWidget {
-  const _NoOpenShops();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(BBSpacing.px20),
-      child: BBEmptyState(
-        icon: Icons.store_outlined,
-        title: 'No shops open right now',
-        subtitle: 'Check back during business hours',
+        ),
       ),
     );
   }
 }
 
-class _ShopsError extends StatelessWidget {
-  const _ShopsError({required this.onRetry});
-
-  final VoidCallback onRetry;
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, this.onSeeAll});
+  final String title;
+  final VoidCallback? onSeeAll;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.wifi_off_outlined, size: 32, color: BBColors.textDisabled),
-          const SizedBox(height: BBSpacing.px12),
-          Text('Could not load shops', style: BBTypography.bodyM),
-          const SizedBox(height: BBSpacing.px12),
+    final colors = context.bbColors;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          title,
+          style: BBTypography.textTheme.titleLarge?.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (onSeeAll != null)
           GestureDetector(
-            onTap: onRetry,
+            onTap: onSeeAll,
             child: Text(
-              'Retry',
-              style: BBTypography.labelL.copyWith(color: BBColors.brandPrimary),
+              'See all',
+              style: BBTypography.textTheme.labelMedium?.copyWith(
+                color: BBColors.amber,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ],
+      ],
+    );
+  }
+}
+
+class _ShopCard extends StatelessWidget {
+  const _ShopCard({required this.shop});
+  final Shop shop;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: () => context.push('/shops/${shop.id}'),
+      child: Container(
+        width: 190,
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 110,
+              color: colors.surfaceVariant,
+              child: Center(
+                child: Icon(
+                  Icons.content_cut_rounded,
+                  size: 40,
+                  color: colors.textTertiary,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(BBSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shop.name,
+                    style: BBTypography.textTheme.titleMedium?.copyWith(
+                      color: colors.text,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          size: 13, color: BBColors.amber),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${shop.rating.toStringAsFixed(1)} · ${shop.waitLabel}',
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: shop.isOpen
+                              ? BBColors.success.withValues(alpha: 0.12)
+                              : BBColors.error.withValues(alpha: 0.12),
+                          borderRadius:
+                              BorderRadius.circular(BBRadius.full),
+                        ),
+                        child: Text(
+                          shop.isOpen ? 'Open' : 'Closed',
+                          style: BBTypography.textTheme.labelSmall?.copyWith(
+                            color: shop.isOpen
+                                ? BBColors.success
+                                : BBColors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (shop.distanceKm != null) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          shop.distanceLabel,
+                          style:
+                              BBTypography.textTheme.labelSmall?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ShopListTile extends StatelessWidget {
+  const _ShopListTile({required this.shop});
+  final Shop shop;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: () => context.push('/shops/${shop.id}'),
+      child: Container(
+        padding: const EdgeInsets.all(BBSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: colors.surfaceVariant,
+                borderRadius: BorderRadius.circular(BBRadius.md),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.content_cut_rounded,
+                  size: 22,
+                  color: colors.textTertiary,
+                ),
+              ),
+            ),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    shop.name,
+                    style: BBTypography.textTheme.titleMedium?.copyWith(
+                      color: colors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    shop.address,
+                    style: BBTypography.textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.star_rounded,
+                          size: 13, color: BBColors.amber),
+                      const SizedBox(width: 3),
+                      Text(
+                        shop.rating.toStringAsFixed(1),
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: BBSpacing.sm),
+                      Icon(Icons.timer_outlined,
+                          size: 13, color: colors.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        shop.waitLabel,
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      if (shop.distanceKm != null) ...[
+                        const SizedBox(width: BBSpacing.sm),
+                        Icon(Icons.near_me_outlined,
+                            size: 13, color: colors.textTertiary),
+                        const SizedBox(width: 3),
+                        Text(
+                          shop.distanceLabel,
+                          style:
+                              BBTypography.textTheme.labelSmall?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: colors.textTertiary,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,411 +1,574 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/design/theme.dart';
-import '../../core/design/tokens.dart';
-import '../../core/providers/auth_provider.dart';
-import '../../features/admin/bookings/admin_bookings_screen.dart';
-import '../../features/admin/dashboard/admin_overview_screen.dart';
-import '../../features/admin/reports/admin_reports_screen.dart';
-import '../../features/admin/shops/admin_shops_screen.dart';
-import '../../features/admin/users/admin_users_screen.dart';
-import '../../features/auth/presentation/change_password_screen.dart';
+import '../../core/design/bb_colors.dart';
+import '../../core/design/bb_tokens.dart';
+import '../../core/design/bb_typography.dart';
+import '../../core/providers/providers.dart';
+import '../../core/providers/theme_provider.dart';
+import '../../core/widgets/bb_button.dart';
+import '../../features/admin/admin_screen.dart';
+import '../../features/auth/data/auth_provider.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
-import '../../features/barber/dashboard/barber_home_screen.dart';
+import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/barber/barber_shell.dart';
+import '../../features/barber/bookings/barber_bookings_screen.dart';
+import '../../features/barber/dashboard/barber_dashboard_screen.dart';
 import '../../features/barber/profile/barber_profile_screen.dart';
 import '../../features/barber/queue/barber_queue_screen.dart';
-import '../../features/barber/schedule/barber_schedule_screen.dart';
-import '../../features/barber/widgets/barber_bottom_nav.dart';
-import '../../features/booking/booking_flow_screen.dart';
-import '../../features/booking/booking_success_screen.dart';
-import '../../features/booking/presentation/pages/barber_details_page.dart';
-import '../../features/booking/presentation/pages/booking_history_page.dart';
-import '../../features/booking/presentation/pages/booking_confirmation_page.dart';
-import '../../features/booking/presentation/pages/services_selection_page.dart';
-import '../../features/booking/presentation/pages/booking_timing_page.dart';
-import '../../features/customer/explore/explore_screen.dart';
+import '../../features/customer/booking/booking_flow_screen.dart';
+import '../../features/customer/customer_shell.dart';
 import '../../features/customer/home/home_screen.dart';
-import '../../features/customer/profile/customer_profile_screen.dart';
-import '../../features/customer/shop_detail/shop_detail_screen.dart';
-import '../../features/customer/widgets/customer_nav_bar.dart';
-import '../../features/maps/presentation/map_screen.dart';
-import '../../features/notifications/notifications_screen.dart';
-import '../../features/profile/edit_profile_screen.dart';
-import '../../features/profile/my_reviews_screen.dart';
-import '../../features/onboarding/onboarding_screen.dart';
-import '../../features/payment/payment_screen.dart';
-import '../../features/payment/payment_success_screen.dart';
-import '../../features/queue/live_queue_screen.dart';
-import '../../features/review/review_screen.dart';
-import '../../features/splash/splash_screen.dart';
-import 'route_guards.dart';
-import 'route_paths.dart';
+import '../../features/customer/profile/bookings_screen.dart';
+import '../../features/customer/profile/my_reviews_screen.dart';
+import '../../features/customer/profile/profile_screen.dart';
+import '../../features/customer/queue/queue_tracker_screen.dart';
+import '../../features/customer/shops/shop_detail_screen.dart';
+import '../../features/customer/shops/shops_screen.dart';
 
-final appRouterKey = GlobalKey<NavigatorState>();
+final _rootKey = GlobalKey<NavigatorState>();
+final _customerKey = GlobalKey<NavigatorState>();
+final _barberKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    navigatorKey: appRouterKey,
-    initialLocation: RoutePaths.splash,
-    refreshListenable:
-        GoRouterRefreshStream(ref.watch(authControllerProvider.notifier).stream),
-    redirect: authRedirect,
-    routes: [
-      // ── Public ──────────────────────────────────────────────
-      GoRoute(
-        path: RoutePaths.splash,
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.login,
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.register,
-        builder: (context, state) => const RegisterScreen(),
-      ),
+    navigatorKey: _rootKey,
+    initialLocation: '/',
+    refreshListenable: AuthStateListenable(ref),
+    redirect: (ctx, state) {
+      final auth = ref.read(authProvider);
+      final path = state.uri.path;
 
-      // ── Customer shell (bottom nav) ──────────────────────────
+      if (auth is AuthInitial || auth is AuthLoading) {
+        return path == '/' ? null : '/';
+      }
+      if (auth is AuthUnauthenticated || auth is AuthError) {
+        if (path == '/login' || path == '/register') return null;
+        return '/login';
+      }
+      if (auth is AuthAuthenticated) {
+        if (path == '/' || path == '/login' || path == '/register') {
+          if (auth.user.isBarber) return '/barber';
+          if (auth.user.isAdmin) return '/admin';
+          return '/home';
+        }
+        if (auth.user.isBarber &&
+            !path.startsWith('/barber') &&
+            path != '/change-password' &&
+            path != '/settings') {
+          return '/barber';
+        }
+        if (auth.user.isCustomer && path.startsWith('/barber')) {
+          return '/home';
+        }
+      }
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
+
+      // Customer shell
       ShellRoute(
-        builder: (context, state, child) => _CustomerShell(child: child),
+        navigatorKey: _customerKey,
+        builder: (_, _, child) => CustomerShell(child: child),
         routes: [
+          GoRoute(path: '/home', builder: (_, _) => const HomeScreen()),
+          GoRoute(path: '/shops', builder: (_, _) => const ShopsScreen()),
           GoRoute(
-            path: RoutePaths.home,
-            builder: (context, state) => const HomeScreen(),
-          ),
+              path: '/bookings', builder: (_, _) => const BookingsScreen()),
           GoRoute(
-            path: RoutePaths.explore,
-            builder: (context, state) => const ExploreScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.bookings,
-            builder: (context, state) => const BookingHistoryPage(),
-          ),
-          GoRoute(
-            path: RoutePaths.profile,
-            builder: (context, state) => const CustomerProfileScreen(),
-          ),
+              path: '/profile', builder: (_, _) => const ProfileScreen()),
         ],
       ),
 
-      // ── Search → redirect to explore ────────────────────────
+      // Customer full-screen routes
       GoRoute(
-        path: '/search',
-        redirect: (context, state) {
-          final service = state.uri.queryParameters['service'];
-          if (service != null && service.isNotEmpty) {
-            return '/home/explore?service=$service';
-          }
-          return '/home/explore';
+        path: '/shops/:shopId',
+        builder: (_, state) =>
+            ShopDetailScreen(shopId: state.pathParameters['shopId']!),
+      ),
+      GoRoute(
+        path: '/shops/:shopId/book',
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          return BookingFlowScreen(
+            shopId: state.pathParameters['shopId']!,
+            shopName: extra['shopName']?.toString() ?? '',
+            joinQueue: extra['joinQueue'] == true,
+          );
         },
       ),
-
-      // ── Barber walk-in (redirect to queue screen) ────────────
       GoRoute(
-        path: '/barber/walkin',
-        redirect: (_, __) => RoutePaths.barberQueue,
+        path: '/queue/:bookingId',
+        builder: (_, state) =>
+            QueueTrackerScreen(bookingId: state.pathParameters['bookingId']!),
+      ),
+      GoRoute(
+        path: '/reviews',
+        builder: (_, _) => const MyReviewsScreen(),
       ),
 
-      // ── Customer standalone routes ───────────────────────────
-      GoRoute(
-        path: RoutePaths.notifications,
-        builder: (context, state) => const NotificationsScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.changePassword,
-        builder: (context, state) => const ChangePasswordScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.editProfile,
-        builder: (context, state) => const EditProfileScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.myReviews,
-        builder: (context, state) => const MyReviewsScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.map,
-        builder: (context, state) => const MapScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.history,
-        builder: (context, state) => const BookingHistoryPage(),
-      ),
-      GoRoute(
-        path: RoutePaths.shopDetail,
-        builder: (context, state) => ShopDetailScreen(
-          shopId: state.pathParameters['shopId']!,
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.bookingFlow,
-        builder: (context, state) => BookingFlowScreen(
-          shopId: state.pathParameters['shopId']!,
-          shopName: state.uri.queryParameters['name'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.bookingSuccess,
-        builder: (context, state) => const BookingSuccessScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.liveQueue,
-        builder: (context, state) => LiveQueueScreen(
-          shopId: state.pathParameters['shopId']!,
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.payment,
-        builder: (context, state) => PaymentScreen(
-          bookingId: state.pathParameters['bookingId']!,
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.paymentSuccess,
-        builder: (context, state) => PaymentSuccessScreen(
-          paymentId: state.pathParameters['paymentId']!,
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.review,
-        builder: (context, state) => ReviewScreen(
-          bookingId: state.pathParameters['bookingId']!,
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.services,
-        builder: (context, state) => const ServicesSelectionPage(),
-      ),
-      GoRoute(
-        path: RoutePaths.timing,
-        builder: (context, state) => const BookingTimingPage(),
-      ),
-      GoRoute(
-        path: RoutePaths.confirmation,
-        builder: (context, state) => const BookingConfirmationPage(),
-      ),
-
-      // ── Barber shell (bottom nav) ────────────────────────────
+      // Barber shell
       ShellRoute(
-        builder: (context, state, child) => _BarberShell(child: child),
+        navigatorKey: _barberKey,
+        builder: (_, _, child) => BarberShell(child: child),
         routes: [
           GoRoute(
-            path: RoutePaths.barberHome,
-            builder: (context, state) => const BarberHomeScreen(),
-          ),
+              path: '/barber',
+              builder: (_, _) => const BarberDashboardScreen()),
           GoRoute(
-            path: RoutePaths.barberQueue,
-            builder: (context, state) => const BarberQueueScreen(),
-          ),
+              path: '/barber/queue',
+              builder: (_, _) => const BarberQueueScreen()),
           GoRoute(
-            path: RoutePaths.barberSchedule,
-            builder: (context, state) => const BarberScheduleScreen(),
-          ),
+              path: '/barber/bookings',
+              builder: (_, _) => const BarberBookingsScreen()),
           GoRoute(
-            path: RoutePaths.barberProfile,
-            builder: (context, state) => const BarberProfileScreen(),
-          ),
+              path: '/barber/profile',
+              builder: (_, _) => const BarberProfileScreen()),
         ],
-      ),
-      GoRoute(
-        path: RoutePaths.barberDetails,
-        builder: (context, state) => BarberDetailsPage(
-          barberId: state.pathParameters['barberId']!,
-        ),
       ),
 
-      // ── Admin shell ──────────────────────────────────────────
-      ShellRoute(
-        builder: (context, state, child) => _AdminShell(child: child),
-        routes: [
-          GoRoute(
-            path: RoutePaths.adminHome,
-            builder: (context, state) => const AdminOverviewScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.adminShops,
-            builder: (context, state) => const AdminShopsScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.adminUsers,
-            builder: (context, state) => const AdminUsersScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.adminBookings,
-            builder: (context, state) => const AdminBookingsScreen(),
-          ),
-          GoRoute(
-            path: RoutePaths.adminReports,
-            builder: (context, state) => const AdminReportsScreen(),
-          ),
-        ],
-      ),
+      // Shared
+      GoRoute(
+          path: '/change-password',
+          builder: (_, _) => const ChangePasswordScreen()),
+      GoRoute(
+          path: '/settings',
+          builder: (_, _) => const AppSettingsScreen()),
+      GoRoute(
+          path: '/review/:bookingId',
+          builder: (_, state) =>
+              ReviewScreen(bookingId: state.pathParameters['bookingId']!)),
     ],
   );
 });
 
-final appRouterProvider = routerProvider;
-
-// ── GoRouter refresh helper ────────────────────────────────────
-
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+class AuthStateListenable extends ChangeNotifier {
+  AuthStateListenable(Ref ref) {
+    ref.listen(authProvider, (_, _) => notifyListeners());
   }
+}
 
-  late final StreamSubscription<dynamic> _subscription;
+// ─────────────── Change Password Screen ───────────────
+
+class ChangePasswordScreen extends ConsumerStatefulWidget {
+  const ChangePasswordScreen({super.key});
+
+  @override
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
+}
+
+class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
+  final _currentCtrl = TextEditingController();
+  final _newCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  bool _loading = false;
+  String? _error;
+  bool _success = false;
 
   @override
   void dispose() {
-    _subscription.cancel();
+    _currentCtrl.dispose();
+    _newCtrl.dispose();
+    _confirmCtrl.dispose();
     super.dispose();
   }
-}
 
-// ── Customer shell ─────────────────────────────────────────────
-
-class _CustomerShell extends ConsumerWidget {
-  const _CustomerShell({required this.child});
-  final Widget child;
-
-  static const _tabs = [
-    RoutePaths.home,
-    RoutePaths.explore,
-    RoutePaths.bookings,
-    RoutePaths.profile,
-  ];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouterState.of(context).matchedLocation;
-    int currentIndex = 0;
-    for (int i = _tabs.length - 1; i >= 0; i--) {
-      if (location.startsWith(_tabs[i])) {
-        currentIndex = i;
-        break;
-      }
+  Future<void> _submit() async {
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
+    if (_newCtrl.text != _confirmCtrl.text) {
+      setState(() {
+        _error = 'New passwords do not match';
+        _loading = false;
+      });
+      return;
     }
-
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        body: child,
-        bottomNavigationBar: CustomerNavBar(
-          currentIndex: currentIndex,
-          onTap: (index) => context.go(_tabs[index]),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Barber shell ───────────────────────────────────────────────
-
-class _BarberShell extends StatelessWidget {
-  const _BarberShell({required this.child});
-  final Widget child;
-
-  static const _tabs = [
-    RoutePaths.barberHome,
-    RoutePaths.barberQueue,
-    RoutePaths.barberSchedule,
-    RoutePaths.barberProfile,
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    int currentIndex = 0;
-    for (int i = _tabs.length - 1; i >= 0; i--) {
-      if (location.startsWith(_tabs[i])) {
-        currentIndex = i;
-        break;
-      }
+    if (_newCtrl.text.length < 6) {
+      setState(() {
+        _error = 'Password must be at least 6 characters';
+        _loading = false;
+      });
+      return;
     }
-
-    return PopScope(
-      canPop: false,
-      child: Scaffold(
-        body: child,
-        bottomNavigationBar: BarberBottomNav(
-          currentIndex: currentIndex,
-          onTap: (index) => context.go(_tabs[index]),
-        ),
-      ),
-    );
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.patch<void>(
+        '/auth/change-password',
+        body: {
+          'currentPassword': _currentCtrl.text,
+          'newPassword': _newCtrl.text,
+        },
+      );
+      setState(() {
+        _success = true;
+        _loading = false;
+      });
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) context.pop();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
   }
-}
-
-// ── Admin shell ────────────────────────────────────────────────
-
-class _AdminShell extends StatelessWidget {
-  const _AdminShell({required this.child});
-  final Widget child;
-
-  static const _tabs = [
-    RoutePaths.adminHome,
-    RoutePaths.adminShops,
-    RoutePaths.adminUsers,
-    RoutePaths.adminBookings,
-    RoutePaths.adminReports,
-  ];
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
-    final location = GoRouterState.of(context).matchedLocation;
-    int currentIndex = 0;
-    for (int i = _tabs.length - 1; i >= 0; i--) {
-      if (location.startsWith(_tabs[i])) {
-        currentIndex = i;
-        break;
-      }
-    }
+    return Scaffold(
+      backgroundColor: colors.background,
+      appBar: AppBar(title: const Text('Change Password')),
+      body: Padding(
+        padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: BBSpacing.base),
+            _PwField(label: 'Current Password', ctrl: _currentCtrl),
+            const SizedBox(height: BBSpacing.md),
+            _PwField(label: 'New Password', ctrl: _newCtrl),
+            const SizedBox(height: BBSpacing.md),
+            _PwField(label: 'Confirm New Password', ctrl: _confirmCtrl),
+            if (_error != null) ...[
+              const SizedBox(height: BBSpacing.sm),
+              Container(
+                padding: const EdgeInsets.all(BBSpacing.md),
+                decoration: BoxDecoration(
+                  color: BBColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(BBRadius.md),
+                  border: Border.all(
+                      color: BBColors.error.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  _error!,
+                  style: BBTypography.textTheme.bodySmall
+                      ?.copyWith(color: BBColors.error),
+                ),
+              ),
+            ],
+            if (_success) ...[
+              const SizedBox(height: BBSpacing.sm),
+              Container(
+                padding: const EdgeInsets.all(BBSpacing.md),
+                decoration: BoxDecoration(
+                  color: BBColors.success.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(BBRadius.md),
+                  border: Border.all(
+                      color: BBColors.success.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  'Password updated successfully!',
+                  style: BBTypography.textTheme.bodySmall
+                      ?.copyWith(color: BBColors.success),
+                ),
+              ),
+            ],
+            const SizedBox(height: BBSpacing.xl),
+            BBButton(
+              label: 'Update Password',
+              onPressed: _loading ? null : _submit,
+              loading: _loading,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PwField extends StatefulWidget {
+  const _PwField({required this.label, required this.ctrl});
+  final String label;
+  final TextEditingController ctrl;
+
+  @override
+  State<_PwField> createState() => _PwFieldState();
+}
+
+class _PwFieldState extends State<_PwField> {
+  bool _hide = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return TextField(
+      controller: widget.ctrl,
+      obscureText: _hide,
+      style: TextStyle(color: colors.text),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _hide ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          ),
+          onPressed: () => setState(() => _hide = !_hide),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────── App Settings Screen ───────────────
+
+class AppSettingsScreen extends ConsumerWidget {
+  const AppSettingsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.bbColors;
+    final themeMode = ref.watch(themeProvider);
 
     return Scaffold(
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) => context.go(_tabs[index]),
-        backgroundColor: colors.bgSurface,
-        indicatorColor: BBColors.brandPrimaryDim,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard_rounded),
-            label: 'Overview',
+      backgroundColor: colors.background,
+      appBar: AppBar(title: const Text('Appearance')),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.pageHorizontal,
+          vertical: BBSpacing.pageVertical,
+        ),
+        children: [
+          Padding(
+            padding:
+                const EdgeInsets.only(left: 2, bottom: BBSpacing.sm),
+            child: Text(
+              'THEME',
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: colors.textTertiary,
+                letterSpacing: 1,
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.store_outlined),
-            selectedIcon: Icon(Icons.store_rounded),
-            label: 'Shops',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.people_outline),
-            selectedIcon: Icon(Icons.people_rounded),
-            label: 'Users',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_today_outlined),
-            selectedIcon: Icon(Icons.calendar_today_rounded),
-            label: 'Bookings',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart_rounded),
-            label: 'Reports',
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(BBRadius.lg),
+              border: Border.all(color: colors.border),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                _ThemeOption(
+                  icon: Icons.brightness_auto_rounded,
+                  label: 'System Default',
+                  subtitle: 'Matches your device setting',
+                  selected: themeMode == ThemeMode.system,
+                  onTap: () => ref
+                      .read(themeProvider.notifier)
+                      .setTheme(ThemeMode.system),
+                ),
+                Divider(color: colors.border, height: 1, indent: 52),
+                _ThemeOption(
+                  icon: Icons.light_mode_rounded,
+                  label: 'Light',
+                  subtitle: 'Always use light theme',
+                  selected: themeMode == ThemeMode.light,
+                  onTap: () => ref
+                      .read(themeProvider.notifier)
+                      .setTheme(ThemeMode.light),
+                ),
+                Divider(color: colors.border, height: 1, indent: 52),
+                _ThemeOption(
+                  icon: Icons.dark_mode_rounded,
+                  label: 'Dark',
+                  subtitle: 'Always use dark theme',
+                  selected: themeMode == ThemeMode.dark,
+                  onTap: () => ref
+                      .read(themeProvider.notifier)
+                      .setTheme(ThemeMode.dark),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  const _ThemeOption({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.base,
+          vertical: BBSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: selected
+                    ? BBColors.amber.withValues(alpha: 0.12)
+                    : colors.surfaceVariant,
+                borderRadius: BorderRadius.circular(BBRadius.sm),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: selected ? BBColors.amber : colors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: BBTypography.textTheme.bodyMedium?.copyWith(
+                      color: colors.text,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (selected)
+              Icon(Icons.check_circle_rounded,
+                  size: 20, color: BBColors.amber),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────── Review Screen ───────────────
+
+class ReviewScreen extends ConsumerStatefulWidget {
+  const ReviewScreen({super.key, required this.bookingId});
+  final String bookingId;
+
+  @override
+  ConsumerState<ReviewScreen> createState() => _ReviewScreenState();
+}
+
+class _ReviewScreenState extends ConsumerState<ReviewScreen> {
+  int _rating = 0;
+  final _commentCtrl = TextEditingController();
+  bool _loading = false;
+
+  @override
+  void dispose() {
+    _commentCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Scaffold(
+      backgroundColor: colors.background,
+      appBar: AppBar(title: const Text('Leave a Review')),
+      body: Padding(
+        padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: BBSpacing.base),
+            Text(
+              'How was your experience?',
+              style: BBTypography.textTheme.headlineSmall
+                  ?.copyWith(color: colors.text),
+            ),
+            const SizedBox(height: BBSpacing.xl),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                5,
+                (i) => GestureDetector(
+                  onTap: () => setState(() => _rating = i + 1),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Icon(
+                      i < _rating
+                          ? Icons.star_rounded
+                          : Icons.star_outline_rounded,
+                      size: 44,
+                      color: BBColors.amber,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: BBSpacing.xl),
+            TextField(
+              controller: _commentCtrl,
+              maxLines: 4,
+              style: TextStyle(color: colors.text),
+              decoration: const InputDecoration(
+                hintText: 'Tell us about your experience...',
+                alignLabelWithHint: true,
+              ),
+            ),
+            const SizedBox(height: BBSpacing.xl),
+            BBButton(
+              label: 'Submit Review',
+              onPressed: (_loading || _rating == 0) ? null : _submit,
+              loading: _loading,
+              disabled: _rating == 0,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    setState(() => _loading = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.post<void>(
+        '/reviews',
+        body: {
+          'bookingId': widget.bookingId,
+          'rating': _rating,
+          'comment': _commentCtrl.text.trim(),
+          'tags': <String>[],
+        },
+      );
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+    if (mounted) setState(() => _loading = false);
   }
 }

@@ -1,0 +1,274 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/design/bb_colors.dart';
+import '../../../core/design/bb_tokens.dart';
+import '../../../core/design/bb_typography.dart';
+import '../../../core/widgets/bb_empty_state.dart';
+import '../../../core/widgets/bb_error_widget.dart';
+import '../../../core/widgets/bb_loading.dart';
+import '../../shared/domain/shop_models.dart';
+import 'shops_provider.dart';
+
+class ShopsScreen extends ConsumerStatefulWidget {
+  const ShopsScreen({super.key});
+
+  @override
+  ConsumerState<ShopsScreen> createState() => _ShopsScreenState();
+}
+
+class _ShopsScreenState extends ConsumerState<ShopsScreen> {
+  final _searchCtrl = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearch(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 400), () {
+      ref.read(shopsProvider.notifier).search(query);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final state = ref.watch(shopsProvider);
+
+    return Scaffold(
+      backgroundColor: colors.background,
+      appBar: AppBar(
+        title: const Text('Barber Shops'),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(64),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BBSpacing.pageHorizontal,
+              0,
+              BBSpacing.pageHorizontal,
+              BBSpacing.md,
+            ),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: _onSearch,
+              style: BBTypography.textTheme.bodyLarge?.copyWith(
+                color: colors.text,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Search shops...',
+                hintStyle: BBTypography.textTheme.bodyLarge?.copyWith(
+                  color: colors.textTertiary,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  size: 20,
+                  color: colors.textTertiary,
+                ),
+                suffixIcon: _searchCtrl.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear_rounded,
+                            size: 18, color: colors.textTertiary),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          ref.read(shopsProvider.notifier).search('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: colors.surfaceVariant,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(BBRadius.md),
+                  borderSide: BorderSide(color: colors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(BBRadius.md),
+                  borderSide: BorderSide(color: colors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(BBRadius.md),
+                  borderSide: const BorderSide(color: BBColors.amber, width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: BBSpacing.base,
+                  vertical: BBSpacing.md,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: state.isLoading
+          ? const Center(child: BBLoader())
+          : state.error != null
+              ? BBErrorWidget(
+                  error: state.error!,
+                  onRetry: () => ref.read(shopsProvider.notifier).refresh(),
+                )
+              : state.shops.isEmpty
+                  ? BBEmptyState(
+                      title: 'No shops found',
+                      subtitle: state.query.isNotEmpty
+                          ? 'Try a different search term.'
+                          : 'No barber shops available yet.',
+                      icon: Icons.store_outlined,
+                    )
+                  : RefreshIndicator(
+                      color: BBColors.amber,
+                      onRefresh: () =>
+                          ref.read(shopsProvider.notifier).refresh(),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+                        itemCount: state.shops.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: BBSpacing.sm),
+                        itemBuilder: (ctx, i) =>
+                            _ShopCard(shop: state.shops[i]),
+                      ),
+                    ),
+    );
+  }
+}
+
+class _ShopCard extends StatelessWidget {
+  const _ShopCard({required this.shop});
+  final Shop shop;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: () => context.push('/shops/${shop.id}'),
+      child: Container(
+        padding: const EdgeInsets.all(BBSpacing.base),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.surfaceVariant,
+                borderRadius: BorderRadius.circular(BBRadius.md),
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.content_cut_rounded,
+                  size: 28,
+                  color: colors.textTertiary,
+                ),
+              ),
+            ),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          shop.name,
+                          style: BBTypography.textTheme.titleMedium?.copyWith(
+                            color: colors.text,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: shop.isOpen
+                              ? BBColors.success.withValues(alpha: 0.12)
+                              : BBColors.error.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(BBRadius.full),
+                        ),
+                        child: Text(
+                          shop.isOpen ? 'Open' : 'Closed',
+                          style: BBTypography.textTheme.labelSmall?.copyWith(
+                            color: shop.isOpen ? BBColors.success : BBColors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    shop.address,
+                    style: BBTypography.textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: BBSpacing.sm,
+                    children: [
+                      _InfoChip(
+                        icon: Icons.star_rounded,
+                        label: shop.rating.toStringAsFixed(1),
+                        iconColor: BBColors.amber,
+                      ),
+                      _InfoChip(
+                        icon: Icons.timer_outlined,
+                        label: shop.waitLabel,
+                      ),
+                      if (shop.distanceKm != null)
+                        _InfoChip(
+                          icon: Icons.near_me_outlined,
+                          label: shop.distanceLabel,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    this.iconColor,
+  });
+  final IconData icon;
+  final String label;
+  final Color? iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: iconColor ?? colors.textSecondary),
+        const SizedBox(width: 3),
+        Text(
+          label,
+          style: BBTypography.textTheme.labelSmall?.copyWith(
+            color: colors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+}

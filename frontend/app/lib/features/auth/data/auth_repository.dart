@@ -1,71 +1,71 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../core/network/api_result.dart';
-import '../../../core/network/dio_client.dart';
-import '../../../core/models/bookber_models.dart';
+import '../../../core/constants/api_endpoints.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/storage/secure_storage.dart';
+import '../domain/auth_models.dart';
 
 class AuthRepository {
-  AuthRepository(this._dio);
+  const AuthRepository(this._api, this._storage);
 
-  final DioClient _dio;
+  final ApiClient _api;
+  final SecureStorage _storage;
 
-  Future<ApiResult<AuthResponse>> login(String identifier, String password) async {
-    return ApiResult.guard(() async {
-      final response = await _dio.post(
-        '/auth/login',
-        body: {'identifier': identifier, 'password': password},
-      );
-      return AuthResponse.fromJson(response as Map<String, dynamic>);
-    });
+  Future<(UserProfile, AuthTokens)> login(LoginRequest req) async {
+    final data = await _api.post<Map<String, dynamic>>(
+      ApiEndpoints.login,
+      body: req.toJson(),
+    );
+    final tokens = AuthTokens.fromJson(data);
+    final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>);
+    await _persistSession(tokens, user);
+    return (user, tokens);
   }
 
-  Future<ApiResult<AuthResponse>> register(RegisterRequest req) async {
-    return ApiResult.guard(() async {
-      final response = await _dio.post('/auth/register', body: req.toJson());
-      return AuthResponse.fromJson(response as Map<String, dynamic>);
-    });
+  Future<(UserProfile, AuthTokens)> register(RegisterRequest req) async {
+    final data = await _api.post<Map<String, dynamic>>(
+      ApiEndpoints.register,
+      body: req.toJson(),
+    );
+    final tokens = AuthTokens.fromJson(data);
+    final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>);
+    await _persistSession(tokens, user);
+    return (user, tokens);
   }
 
-  Future<ApiResult<UserProfile>> getMe() async {
-    return ApiResult.guard(() async {
-      final response = await _dio.get('/auth/me');
-      final data = response as Map<String, dynamic>;
-      final userData = data['user'] is Map<String, dynamic>
-          ? data['user'] as Map<String, dynamic>
-          : data;
-      return UserProfile.fromJson(userData);
-    });
+  Future<UserProfile> getMe() async {
+    final data = await _api.get<Map<String, dynamic>>(ApiEndpoints.me);
+    return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
   }
 
-  Future<ApiResult<AuthResponse>> refresh(String refreshToken) async {
-    return ApiResult.guard(() async {
-      final response = await _dio.post(
-        '/auth/refresh',
-        body: {'refreshToken': refreshToken},
-      );
-      return AuthResponse.fromJson(response as Map<String, dynamic>);
-    });
+  Future<void> logout() async {
+    try {
+      await _api.post<void>(ApiEndpoints.logout, body: {});
+    } catch (_) {}
+    await _storage.clearSession();
+    _api.clearAuthToken();
   }
 
-  Future<ApiResult<void>> logout() async {
-    return ApiResult.guard(() async {
-      await _dio.post('/auth/logout');
-    });
+  Future<UserProfile?> restoreSession() async {
+    final accessToken = await _storage.accessToken;
+    if (accessToken == null) return null;
+
+    try {
+      await _api.setAuthToken(accessToken);
+      return await getMe();
+    } catch (_) {
+      await _storage.clearSession();
+      return null;
+    }
   }
 
-  Future<ApiResult<void>> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
-    return ApiResult.guard(() async {
-      await _dio.patch('/auth/change-password', body: {
-        'currentPassword': currentPassword,
-        'newPassword': newPassword,
-      });
-    });
+  Future<void> _persistSession(AuthTokens tokens, UserProfile user) async {
+    await _storage.saveTokens(
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    );
+    await Future.wait([
+      _storage.write(StorageKeys.userId, user.id),
+      _storage.write(StorageKeys.userRole, user.role),
+    ]);
+    await _api.setAuthToken(tokens.accessToken);
   }
 }
-
-final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepository(ref.watch(dioClientProvider)),
-);
