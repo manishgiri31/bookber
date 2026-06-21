@@ -9,25 +9,25 @@ export function registerAnalyticsRoutes(
 
   app.get(
     "/shops/:shopId/analytics/daily",
-    { ...auth, schema: { tags: ["Analytics"] } },
+    auth,
     (req, reply) => controller.getDailyAnalytics(req as any, reply)
   );
 
   app.get(
     "/shops/:shopId/analytics/peak-hours",
-    { ...auth, schema: { tags: ["Analytics"] } },
+    auth,
     (req, reply) => controller.getPeakHours(req as any, reply)
   );
 
   app.get(
     "/shops/:shopId/analytics/utilization",
-    { ...auth, schema: { tags: ["Analytics"] } },
+    auth,
     (req, reply) => controller.getUtilization(req as any, reply)
   );
 
   app.get(
     "/shops/:shopId/analytics/insights",
-    { ...auth, schema: { tags: ["Analytics"] } },
+    auth,
     (req, reply) => controller.getWeeklyInsights(req as any, reply)
   );
 }

@@ -99,7 +99,7 @@ export class PaymentService {
       razorpayOrderId: order.id,
       amount: order.amount / 100, // back to rupees
       currency: order.currency,
-      keyId: process.env.RAZORPAY_KEY_ID ?? "",
+      keyId: process.env["RAZORPAY_KEY_ID"] ?? "",
       isStub: !razorpay.isEnabled,
     };
   }
@@ -145,9 +145,9 @@ export class PaymentService {
     }
     // Idempotently process the webhook — mark PAID if not already
     const event = JSON.parse(payload) as Record<string, any>;
-    if (event.event === "payment.captured") {
-      const razorpayPaymentId = event.payload?.payment?.entity?.id as string | undefined;
-      const orderId = event.payload?.payment?.entity?.order_id as string | undefined;
+    if (event["event"] === "payment.captured") {
+      const razorpayPaymentId = event["payload"]?.payment?.entity?.id as string | undefined;
+      const orderId = event["payload"]?.payment?.entity?.order_id as string | undefined;
       if (razorpayPaymentId && orderId) {
         const idempotencyKey = `rzp_${orderId}`;
         const payment = await this.repository.findByIdempotencyKey(idempotencyKey);

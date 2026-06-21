@@ -23,8 +23,8 @@ export class RazorpayClient {
   private readonly enabled: boolean;
 
   constructor() {
-    this.keyId = process.env.RAZORPAY_KEY_ID ?? "";
-    this.keySecret = process.env.RAZORPAY_KEY_SECRET ?? "";
+    this.keyId = process.env["RAZORPAY_KEY_ID"] ?? "";
+    this.keySecret = process.env["RAZORPAY_KEY_SECRET"] ?? "";
     this.enabled =
       !!this.keyId &&
       !!this.keySecret &&
@@ -100,7 +100,7 @@ export class RazorpayClient {
     if (!this.enabled) return true;
 
     const expected = crypto
-      .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET ?? this.keySecret)
+      .createHmac("sha256", process.env["RAZORPAY_WEBHOOK_SECRET"] ?? this.keySecret)
       .update(payload)
       .digest("hex");
 

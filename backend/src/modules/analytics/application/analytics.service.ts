@@ -127,8 +127,10 @@ export class AnalyticsService {
     }));
 
     const sorted = [...byHour].sort((a, b) => b.bookingCount - a.bookingCount);
-    const peakHour = sorted[0]?.bookingCount > 0 ? sorted[0].hour : null;
-    const slowestHour = sorted[sorted.length - 1]?.bookingCount > 0 ? sorted[sorted.length - 1].hour : null;
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const peakHour = first && first.bookingCount > 0 ? first.hour : null;
+    const slowestHour = last && last.bookingCount > 0 ? last.hour : null;
 
     return { shopId, from, to, byHour, peakHour, slowestHour };
   }
@@ -316,7 +318,7 @@ function peakDayFrom(rows: Array<{ date: Date; totalBookings: number; totalWalkI
   const sorted = [...rows].sort(
     (a, b) => b.totalBookings + b.totalWalkIns - (a.totalBookings + a.totalWalkIns)
   );
-  return sorted[0].date.toLocaleDateString("en-US", { weekday: "long" });
+  return sorted[0]!.date.toLocaleDateString("en-US", { weekday: "long" });
 }
 
 function daysBetween(from: Date, to: Date): number {

@@ -11,6 +11,7 @@ import '../../../core/widgets/bb_loading.dart';
 import '../../../core/widgets/bb_snackbar.dart';
 import '../../../core/widgets/bb_status_chip.dart';
 import '../../shared/domain/queue_models.dart';
+import '../setup/barber_setup_screen.dart';
 import 'barber_provider.dart';
 
 class BarberDashboardScreen extends ConsumerWidget {
@@ -26,12 +27,15 @@ class BarberDashboardScreen extends ConsumerWidget {
       body: state.isLoading
           ? const BBLoadingScreen()
           : state.error != null && state.profile == null
-              ? BBErrorWidget(
-                  error: state.error!,
-                  onRetry: () =>
-                      ref.read(barberDashProvider.notifier).refresh(),
-                  fullScreen: true,
-                )
+              ? (state.error!.toLowerCase().contains('not found') ||
+                      state.error!.toLowerCase().contains('barber profile'))
+                  ? const BarberSetupScreen()
+                  : BBErrorWidget(
+                      error: state.error!,
+                      onRetry: () =>
+                          ref.read(barberDashProvider.notifier).refresh(),
+                      fullScreen: true,
+                    )
               : RefreshIndicator(
                   color: BBColors.amber,
                   onRefresh: () =>

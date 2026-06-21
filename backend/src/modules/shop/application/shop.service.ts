@@ -54,7 +54,7 @@ export class ShopService {
       throw Errors.conflict("Barber already has a shop");
     }
 
-    return this.repository.createShop({
+    const shop = await this.repository.createShop({
       name: dto.name,
       slug: makeShopSlug(dto.name),
       description: dto.description ?? null,
@@ -82,6 +82,13 @@ export class ShopService {
         }))
       }
     });
+
+    // Auto-create Barber profile when a BARBER registers their shop
+    if (user.role === "BARBER") {
+      await this.repository.upsertBarberProfile(user.id, shop.id);
+    }
+
+    return shop;
   }
 
   async updateShop(user: AuthUser, shopId: string, dto: UpdateShopDto) {

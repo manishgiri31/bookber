@@ -11,7 +11,7 @@ export const sendNotificationSchema = z.object({
   type: z.enum(["BOOKING_REMINDER", "QUEUE_MOVEMENT", "BARBER_READY", "CANCELLATION", "DELAY"]),
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(500),
-  data: z.record(z.string()).optional()
+  data: z.record(z.string(), z.unknown()).optional()
 });
 
 export type RegisterTokenDto = z.infer<typeof registerTokenSchema>;

@@ -34,12 +34,20 @@ export class PrismaShopRepository {
     });
   }
 
-  async findShopByBarber(barberId: string) {
+  async findShopByBarber(userId: string) {
     const barber = await prisma.barber.findUnique({
-      where: { id: barberId },
+      where: { userId },
       include: { shop: true }
     });
     return barber?.shop || null;
+  }
+
+  async upsertBarberProfile(userId: string, shopId: string) {
+    return prisma.barber.upsert({
+      where: { userId },
+      update: { shopId },
+      create: { userId, shopId }
+    });
   }
 
   async createService(shopId: string, data: { name: string; description: string | null; durationMinutes: number; price: number }) {

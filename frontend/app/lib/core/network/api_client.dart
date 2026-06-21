@@ -105,7 +105,11 @@ class ApiClient {
 
   String? _extractMessage(dynamic data) {
     if (data is Map<String, dynamic>) {
-      return (data['message'] ?? data['error'])?.toString();
+      final err = data['error'];
+      if (err is Map<String, dynamic>) {
+        return err['message']?.toString();
+      }
+      return (data['message'] ?? err)?.toString();
     }
     return null;
   }

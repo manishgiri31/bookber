@@ -9,10 +9,10 @@ type DateRangeQuery = z.infer<typeof dateRangeSchema>;
 
 function requireOwnerOrAdmin(request: FastifyRequest, shopId: string) {
   const user = (request as any).user as { id: string; role: string; shopId?: string } | undefined;
-  if (!user) throw HttpError.unauthorized();
+  if (!user) throw HttpError.unauthorized("Authentication required");
   if (user.role === "ADMIN") return;
   if (user.role === "BARBER" && user.shopId === shopId) return;
-  throw HttpError.forbidden();
+  throw HttpError.forbidden("Forbidden");
 }
 
 export class AnalyticsController {

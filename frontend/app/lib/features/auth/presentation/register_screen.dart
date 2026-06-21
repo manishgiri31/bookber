@@ -67,8 +67,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       setState(() => _emailError = 'Enter a valid email');
       ok = false;
     }
-    if (_passCtrl.text.length < 4) {
-      setState(() => _passError = 'Minimum 4 characters');
+    if (_passCtrl.text.trim().isEmpty) {
+      setState(() => _passError = 'Password cannot be empty');
       ok = false;
     } else if (_isCommonPassword(_passCtrl.text)) {
       setState(() => _passError = 'Password is too common, please choose another');
@@ -110,7 +110,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         title: const Text('Create Account'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/login'),
         ),
       ),
       body: SafeArea(
@@ -247,14 +247,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
               const SizedBox(height: BBSpacing.lg),
               Center(
-                child: TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(
-                    'Already have an account? Sign in',
-                    style: BBTypography.textTheme.bodyMedium?.copyWith(
-                      color: colors.textSecondary,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Already have an account? ',
+                      style: BBTypography.textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
                     ),
-                  ),
+                    GestureDetector(
+                      onTap: () => context.canPop() ? context.pop() : context.go('/login'),
+                      child: Text(
+                        'Sign in',
+                        style: BBTypography.textTheme.bodyMedium?.copyWith(
+                          color: BBColors.amber,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

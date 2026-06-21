@@ -1,10 +1,20 @@
 import { z } from "zod";
 
+const COMMON_PASSWORDS = new Set([
+  "password", "1234", "12345", "123456", "1234567", "12345678", "12345678",
+  "password1", "qwerty", "abc123", "letmein", "welcome", "monkey",
+  "dragon", "master", "admin", "login", "pass", "test", "guest",
+  "iloveyou", "sunshine", "princess", "football", "charlie", "donald",
+  "superman", "batman", "shadow", "baseball", "access", "hello",
+]);
+
 export const registerSchema = z.object({
   fullName: z.string().min(2).max(100),
   email: z.string().email(),
   phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional(),
-  password: z.string().min(8).max(72).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain at least one uppercase letter, one lowercase letter, and one number"),
+  password: z.string()
+    .refine(p => p.trim().length > 0, "Password cannot be empty or whitespace")
+    .refine(p => !COMMON_PASSWORDS.has(p.toLowerCase()), "Password is too common, please choose another"),
   role: z.enum(["CLIENT", "BARBER", "ADMIN"]).default("CLIENT")
 });
 
