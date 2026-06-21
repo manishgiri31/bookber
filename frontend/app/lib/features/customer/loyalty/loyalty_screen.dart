@@ -14,12 +14,17 @@ final _loyaltyProvider = FutureProvider.autoDispose((ref) async {
     client.get<dynamic>(ApiEndpoints.loyaltyAccount),
     client.get<dynamic>(ApiEndpoints.loyaltyTransactions),
   ]);
-  final account = results[0] as Map<String, dynamic>;
-  final txRes = results[1] as Map<String, dynamic>;
+  final account = results[0] is Map<String, dynamic>
+      ? results[0] as Map<String, dynamic>
+      : <String, dynamic>{};
+  final txRes = results[1] is Map<String, dynamic>
+      ? results[1] as Map<String, dynamic>
+      : <String, dynamic>{};
   return {
     'account': account,
-    'transactions':
-        (txRes['transactions'] as List?)?.cast<Map<String, dynamic>>() ?? [],
+    'transactions': (txRes['transactions'] as List?)
+        ?.whereType<Map<String, dynamic>>()
+        .toList() ?? [],
   };
 });
 

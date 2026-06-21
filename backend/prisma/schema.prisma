@@ -230,6 +230,8 @@ model Booking {
   queueEntry         QueueEntry?
   queueEvents        QueueEvent[]
 
+  @@index([userId])
+  @@index([userId, status])
   @@index([shopId, status])
   @@index([barberId, status])
   @@index([status])
@@ -356,6 +358,7 @@ model Review {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([shopId])
+  @@index([userId])
 }
 
 model WaitTimeMetric {

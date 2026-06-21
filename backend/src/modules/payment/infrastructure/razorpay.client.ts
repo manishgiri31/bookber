@@ -104,7 +104,14 @@ export class RazorpayClient {
       .update(payload)
       .digest("hex");
 
-    return expected === signature;
+    try {
+      return crypto.timingSafeEqual(
+        Buffer.from(expected, "hex"),
+        Buffer.from(signature, "hex")
+      );
+    } catch {
+      return false;
+    }
   }
 
   private _stubOrder(amount: number, currency: string, receipt: string): RazorpayOrder {

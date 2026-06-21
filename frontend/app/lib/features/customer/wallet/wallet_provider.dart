@@ -44,11 +44,16 @@ class WalletNotifier extends Notifier<WalletState> {
         client.get<dynamic>(ApiEndpoints.walletBalance),
         client.get<dynamic>(ApiEndpoints.walletTransactions),
       ]);
-      final balRes = results[0] as Map<String, dynamic>;
-      final txRes = results[1] as Map<String, dynamic>;
+      final balRes = results[0] is Map<String, dynamic>
+          ? results[0] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final txRes = results[1] is Map<String, dynamic>
+          ? results[1] as Map<String, dynamic>
+          : <String, dynamic>{};
       final balance = (balRes['balance'] as num?)?.toDouble() ?? 0.0;
-      final txList =
-          (txRes['transactions'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+      final txList = (txRes['transactions'] as List?)
+          ?.whereType<Map<String, dynamic>>()
+          .toList() ?? [];
       state = state.copyWith(
           balance: balance, transactions: txList, isLoading: false);
     } catch (e) {

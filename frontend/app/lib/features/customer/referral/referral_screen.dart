@@ -17,13 +17,17 @@ final _referralProvider = FutureProvider.autoDispose((ref) async {
     client.get<dynamic>(ApiEndpoints.referralMyCode),
     client.get<dynamic>(ApiEndpoints.referralMyReferrals),
   ]);
-  final codeRes = results[0] as Map<String, dynamic>;
-  final referralsRes = results[1] as Map<String, dynamic>;
+  final codeRes = results[0] is Map<String, dynamic>
+      ? results[0] as Map<String, dynamic>
+      : <String, dynamic>{};
+  final referralsRes = results[1] is Map<String, dynamic>
+      ? results[1] as Map<String, dynamic>
+      : <String, dynamic>{};
   return {
     'code': codeRes['code'] as String? ?? '',
-    'referrals':
-        (referralsRes['referrals'] as List?)?.cast<Map<String, dynamic>>() ??
-            [],
+    'referrals': (referralsRes['referrals'] as List?)
+        ?.whereType<Map<String, dynamic>>()
+        .toList() ?? [],
   };
 });
 

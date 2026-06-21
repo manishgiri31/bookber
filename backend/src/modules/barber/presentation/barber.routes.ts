@@ -70,6 +70,15 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   // PATCH /api/barbers/:barberId/status
   app.patch("/barbers/:barberId/status", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
+    if (request.user.role === "BARBER") {
+      const ownBarber = await app.prisma.barber.findUnique({
+        where: { userId: request.user.sub },
+        select: { id: true }
+      });
+      if (!ownBarber || ownBarber.id !== barberId) {
+        throw app.httpErrors.forbidden("Cannot modify another barber's status");
+      }
+    }
     const { isAvailable } = z.object({ isAvailable: z.boolean() }).parse(request.body);
     const barber = await app.prisma.barber.update({ where: { id: barberId }, data: { isAvailable } });
     return { barber };
@@ -95,9 +104,16 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
     const rawStatus = ((request.body as { status?: string })?.status ?? "").toUpperCase();
     const status = queueStatusSchema.parse(rawStatus);
     const existing = await app.prisma.queueEntry.findFirst({
-      where: { OR: [{ id: entryId }, { bookingId: entryId }] }
+      where: { OR: [{ id: entryId }, { bookingId: entryId }] },
+      include: { booking: { select: { shopId: true } } }
     });
     if (!existing) throw app.httpErrors.notFound("Queue entry not found");
+    if (request.user.role === "BARBER") {
+      const ownBarber = await app.prisma.barber.findFirst({
+        where: { userId: request.user.sub, shopId: existing.booking.shopId }
+      });
+      if (!ownBarber) throw app.httpErrors.forbidden("Not authorized to manage this queue");
+    }
     const entry = await app.prisma.queueEntry.update({ where: { id: existing.id }, data: { queueStatus: status } });
     return { entry };
   });

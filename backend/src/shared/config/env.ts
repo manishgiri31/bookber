@@ -30,7 +30,7 @@ const envSchema = z.object({
 
   // Cookie Configuration
   COOKIE_DOMAIN: z.string().optional(),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  COOKIE_SECURE: z.coerce.boolean().default(true),
   COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   ACCESS_TOKEN_COOKIE_NAME: z.string().default("bookber_at"),
   REFRESH_TOKEN_COOKIE_NAME: z.string().default("bookber_rt"),

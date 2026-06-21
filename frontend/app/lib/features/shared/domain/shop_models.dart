@@ -40,9 +40,10 @@ class Shop {
   final int totalChairs;
 
   String get distanceLabel {
-    if (distanceKm == null) return '';
-    if (distanceKm! < 1) return '${(distanceKm! * 1000).round()}m away';
-    return '${distanceKm!.toStringAsFixed(1)}km away';
+    final dist = distanceKm;
+    if (dist == null) return '';
+    if (dist < 1) return '${(dist * 1000).round()}m away';
+    return '${dist.toStringAsFixed(1)}km away';
   }
 
   String get waitLabel => waitTimeMinutes > 0 ? '~$waitTimeMinutes min wait' : 'No wait';

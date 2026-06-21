@@ -145,16 +145,16 @@ async function main() {
   });
 
   const customerDefs = [
-    { fullName: "Ravi Sharma",  email: "customer.ravi@bookber.dev",  phoneNumber: "+919100000001" },
-    { fullName: "Priya Nair",   email: "customer.priya@bookber.dev", phoneNumber: "+919100000002" },
-    { fullName: "Arjun Mehta",  email: "customer.arjun@bookber.dev", phoneNumber: "+919100000003" },
-    { fullName: "Kiran Patel",  email: "customer.kiran@bookber.dev", phoneNumber: "+919100000004" },
-    { fullName: "Deepak Gupta", email: "customer.deepak@bookber.dev",phoneNumber: "+919100000005" },
-    { fullName: "Sneha Reddy",  email: "customer.sneha@bookber.dev", phoneNumber: "+919100000006" },
-    { fullName: "Rahul Verma",  email: "customer.rahul@bookber.dev", phoneNumber: "+919100000007" },
-    { fullName: "Anita Singh",  email: "customer.anita@bookber.dev", phoneNumber: "+919100000008" },
-    { fullName: "Vijay Kumar",  email: "customer.vijay@bookber.dev", phoneNumber: "+919100000009" },
-    { fullName: "Neha Joshi",   email: "customer.neha@bookber.dev",  phoneNumber: "+919100000010" },
+    { fullName: "Ravi Sharma", email: "customer.ravi@bookber.dev", phoneNumber: "+919100000001" },
+    { fullName: "Priya Nair", email: "customer.priya@bookber.dev", phoneNumber: "+919100000002" },
+    { fullName: "Arjun Mehta", email: "customer.arjun@bookber.dev", phoneNumber: "+919100000003" },
+    { fullName: "Kiran Patel", email: "customer.kiran@bookber.dev", phoneNumber: "+919100000004" },
+    { fullName: "Deepak Gupta", email: "customer.deepak@bookber.dev", phoneNumber: "+919100000005" },
+    { fullName: "Sneha Reddy", email: "customer.sneha@bookber.dev", phoneNumber: "+919100000006" },
+    { fullName: "Rahul Verma", email: "customer.rahul@bookber.dev", phoneNumber: "+919100000007" },
+    { fullName: "Anita Singh", email: "customer.anita@bookber.dev", phoneNumber: "+919100000008" },
+    { fullName: "Vijay Kumar", email: "customer.vijay@bookber.dev", phoneNumber: "+919100000009" },
+    { fullName: "Neha Joshi", email: "customer.neha@bookber.dev", phoneNumber: "+919100000010" },
   ] as const;
 
   const customers = await Promise.all(
@@ -250,7 +250,7 @@ async function main() {
   };
 
   const DAYS = [
-    "MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY",
+    "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY",
   ] as const;
 
   for (const shop of [shop1, shop2]) {
@@ -336,15 +336,15 @@ async function main() {
 
   // Shop 1: 4 chairs — chair 1 & 2 reserved for BookBer advance bookings
   const chairs1 = await upsertChairs(shop1.id, [
-    { number: 1, reservedForBookBer: true  },
-    { number: 2, reservedForBookBer: true  },
+    { number: 1, reservedForBookBer: true },
+    { number: 2, reservedForBookBer: true },
     { number: 3, reservedForBookBer: false },
     { number: 4, reservedForBookBer: false },
   ]);
 
   // Shop 2: 3 chairs — chair 1 reserved for BookBer
   const chairs2 = await upsertChairs(shop2.id, [
-    { number: 1, reservedForBookBer: true  },
+    { number: 1, reservedForBookBer: true },
     { number: 2, reservedForBookBer: false },
     { number: 3, reservedForBookBer: false },
   ]);
@@ -986,22 +986,22 @@ async function main() {
   const queueEvents: QueueEventSeed[] = [
     // ENQUEUED for every booking
     { shopId: shop1.id, bookingId: b_s1_1.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 100 } },
-    { shopId: shop1.id, bookingId: b_s1_2.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN",  position: 100 } },
+    { shopId: shop1.id, bookingId: b_s1_2.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN", position: 100 } },
     { shopId: shop1.id, bookingId: b_s1_3.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 110 } },
     { shopId: shop1.id, bookingId: b_s1_4.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 120 } },
-    { shopId: shop1.id, bookingId: b_s1_5.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 10  } },
-    { shopId: shop1.id, bookingId: b_s1_6.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN",  position: 10  } },
+    { shopId: shop1.id, bookingId: b_s1_5.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 10 } },
+    { shopId: shop1.id, bookingId: b_s1_6.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN", position: 10 } },
     { shopId: shop2.id, bookingId: b_s2_1.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 100 } },
-    { shopId: shop2.id, bookingId: b_s2_2.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN",  position: 100 } },
+    { shopId: shop2.id, bookingId: b_s2_2.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN", position: 100 } },
     // State transitions for completed bookings
     { shopId: shop1.id, bookingId: b_s1_1.id, type: QueueEventType.CHAIR_ASSIGNED, payload: { chairNumber: 1 } },
     { shopId: shop1.id, bookingId: b_s1_1.id, type: QueueEventType.IN_SERVICE, payload: {} },
-    { shopId: shop1.id, bookingId: b_s1_1.id, type: QueueEventType.COMPLETED,   payload: {} },
+    { shopId: shop1.id, bookingId: b_s1_1.id, type: QueueEventType.COMPLETED, payload: {} },
     { shopId: shop1.id, bookingId: b_s1_4.id, type: QueueEventType.CHAIR_ASSIGNED, payload: { chairNumber: 1 } },
     { shopId: shop1.id, bookingId: b_s1_4.id, type: QueueEventType.IN_SERVICE, payload: {} },
     { shopId: shop2.id, bookingId: b_s2_1.id, type: QueueEventType.CHAIR_ASSIGNED, payload: { chairNumber: 1 } },
     { shopId: shop2.id, bookingId: b_s2_1.id, type: QueueEventType.IN_SERVICE, payload: {} },
-    { shopId: shop2.id, bookingId: b_s2_1.id, type: QueueEventType.COMPLETED,   payload: {} },
+    { shopId: shop2.id, bookingId: b_s2_1.id, type: QueueEventType.COMPLETED, payload: {} },
   ];
 
   await prisma.queueEvent.createMany({ data: queueEvents });
@@ -1060,12 +1060,12 @@ async function main() {
   await prisma.waitTimeMetric.createMany({
     data: [
       { shopId: shop1.id, barberId: barber1.id, category: ServiceCategory.HAIRCUT, actualMinutes: 28, expectedMinutes: 30, recordedAt: daysAgo(3) },
-      { shopId: shop1.id, barberId: barber1.id, category: ServiceCategory.COMBO,   actualMinutes: 44, expectedMinutes: 45, recordedAt: daysAgo(2) },
-      { shopId: shop1.id, barberId: barber2.id, category: ServiceCategory.BEARD,   actualMinutes: 22, expectedMinutes: 20, recordedAt: daysAgo(5) },
+      { shopId: shop1.id, barberId: barber1.id, category: ServiceCategory.COMBO, actualMinutes: 44, expectedMinutes: 45, recordedAt: daysAgo(2) },
+      { shopId: shop1.id, barberId: barber2.id, category: ServiceCategory.BEARD, actualMinutes: 22, expectedMinutes: 20, recordedAt: daysAgo(5) },
       { shopId: shop1.id, barberId: barber2.id, category: ServiceCategory.HAIRCUT, actualMinutes: 31, expectedMinutes: 30, recordedAt: daysAgo(1) },
       { shopId: shop2.id, barberId: barber3.id, category: ServiceCategory.HAIRCUT, actualMinutes: 35, expectedMinutes: 30, recordedAt: daysAgo(4) },
-      { shopId: shop2.id, barberId: barber3.id, category: ServiceCategory.COMBO,   actualMinutes: 47, expectedMinutes: 45, recordedAt: daysAgo(6) },
-      { shopId: shop2.id, barberId: barber3.id, category: ServiceCategory.BEARD,   actualMinutes: 18, expectedMinutes: 20, recordedAt: daysAgo(2) },
+      { shopId: shop2.id, barberId: barber3.id, category: ServiceCategory.COMBO, actualMinutes: 47, expectedMinutes: 45, recordedAt: daysAgo(6) },
+      { shopId: shop2.id, barberId: barber3.id, category: ServiceCategory.BEARD, actualMinutes: 18, expectedMinutes: 20, recordedAt: daysAgo(2) },
     ],
   });
 
@@ -1097,7 +1097,7 @@ async function main() {
     { totalBookings: 18, totalWalkIns: 4, completedBookings: 15, cancelledBookings: 2, noShows: 1, avgWaitMinutes: 14.0, avgServiceMinutes: 29.5, totalRevenue: 3500, peakHour: 12, chairUtilizationPct: 0.65, queueAbandonments: 2 },
     { totalBookings: 25, totalWalkIns: 8, completedBookings: 21, cancelledBookings: 3, noShows: 1, avgWaitMinutes: 10.2, avgServiceMinutes: 31.0, totalRevenue: 5100, peakHour: 10, chairUtilizationPct: 0.80, queueAbandonments: 0 },
     { totalBookings: 20, totalWalkIns: 5, completedBookings: 17, cancelledBookings: 2, noShows: 1, avgWaitMinutes: 11.8, avgServiceMinutes: 30.0, totalRevenue: 3900, peakHour: 13, chairUtilizationPct: 0.70, queueAbandonments: 1 },
-    { totalBookings: 28, totalWalkIns: 9, completedBookings: 24, cancelledBookings: 3, noShows: 1, avgWaitMinutes: 9.5,  avgServiceMinutes: 33.0, totalRevenue: 5800, peakHour: 11, chairUtilizationPct: 0.85, queueAbandonments: 0 },
+    { totalBookings: 28, totalWalkIns: 9, completedBookings: 24, cancelledBookings: 3, noShows: 1, avgWaitMinutes: 9.5, avgServiceMinutes: 33.0, totalRevenue: 5800, peakHour: 11, chairUtilizationPct: 0.85, queueAbandonments: 0 },
     { totalBookings: 30, totalWalkIns: 10, completedBookings: 26, cancelledBookings: 3, noShows: 1, avgWaitMinutes: 8.0, avgServiceMinutes: 34.0, totalRevenue: 6300, peakHour: 12, chairUtilizationPct: 0.90, queueAbandonments: 1 },
     { totalBookings: 15, totalWalkIns: 3, completedBookings: 12, cancelledBookings: 2, noShows: 1, avgWaitMinutes: 16.0, avgServiceMinutes: 28.0, totalRevenue: 2900, peakHour: 14, chairUtilizationPct: 0.55, queueAbandonments: 2 },
   ];
@@ -1117,17 +1117,17 @@ async function main() {
         create: {
           shopId: shop.id,
           date,
-          totalBookings:       Math.round(stats.totalBookings * scale),
-          totalWalkIns:        Math.round(stats.totalWalkIns * scale),
-          completedBookings:   Math.round(stats.completedBookings * scale),
-          cancelledBookings:   Math.round(stats.cancelledBookings * scale),
-          noShows:             stats.noShows,
-          avgWaitMinutes:      stats.avgWaitMinutes + (shop.id === shop2.id ? 3 : 0),
-          avgServiceMinutes:   stats.avgServiceMinutes + (shop.id === shop2.id ? 5 : 0),
-          totalRevenue:        stats.totalRevenue * scale,
-          peakHour:            stats.peakHour,
+          totalBookings: Math.round(stats.totalBookings * scale),
+          totalWalkIns: Math.round(stats.totalWalkIns * scale),
+          completedBookings: Math.round(stats.completedBookings * scale),
+          cancelledBookings: Math.round(stats.cancelledBookings * scale),
+          noShows: stats.noShows,
+          avgWaitMinutes: stats.avgWaitMinutes + (shop.id === shop2.id ? 3 : 0),
+          avgServiceMinutes: stats.avgServiceMinutes + (shop.id === shop2.id ? 5 : 0),
+          totalRevenue: stats.totalRevenue * scale,
+          peakHour: stats.peakHour,
           chairUtilizationPct: stats.chairUtilizationPct * (shop.id === shop2.id ? 0.85 : 1),
-          queueAbandonments:   stats.queueAbandonments,
+          queueAbandonments: stats.queueAbandonments,
         },
       });
     }
