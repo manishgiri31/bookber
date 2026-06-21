@@ -144,7 +144,7 @@ class CheckoutScreen extends ConsumerWidget {
                       Border.all(color: BBColors.error.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  (checkoutState as CheckoutError).message,
+                  checkoutState.message,
                   style: BBTypography.textTheme.bodySmall
                       ?.copyWith(color: BBColors.error),
                 ),

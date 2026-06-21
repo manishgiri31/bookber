@@ -24,12 +24,15 @@ import '../../features/barber/queue/barber_queue_screen.dart';
 import '../../features/customer/booking/booking_flow_screen.dart';
 import '../../features/customer/customer_shell.dart';
 import '../../features/customer/home/home_screen.dart';
+import '../../features/customer/loyalty/loyalty_screen.dart';
 import '../../features/customer/profile/bookings_screen.dart';
 import '../../features/customer/profile/my_reviews_screen.dart';
 import '../../features/customer/profile/profile_screen.dart';
 import '../../features/customer/queue/queue_tracker_screen.dart';
+import '../../features/customer/referral/referral_screen.dart';
 import '../../features/customer/shops/shop_detail_screen.dart';
 import '../../features/customer/shops/shops_screen.dart';
+import '../../features/customer/wallet/wallet_screen.dart';
 
 final _rootKey = GlobalKey<NavigatorState>();
 final _customerKey = GlobalKey<NavigatorState>();
@@ -134,6 +137,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/payments/history',
         builder: (_, _) => const PaymentHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/wallet',
+        builder: (_, _) => const WalletScreen(),
+      ),
+      GoRoute(
+        path: '/loyalty',
+        builder: (_, _) => const LoyaltyScreen(),
+      ),
+      GoRoute(
+        path: '/referral',
+        builder: (_, _) => const ReferralScreen(),
       ),
 
       // Barber shell

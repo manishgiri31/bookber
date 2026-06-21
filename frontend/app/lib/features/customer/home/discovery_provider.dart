@@ -24,9 +24,9 @@ final nearbyShopsProvider =
         'sortBy': 'distance',
       },
     );
-    final list =
-        data['data'] as List? ?? data['shops'] as List? ?? [];
-    return (list as List)
+    final rawList = data['data'] ?? data['shops'] ?? [];
+    final list = rawList is List ? rawList : <dynamic>[];
+    return list
         .whereType<Map<String, dynamic>>()
         .map(_nearbyToShop)
         .toList();
@@ -52,9 +52,9 @@ final topRatedShopsProvider =
       ApiEndpoints.topRatedShops,
       params: params,
     );
-    final list =
-        data['data'] as List? ?? data['shops'] as List? ?? [];
-    return (list as List)
+    final rawList = data['data'] ?? data['shops'] ?? [];
+    final list = rawList is List ? rawList : <dynamic>[];
+    return list
         .whereType<Map<String, dynamic>>()
         .map(_nearbyToShop)
         .toList();

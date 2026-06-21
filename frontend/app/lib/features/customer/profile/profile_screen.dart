@@ -109,6 +109,33 @@ class ProfileScreen extends ConsumerWidget {
                 label: 'My Reviews',
                 onTap: () => context.push('/reviews'),
               ),
+              _ActionRow(
+                icon: Icons.receipt_long_rounded,
+                label: 'Payment History',
+                onTap: () => context.push('/payments/history'),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.base),
+
+          _Section(
+            title: 'Rewards',
+            children: [
+              _ActionRow(
+                icon: Icons.account_balance_wallet_outlined,
+                label: 'Wallet',
+                onTap: () => context.push('/wallet'),
+              ),
+              _ActionRow(
+                icon: Icons.military_tech_rounded,
+                label: 'Loyalty Points',
+                onTap: () => context.push('/loyalty'),
+              ),
+              _ActionRow(
+                icon: Icons.card_giftcard_rounded,
+                label: 'Referrals',
+                onTap: () => context.push('/referral'),
+              ),
             ],
           ),
           const SizedBox(height: BBSpacing.base),

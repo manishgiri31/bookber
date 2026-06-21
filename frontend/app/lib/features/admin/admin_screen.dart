@@ -182,8 +182,9 @@ final adminQueuesProvider =
   final api = ref.watch(apiClientProvider);
   final data =
       await api.get<Map<String, dynamic>>(ApiEndpoints.adminActiveQueues);
-  final list = data['queues'] as List? ?? (data as List?) ?? [];
-  return (list as List)
+  final rawList = data['queues'] ?? data;
+  final list = rawList is List ? rawList : <dynamic>[];
+  return list
       .whereType<Map<String, dynamic>>()
       .map(ActiveQueue.fromJson)
       .toList();

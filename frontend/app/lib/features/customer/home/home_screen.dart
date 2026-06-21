@@ -9,7 +9,6 @@ import '../../../core/providers/location_provider.dart';
 import '../../../core/providers/notifications_provider.dart';
 import '../../../core/widgets/bb_empty_state.dart';
 import '../../../core/widgets/bb_error_widget.dart';
-import '../../../core/widgets/bb_loading.dart';
 import '../../auth/data/auth_provider.dart';
 import '../../shared/domain/shop_models.dart';
 import 'discovery_provider.dart';

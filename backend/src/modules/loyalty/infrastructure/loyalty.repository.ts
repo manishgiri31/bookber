@@ -11,9 +11,8 @@ function computeTier(points: number): Tier {
 }
 
 export class PrismaLoyaltyRepository {
-
   async getOrCreate(userId: string) {
-    return this.prisma.loyaltyAccount.upsert({
+    return prisma.loyaltyAccount.upsert({
       where: { userId },
       create: { userId, points: 0, tier: "BRONZE" },
       update: {},
@@ -25,13 +24,19 @@ export class PrismaLoyaltyRepository {
     const account = await this.getOrCreate(userId);
     const newPoints = account.points + points;
     const newTier = computeTier(newPoints);
-    return this.prisma.$transaction([
-      this.prisma.loyaltyAccount.update({
+    return prisma.$transaction([
+      prisma.loyaltyAccount.update({
         where: { id: account.id },
         data: { points: { increment: points }, tier: newTier },
       }),
-      this.prisma.loyaltyTransaction.create({
-        data: { accountId: account.id, points, type: "EARN", reason, refId },
+      prisma.loyaltyTransaction.create({
+        data: {
+          loyaltyAccountId: account.id,
+          points,
+          type: "EARN",
+          reason,
+          ...(refId !== undefined && { refId }),
+        },
       }),
     ]);
   }
@@ -41,22 +46,28 @@ export class PrismaLoyaltyRepository {
     if (account.points < points) throw new Error("Insufficient loyalty points");
     const newPoints = account.points - points;
     const newTier = computeTier(newPoints);
-    return this.prisma.$transaction([
-      this.prisma.loyaltyAccount.update({
+    return prisma.$transaction([
+      prisma.loyaltyAccount.update({
         where: { id: account.id },
         data: { points: { decrement: points }, tier: newTier },
       }),
-      this.prisma.loyaltyTransaction.create({
-        data: { accountId: account.id, points, type: "REDEEM", reason, refId },
+      prisma.loyaltyTransaction.create({
+        data: {
+          loyaltyAccountId: account.id,
+          points,
+          type: "REDEEM",
+          reason,
+          ...(refId !== undefined && { refId }),
+        },
       }),
     ]);
   }
 
   async getTransactions(userId: string) {
-    const account = await this.prisma.loyaltyAccount.findUnique({ where: { userId } });
+    const account = await prisma.loyaltyAccount.findUnique({ where: { userId } });
     if (!account) return [];
-    return this.prisma.loyaltyTransaction.findMany({
-      where: { accountId: account.id },
+    return prisma.loyaltyTransaction.findMany({
+      where: { loyaltyAccountId: account.id },
       orderBy: { createdAt: "desc" },
       take: 50,
     });

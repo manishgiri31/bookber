@@ -7,8 +7,8 @@ export class CouponService {
     return this.repo.validate(code, userId, orderAmount);
   }
 
-  async redeem(couponId: string, userId: string, bookingId: string) {
-    return this.repo.redeem(couponId, userId, bookingId);
+  async redeem(couponId: string, userId: string, bookingId: string, discount: number) {
+    return this.repo.redeem(couponId, userId, bookingId, discount);
   }
 
   async create(data: {

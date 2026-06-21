@@ -98,8 +98,12 @@ abstract final class ApiEndpoints {
   static const String loyaltyTransactions = '/loyalty/transactions';
 
   // Referral
-  static const String referralCode = '/referral/code';
-  static const String referralStatus = '/referral/status';
+  static const String referralMyCode = '/referral/my-code';
+  static const String referralMyReferrals = '/referral/my-referrals';
+  static const String referralApply = '/referral/apply';
+
+  // Loyalty (redeem)
+  static const String loyaltyRedeem = '/loyalty/redeem';
 
   // Coupons
   static const String validateCoupon = '/coupons/validate';
