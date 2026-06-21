@@ -16,7 +16,7 @@ abstract final class BBTheme {
     final colorScheme = ColorScheme(
       brightness: brightness,
       primary: BBColors.amber,
-      onPrimary: BBColors.amber,
+      onPrimary: Colors.white,
       primaryContainer: colors.accentSurface,
       onPrimaryContainer: colors.text,
       secondary: colors.textSecondary,
@@ -41,7 +41,7 @@ abstract final class BBTheme {
       scrim: Colors.black,
       inverseSurface: isDark ? colors.surface : const Color(0xFF1A1A1C),
       onInverseSurface: isDark ? colors.text : const Color(0xFFFAFAFA),
-      inversePrimary: BBColors.amberDark,
+      inversePrimary: BBColors.amberLight,
     );
 
     return ThemeData(
@@ -129,7 +129,7 @@ abstract final class BBTheme {
           backgroundColor: BBColors.amber,
           foregroundColor: colors.accentForeground,
           disabledBackgroundColor: isDark
-              ? const Color(0xFF1A1A00)
+              ? const Color(0xFF2D0A0A)
               : const Color(0xFFD1D5DB),
           disabledForegroundColor: colors.textTertiary,
           elevation: 0,
@@ -272,7 +272,7 @@ abstract final class BBTheme {
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: BBColors.amber,
-        foregroundColor: isDark ? const Color(0xFF0A0A0B) : const Color(0xFF0A0A0B),
+        foregroundColor: Colors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(BBRadius.lg),

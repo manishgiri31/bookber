@@ -43,7 +43,7 @@ final topRatedShopsProvider =
 
   try {
     final api = ref.read(apiClientProvider);
-    final params = <String, dynamic>{'limit': '8'};
+    final params = <String, dynamic>{'limit': '8', 'radius': '50'};
     if (location != null) {
       params['latitude'] = location.latitude.toString();
       params['longitude'] = location.longitude.toString();

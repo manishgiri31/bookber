@@ -6,7 +6,6 @@ import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
 import '../../../core/widgets/bb_button.dart';
-import '../../../core/widgets/bb_snackbar.dart';
 import '../../../core/widgets/bb_text_field.dart';
 import '../data/auth_provider.dart';
 
@@ -24,6 +23,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _submitting = false;
   String? _emailError;
   String? _passError;
+  String? _serverError;
 
   @override
   void dispose() {
@@ -36,14 +36,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _emailError = null;
       _passError = null;
+      _serverError = null;
     });
     bool valid = true;
     if (_emailCtrl.text.trim().isEmpty || !_emailCtrl.text.contains('@')) {
       setState(() => _emailError = 'Enter a valid email address');
       valid = false;
     }
-    if (_passCtrl.text.length < 6) {
-      setState(() => _passError = 'Password must be at least 6 characters');
+    if (_passCtrl.text.length < 4) {
+      setState(() => _passError = 'Password must be at least 4 characters');
       valid = false;
     }
     return valid;
@@ -59,11 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _submitting = false);
     if (!ok) {
       final err = ref.read(authProvider);
-      showBBSnackbar(
-        context,
-        message: err is AuthError ? err.message : 'Login failed.',
-        isError: true,
-      );
+      setState(() => _serverError = err is AuthError ? err.message : 'Login failed.');
       ref.read(authProvider.notifier).clearError();
     }
   }
@@ -101,7 +98,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         fontFamily: 'Satoshi',
                         fontSize: 28,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF09090B),
+                        color: Colors.white,
                         height: 1,
                       ),
                     ),
@@ -143,6 +140,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onSubmitted: (_) => _submit(),
                 ),
                 const SizedBox(height: BBSpacing.lg),
+                if (_serverError != null) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BBSpacing.base,
+                      vertical: BBSpacing.sm,
+                    ),
+                    decoration: BoxDecoration(
+                      color: BBColors.errorSurface,
+                      borderRadius: BorderRadius.circular(BBRadius.md),
+                      border: Border.all(color: BBColors.error.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: BBColors.error, size: 18),
+                        const SizedBox(width: BBSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            _serverError!,
+                            style: BBTypography.textTheme.bodySmall?.copyWith(color: BBColors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: BBSpacing.base),
+                ],
                 BBButton(
                   label: 'Sign In',
                   onPressed: _submit,

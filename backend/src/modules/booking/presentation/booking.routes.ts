@@ -10,6 +10,7 @@ export const bookingRoutes: FastifyPluginAsync = async (app) => {
   app.post("/:bookingId/complete", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.completeService);
   app.post("/:bookingId/no-show", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.markNoShow);
   app.post("/:bookingId/cancel", { preHandler: app.authenticate }, controller.cancel);
+  app.get("/my", { preHandler: app.authenticate }, controller.listMine);
   app.get("/:bookingId", { preHandler: app.authenticate }, controller.getOne);
   app.get("/shops/:shopId", { preHandler: app.authenticate }, controller.listShop);
 };

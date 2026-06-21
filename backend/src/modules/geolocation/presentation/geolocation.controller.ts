@@ -61,13 +61,15 @@ export class GeolocationController {
   };
 
   getTopRatedNearbyShops = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { latitude, longitude, radius } = request.query as { latitude: string; longitude: string; radius: string };
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-    const rad = parseFloat(radius);
-    this.service.validateCoordinates(lat, lng);
-    this.service.validateRadius(rad);
-    const shops = await this.service.getTopRatedNearbyShops(lat, lng, rad);
+    const { latitude, longitude, radius, limit } = request.query as { latitude?: string; longitude?: string; radius?: string; limit?: string };
+    const lat = latitude ? parseFloat(latitude) : undefined;
+    const lng = longitude ? parseFloat(longitude) : undefined;
+    const rad = radius ? parseFloat(radius) : 50;
+    const lim = limit ? parseInt(limit) : 10;
+    if (lat !== undefined && lng !== undefined) {
+      this.service.validateCoordinates(lat, lng);
+    }
+    const shops = await this.service.getTopRatedNearbyShops(lat, lng, rad, lim);
     return reply.send({ shops });
   };
 

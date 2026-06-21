@@ -48,7 +48,7 @@ export class GeolocationService {
     return this.repository.getMapMarkers(latitude, longitude, radius, city);
   }
 
-  async getTopRatedNearbyShops(latitude: number, longitude: number, radius: number, limit: number = 10): Promise<NearbyShop[]> {
+  async getTopRatedNearbyShops(latitude: number | undefined, longitude: number | undefined, radius: number, limit: number = 10): Promise<NearbyShop[]> {
     return this.repository.getTopRatedNearbyShops(latitude, longitude, radius, limit);
   }
 

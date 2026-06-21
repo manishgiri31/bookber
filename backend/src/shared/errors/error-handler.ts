@@ -27,6 +27,19 @@ export function errorHandler(error: FastifyError, request: FastifyRequest, reply
     });
   }
 
+  // Handle FastifyError from @fastify/sensible (app.httpErrors.*)
+  const statusCode = (error as any).statusCode as number | undefined;
+  if (statusCode && statusCode >= 400 && statusCode < 600) {
+    const expose = (error as any).expose !== false;
+    return reply.status(statusCode).send({
+      error: {
+        code: error.code ?? "HTTP_ERROR",
+        message: expose ? error.message : "An error occurred",
+        requestId: request.id
+      }
+    });
+  }
+
   return reply.status(500).send({
     error: {
       code: "INTERNAL_SERVER_ERROR",

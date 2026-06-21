@@ -62,4 +62,25 @@ export class PrismaBookingRepository {
       }
     });
   }
+
+  async findBookingsByUserId(db: DbClient, userId: string, status?: string) {
+    const activeStatuses = ["QUEUED", "READY", "CALLED", "IN_SERVICE"];
+    const statusFilter = status === "active"
+      ? { status: { in: activeStatuses as any } }
+      : status
+        ? { status: status.toUpperCase() as any }
+        : {};
+
+    return db.booking.findMany({
+      where: { userId, ...statusFilter },
+      orderBy: { createdAt: "desc" },
+      include: {
+        shop: true,
+        service: true,
+        barber: { include: { user: true } },
+        chair: true,
+        queueEntry: true
+      }
+    });
+  }
 }

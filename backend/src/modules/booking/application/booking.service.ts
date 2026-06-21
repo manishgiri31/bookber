@@ -66,4 +66,8 @@ export class BookingService {
       (b) => b.userId === user.id || b.barber?.userId === user.id
     );
   }
+
+  async listUserBookings(user: AuthUser, status?: string) {
+    return this.repository.findBookingsByUserId(prisma, user.id, status);
+  }
 }

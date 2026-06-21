@@ -54,4 +54,10 @@ export class BookingController {
     const bookings = await this.service.listShopBookings(getAuthUser(request), shopId);
     return { bookings };
   };
+
+  listMine = async (request: FastifyRequest) => {
+    const query = request.query as { status?: string };
+    const bookings = await this.service.listUserBookings(getAuthUser(request), query.status);
+    return { bookings };
+  };
 }

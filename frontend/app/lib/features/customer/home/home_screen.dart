@@ -137,102 +137,135 @@ class _Header extends ConsumerWidget {
     final first = userName?.split(' ').first ?? 'there';
     final unread = ref.watch(
         notificationsProvider.select((s) => s.unreadCount));
-    return Row(
+    final locationAsync = ref.watch(locationProvider);
+    final cityName = locationAsync.valueOrNull?.cityName;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Good ${_greeting()},',
-                style: BBTypography.textTheme.bodyLarge?.copyWith(
-                  color: colors.textSecondary,
-                ),
-              ),
-              Text(
-                first,
-                style: BBTypography.textTheme.displaySmall?.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            ref.read(notificationsProvider.notifier).markAllRead();
-            context.push('/notifications');
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: colors.surfaceVariant,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.border),
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.notifications_outlined,
-                    size: 20,
-                    color: colors.textSecondary,
+        // ── Location row (Rapido-style) ───────────────────────
+        Row(
+          children: [
+            Icon(Icons.location_on_rounded,
+                size: 16, color: BBColors.amber),
+            const SizedBox(width: 4),
+            locationAsync.isLoading
+                ? SizedBox(
+                    width: 80,
+                    height: 12,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: colors.surfaceVariant,
+                        borderRadius: BorderRadius.circular(BBRadius.xs),
+                      ),
+                    ),
+                  )
+                : Text(
+                    cityName ?? 'Your Location',
+                    style: BBTypography.textTheme.labelMedium?.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-              ),
-              if (unread > 0)
-                Positioned(
-                  top: -3,
-                  right: -3,
-                  child: Container(
-                    width: 17,
-                    height: 17,
-                    decoration: const BoxDecoration(
-                      color: BBColors.amber,
+            if (cityName != null) ...[
+              const SizedBox(width: 2),
+              Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 16, color: colors.textSecondary),
+            ],
+            const Spacer(),
+            // Notification icon
+            GestureDetector(
+              onTap: () {
+                ref.read(notificationsProvider.notifier).markAllRead();
+                context.push('/notifications');
+              },
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: colors.surfaceVariant,
                       shape: BoxShape.circle,
+                      border: Border.all(color: colors.border),
                     ),
                     child: Center(
-                      child: Text(
-                        unread > 9 ? '9+' : '$unread',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      child: Icon(
+                        Icons.notifications_outlined,
+                        size: 18,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
+                  if (unread > 0)
+                    Positioned(
+                      top: -3,
+                      right: -3,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: BBColors.amber,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            unread > 9 ? '9+' : '$unread',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            // Avatar
+            GestureDetector(
+              onTap: () => context.push('/profile'),
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: BBColors.amber.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: BBColors.amber.withValues(alpha: 0.3),
+                  ),
                 ),
-            ],
+                child: Center(
+                  child: Text(
+                    (userName?.isNotEmpty == true)
+                        ? userName![0].toUpperCase()
+                        : '?',
+                    style: BBTypography.textTheme.titleMedium?.copyWith(
+                      color: BBColors.amber,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: BBSpacing.base),
+        // ── Greeting ─────────────────────────────────────────
+        Text(
+          'Good ${_greeting()},',
+          style: BBTypography.textTheme.bodyLarge?.copyWith(
+            color: colors.textSecondary,
           ),
         ),
-        const SizedBox(width: BBSpacing.sm),
-        GestureDetector(
-          onTap: () => context.push('/profile'),
-          child: Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: BBColors.amber.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Center(
-              child: Text(
-                (userName?.isNotEmpty == true)
-                    ? userName![0].toUpperCase()
-                    : '?',
-                style: BBTypography.textTheme.titleLarge?.copyWith(
-                  color: BBColors.amber,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
+        Text(
+          first,
+          style: BBTypography.textTheme.displaySmall?.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],

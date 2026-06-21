@@ -256,12 +256,18 @@ export class PrismaGeolocationRepository {
   }
 
   async getTopRatedNearbyShops(
-    latitude: number,
-    longitude: number,
+    latitude: number | undefined,
+    longitude: number | undefined,
     radius: number,
     limit: number = 10
   ): Promise<NearbyShop[]> {
-    const distExpr = haversineSql(latitude, longitude, `s."latitude"`, `s."longitude"`);
+    const hasLocation = latitude !== undefined && longitude !== undefined;
+    const distExpr = hasLocation
+      ? haversineSql(latitude!, longitude!, `s."latitude"`, `s."longitude"`)
+      : Prisma.sql`0`;
+    const distanceFilter = hasLocation
+      ? Prisma.sql`AND ${haversineSql(latitude!, longitude!, `s."latitude"`, `s."longitude"`)} <= ${radius}`
+      : Prisma.empty;
 
     const shops = await prisma.$queryRaw<
       Array<{
@@ -305,12 +311,11 @@ export class PrismaGeolocationRepository {
       FROM "Shop" s
       LEFT JOIN "Review" r ON r."shopId" = s.id
       WHERE s."isActive" = true
-        AND ${distExpr} <= ${radius}
+        ${distanceFilter}
       GROUP BY
         s.id, s.name, s.slug, s.description, s.address, s.city, s.state,
         s.country, s."latitude", s."longitude", s."isActive",
         s."isAcceptingBookings", s."isAcceptingWalkIns", s."profileImage"
-      HAVING COUNT(r.id) >= 3
       ORDER BY "averageRating" DESC, "reviewCount" DESC
       LIMIT ${limit}
     `;
