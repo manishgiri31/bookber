@@ -97,7 +97,8 @@ class ServiceItem {
         id: json['id']?.toString() ?? '',
         name: json['name']?.toString() ?? '',
         category: json['category']?.toString() ?? '',
-        durationMin: (json['durationMin'] as int?) ??
+        durationMin: (json['durationMinutes'] as int?) ??
+            (json['durationMin'] as int?) ??
             int.tryParse(json['duration']?.toString() ?? '') ??
             0,
         price: (json['price'] as num?)?.toDouble() ?? 0.0,

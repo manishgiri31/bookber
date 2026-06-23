@@ -135,21 +135,29 @@ export class SparsePositionAllocator {
           return result;
         }
 
-        // Position conflict, retry with different strategy
+        // Position conflict — a completed/cancelled/no-show entry occupies this slot.
+        // Fall back using the global max across ALL statuses so we never re-collide.
         lastError = new Error(`Position conflict: ${result.position}`);
 
-        // Try next available position
         const maxPosition = await db.queueEntry.aggregate({
-          where: { shopId, lane, queueStatus: { in: ["WAITING", "READY", "CALLED", "IN_SERVICE"] } },
+          where: { shopId, lane },
           _max: { position: true }
         });
 
         const nextPosition = (maxPosition._max.position || 0) + POSITION_INCREMENT;
-        return {
-          position: nextPosition,
-          needsRebalance: false,
-          needsNormalization: nextPosition > MAX_GAP_THRESHOLD
-        };
+
+        const stillExists = await db.queueEntry.findFirst({
+          where: { shopId, lane, position: nextPosition }
+        });
+
+        if (!stillExists) {
+          return {
+            position: nextPosition,
+            needsRebalance: false,
+            needsNormalization: nextPosition > MAX_GAP_THRESHOLD
+          };
+        }
+        // If somehow still conflicting, continue to next retry attempt
       } catch (error) {
         lastError = error as Error;
         // Continue to next retry

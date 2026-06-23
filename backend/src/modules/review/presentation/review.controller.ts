@@ -7,8 +7,15 @@ export class ReviewController {
   create = async (request: FastifyRequest, reply: FastifyReply) => {
     const user = request.user as any;
     const dto = request.body as any;
-    const review = await this.service.createReview(dto, user.id);
-    return reply.status(201).send({ review });
+    try {
+      const review = await this.service.createReview(dto, user.id);
+      return reply.status(201).send({ review });
+    } catch (err: any) {
+      if (err?.message === "User has already reviewed this shop") {
+        return reply.status(409).send({ error: { code: "CONFLICT", message: err.message } });
+      }
+      throw err;
+    }
   };
 
   getShopReviews = async (request: FastifyRequest) => {

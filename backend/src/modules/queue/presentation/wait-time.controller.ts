@@ -6,9 +6,16 @@ import { WAIT_RECALC_TRIGGERS } from "../domain/wait-time.types.js";
 export class WaitTimeController {
   constructor(private readonly waitTime: WaitTimeEngine) {}
 
-  getEstimates = async (request: FastifyRequest) => {
+  getEstimates = async (request: FastifyRequest, reply: FastifyReply) => {
     const { shopId } = request.params as { shopId: string };
-    return this.waitTime.getEstimates(shopId);
+    try {
+      return await this.waitTime.getEstimates(shopId);
+    } catch (err: any) {
+      if (err?.message === "REDIS_UNAVAILABLE") {
+        return reply.status(503).send({ error: { code: "SERVICE_UNAVAILABLE", message: "Real-time wait estimates are temporarily unavailable" } });
+      }
+      throw err;
+    }
   };
 
   recalculate = async (request: FastifyRequest, reply: FastifyReply) => {

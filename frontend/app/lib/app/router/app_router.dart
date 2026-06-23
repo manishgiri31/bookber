@@ -15,6 +15,7 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/barber/analytics/analytics_screen.dart';
 import '../../features/barber/barber_shell.dart';
+import '../../features/barber/shop/shop_management_screen.dart';
 import '../../features/customer/notifications/notifications_screen.dart';
 import '../../features/customer/payment/checkout_screen.dart';
 import '../../features/barber/bookings/barber_bookings_screen.dart';
@@ -173,6 +174,11 @@ final routerProvider = Provider<GoRouter>((ref) {
               builder: (_, _) => const BarberAnalyticsScreen()),
         ],
       ),
+
+      // Barber full-screen routes (outside shell — no bottom nav)
+      GoRoute(
+          path: '/barber/shop',
+          builder: (_, _) => const ShopManagementScreen()),
 
       // Shared
       GoRoute(

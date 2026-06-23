@@ -291,11 +291,11 @@ export class WaitTimeEngine {
   }
 
   private async ensureShopHydrated(shopId: string): Promise<HydratedShop> {
-    const cached = await this.redis.getShopConfig(shopId);
-    if (cached) {
-      const reserved = cached.activeReservedChairs;
-      const walkIn = cached.activeWalkInChairs;
-      return { config: cached, reservedChairCount: reserved, walkInChairCount: walkIn };
+    if (this.hasRedis()) {
+      const cached = await this.redis.getShopConfig(shopId);
+      if (cached) {
+        return { config: cached, reservedChairCount: cached.activeReservedChairs, walkInChairCount: cached.activeWalkInChairs };
+      }
     }
 
     const shop = await prisma.shop.findUnique({

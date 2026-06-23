@@ -17,6 +17,7 @@ class BarberProfileScreen extends ConsumerWidget {
     final colors = context.bbColors;
     final dash = ref.watch(barberDashProvider);
     final profile = dash.profile;
+    final stats = dash.stats;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -27,44 +28,51 @@ class BarberProfileScreen extends ConsumerWidget {
           vertical: BBSpacing.pageVertical,
         ),
         children: [
-          // Avatar
+          // ── Avatar + name ──
           Center(
             child: Column(
               children: [
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: BBColors.amber.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      profile?.name.isNotEmpty == true
-                          ? profile!.name[0].toUpperCase()
-                          : 'B',
-                      style: BBTypography.textTheme.displaySmall?.copyWith(
-                        color: BBColors.amber,
-                        fontWeight: FontWeight.w700,
+                Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    Container(
+                      width: 96,
+                      height: 96,
+                      decoration: BoxDecoration(
+                        color: BBColors.amber.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: BBColors.amber.withValues(alpha: 0.35),
+                          width: 2.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          profile?.name.isNotEmpty == true
+                              ? profile!.name[0].toUpperCase()
+                              : 'B',
+                          style:
+                              BBTypography.textTheme.displaySmall?.copyWith(
+                            color: BBColors.amber,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
                 const SizedBox(height: BBSpacing.md),
                 Text(
                   profile?.name ?? '—',
                   style: BBTypography.textTheme.headlineMedium?.copyWith(
                     color: colors.text,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: BBSpacing.xs),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                   decoration: BoxDecoration(
                     color: BBColors.amber.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(BBRadius.full),
@@ -74,11 +82,12 @@ class BarberProfileScreen extends ConsumerWidget {
                     style: BBTypography.textTheme.labelSmall?.copyWith(
                       color: BBColors.amber,
                       fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
                     ),
                   ),
                 ),
 
-                // Availability pill
+                // Availability toggle pill
                 if (profile != null) ...[
                   const SizedBox(height: BBSpacing.sm),
                   GestureDetector(
@@ -116,8 +125,7 @@ class BarberProfileScreen extends ConsumerWidget {
                           const SizedBox(width: 6),
                           Text(
                             profile.isAvailable ? 'Available' : 'Away',
-                            style: BBTypography.textTheme.labelMedium
-                                ?.copyWith(
+                            style: BBTypography.textTheme.labelMedium?.copyWith(
                               color: profile.isAvailable
                                   ? BBColors.success
                                   : colors.textSecondary,
@@ -129,11 +137,19 @@ class BarberProfileScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
+
               ],
             ),
           ),
           const SizedBox(height: BBSpacing.xl),
 
+          // ── Stats row ──
+          if (stats != null) ...[
+            _StatsRow(stats: stats),
+            const SizedBox(height: BBSpacing.xl),
+          ],
+
+          // ── Work info ──
           if (profile != null)
             _Section(
               title: 'Work',
@@ -158,6 +174,21 @@ class BarberProfileScreen extends ConsumerWidget {
             ),
           const SizedBox(height: BBSpacing.base),
 
+          // ── Shop Management ──
+          _Section(
+            title: 'Shop',
+            items: [
+              _ActionItem(
+                icon: Icons.store_mall_directory_outlined,
+                label: 'Manage Shop',
+                subtitle: 'Services, schedule & info',
+                onTap: () => context.push('/barber/shop'),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.base),
+
+          // ── Settings ──
           _Section(
             title: 'Settings',
             items: [
@@ -214,6 +245,110 @@ class BarberProfileScreen extends ConsumerWidget {
   }
 }
 
+// ── Stats Row ─────────────────────────────────────────────────────────────────
+
+class _StatsRow extends StatelessWidget {
+  const _StatsRow({required this.stats});
+  final BarberStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Row(
+      children: [
+        _StatCard(
+          label: 'Today',
+          value: stats.todayBookings.toString(),
+          icon: Icons.calendar_today_rounded,
+        ),
+        const SizedBox(width: BBSpacing.sm),
+        _StatCard(
+          label: 'Completed',
+          value: stats.completedToday.toString(),
+          icon: Icons.check_circle_outline_rounded,
+          color: BBColors.success,
+        ),
+        const SizedBox(width: BBSpacing.sm),
+        _StatCard(
+          label: 'In Queue',
+          value: stats.activeQueue.toString(),
+          icon: Icons.people_outline_rounded,
+          color: colors.textSecondary,
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.color,
+  });
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final accent = color ?? BBColors.amber;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(BBSpacing.md),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: accent),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: BBTypography.textTheme.titleLarge?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              label,
+              style: BBTypography.textTheme.labelSmall
+                  ?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Shared Helpers ────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Text(
+        label.toUpperCase(),
+        style: BBTypography.textTheme.labelSmall?.copyWith(
+          color: colors.textTertiary,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+}
+
 class _Section extends StatelessWidget {
   const _Section({required this.title, required this.items});
   final String title;
@@ -225,16 +360,8 @@ class _Section extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: BBSpacing.sm),
-          child: Text(
-            title.toUpperCase(),
-            style: BBTypography.textTheme.labelSmall?.copyWith(
-              color: colors.textTertiary,
-              letterSpacing: 1,
-            ),
-          ),
-        ),
+        _SectionLabel(label: title),
+        const SizedBox(height: BBSpacing.sm),
         Container(
           decoration: BoxDecoration(
             color: colors.surface,
@@ -315,9 +442,11 @@ class _ActionItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.subtitle,
   });
   final IconData icon;
   final String label;
+  final String? subtitle;
   final VoidCallback onTap;
 
   @override
@@ -335,11 +464,27 @@ class _ActionItem extends StatelessWidget {
             Icon(icon, size: 18, color: colors.textSecondary),
             const SizedBox(width: BBSpacing.md),
             Expanded(
-              child: Text(
-                label,
-                style: BBTypography.textTheme.bodyMedium
-                    ?.copyWith(color: colors.text),
-              ),
+              child: subtitle != null
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: BBTypography.textTheme.bodyMedium
+                              ?.copyWith(color: colors.text),
+                        ),
+                        Text(
+                          subtitle!,
+                          style: BBTypography.textTheme.labelSmall
+                              ?.copyWith(color: colors.textTertiary),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      label,
+                      style: BBTypography.textTheme.bodyMedium
+                          ?.copyWith(color: colors.text),
+                    ),
             ),
             Icon(Icons.arrow_forward_ios_rounded,
                 size: 14, color: colors.textTertiary),

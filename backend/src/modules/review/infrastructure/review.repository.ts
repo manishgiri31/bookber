@@ -4,19 +4,15 @@ import type { ReviewDTO, CreateReviewRequest } from "../domain/review.types.js";
 export class PrismaReviewRepository {
 
   async create(data: CreateReviewRequest, userId: string): Promise<ReviewDTO> {
-    // Check if user already reviewed this shop
-    const existing = await this.prisma.review.findFirst({
-      where: {
-        userId,
-        shopId: data.shopId
-      }
+    const existing = await prisma.review.findFirst({
+      where: { userId, shopId: data.shopId }
     });
 
     if (existing) {
       throw new Error("User has already reviewed this shop");
     }
 
-    const review = await this.prisma.review.create({
+    const review = await prisma.review.create({
       data: {
         userId,
         shopId: data.shopId,
@@ -29,7 +25,7 @@ export class PrismaReviewRepository {
   }
 
   async findByShopId(shopId: string): Promise<ReviewDTO[]> {
-    const reviews = await this.prisma.review.findMany({
+    const reviews = await prisma.review.findMany({
       where: { shopId },
       orderBy: { createdAt: "desc" }
     });
@@ -38,7 +34,7 @@ export class PrismaReviewRepository {
   }
 
   async findByUserId(userId: string): Promise<ReviewDTO[]> {
-    const reviews = await this.prisma.review.findMany({
+    const reviews = await prisma.review.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" }
     });
