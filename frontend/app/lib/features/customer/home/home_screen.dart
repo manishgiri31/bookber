@@ -22,253 +22,250 @@ class HomeScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final homeState = ref.watch(homeProvider);
     final colors = context.bbColors;
+    final isDark = context.isDark;
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: BBColors.amber,
-          backgroundColor: colors.surface,
-          onRefresh: () => ref.read(homeProvider.notifier).refresh(),
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
+      body: RefreshIndicator(
+        color: BBColors.amber,
+        backgroundColor: colors.surface,
+        onRefresh: () => ref.read(homeProvider.notifier).refresh(),
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // ── Hero header with gradient ──────────────────────────────────
+            SliverToBoxAdapter(
+              child: _HeroHeader(userName: user?.name, isDark: isDark),
+            ),
+
+            // Location permission nudge
+            _LocationNudge(),
+
+            // Active booking banner
+            _ActiveBookingBanner(),
+
+            // Quick actions row
+            const SliverToBoxAdapter(child: _QuickActions()),
+
+            // Discovery: nearby shops
+            _NearbySection(),
+
+            // Discovery: top-rated shops
+            _TopRatedSection(),
+
+            // All shops list
+            if (homeState.isLoading)
+              const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.md))
+            else if (homeState.error != null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
+                  child: BBErrorWidget(
+                    error: homeState.error!,
+                    onRetry: () => ref.read(homeProvider.notifier).refresh(),
+                  ),
+                ),
+              )
+            else if (homeState.shops.isNotEmpty) ...[
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(
-                    BBSpacing.pageHorizontal,
-                    BBSpacing.base,
-                    BBSpacing.pageHorizontal,
-                    0,
+                    BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.md),
+                  child: _SectionHeader(
+                    title: 'All Shops',
+                    onSeeAll: () => context.go('/shops'),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _Header(userName: user?.name),
-                      const SizedBox(height: BBSpacing.xl),
-                      _SearchBar(),
-                      const SizedBox(height: BBSpacing.base),
-                    ],
+                ),
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
+                sliver: SliverList.separated(
+                  itemCount: homeState.shops.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: BBSpacing.sm),
+                  itemBuilder: (ctx, i) => _ShopListTile(shop: homeState.shops[i]),
+                ),
+              ),
+            ] else if (!homeState.isLoading)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
+                  child: BBEmptyState(
+                    title: 'No shops yet',
+                    subtitle: 'Check back soon — shops are being added.',
+                    icon: Icons.store_outlined,
                   ),
                 ),
               ),
 
-              // Location permission nudge
-              _LocationNudge(),
-
-              // Active booking banner
-              _ActiveBookingBanner(),
-
-              // Discovery: nearby shops (geolocation API)
-              _NearbySection(),
-
-              // Discovery: top-rated shops
-              _TopRatedSection(),
-
-              if (homeState.isLoading)
-                const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.md))
-              else if (homeState.error != null)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: BBSpacing.pageHorizontal),
-                    child: BBErrorWidget(
-                      error: homeState.error!,
-                      onRetry: () =>
-                          ref.read(homeProvider.notifier).refresh(),
-                    ),
-                  ),
-                )
-              else if (homeState.shops.isNotEmpty) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: BBSpacing.pageHorizontal,
-                    ),
-                    child: _SectionHeader(
-                      title: 'All Shops',
-                      onSeeAll: () => context.go('/shops'),
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                    child: SizedBox(height: BBSpacing.md)),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: BBSpacing.pageHorizontal,
-                  ),
-                  sliver: SliverList.separated(
-                    itemCount: homeState.shops.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: BBSpacing.sm),
-                    itemBuilder: (ctx, i) =>
-                        _ShopListTile(shop: homeState.shops[i]),
-                  ),
-                ),
-              ] else if (!homeState.isLoading)
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: BBSpacing.pageHorizontal),
-                    child: BBEmptyState(
-                      title: 'No shops yet',
-                      subtitle: 'Check back soon — shops are being added.',
-                      icon: Icons.store_outlined,
-                    ),
-                  ),
-                ),
-              const SliverToBoxAdapter(
-                  child: SizedBox(height: BBSpacing.xxl)),
-            ],
-          ),
+            // Bottom padding for floating nav
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Header extends ConsumerWidget {
-  const _Header({this.userName});
+// ─── Hero Header ──────────────────────────────────────────────────────────────
+
+class _HeroHeader extends ConsumerWidget {
+  const _HeroHeader({this.userName, required this.isDark});
   final String? userName;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.bbColors;
     final first = userName?.split(' ').first ?? 'there';
-    final unread = ref.watch(
-        notificationsProvider.select((s) => s.unreadCount));
+    final unread = ref.watch(notificationsProvider.select((s) => s.unreadCount));
     final locationAsync = ref.watch(locationProvider);
     final cityName = locationAsync.valueOrNull?.cityName;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Location row (Rapido-style) ───────────────────────
-        Row(
-          children: [
-            Icon(Icons.location_on_rounded,
-                size: 16, color: BBColors.amber),
-            const SizedBox(width: 4),
-            locationAsync.isLoading
-                ? SizedBox(
-                    width: 80,
-                    height: 12,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: colors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(BBRadius.xs),
-                      ),
-                    ),
-                  )
-                : Text(
-                    cityName ?? 'Your Location',
-                    style: BBTypography.textTheme.labelMedium?.copyWith(
-                      color: colors.text,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-            if (cityName != null) ...[
-              const SizedBox(width: 2),
-              Icon(Icons.keyboard_arrow_down_rounded,
-                  size: 16, color: colors.textSecondary),
-            ],
-            const Spacer(),
-            // Notification icon
-            GestureDetector(
-              onTap: () {
-                ref.read(notificationsProvider.notifier).markAllRead();
-                context.push('/notifications');
-              },
-              child: Stack(
-                clipBehavior: Clip.none,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF1A0000),
+                  const Color(0xFF000000),
+                ]
+              : [
+                  BBColors.amber.withValues(alpha: 0.08),
+                  colors.background,
+                ],
+          stops: const [0.0, 1.0],
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            BBSpacing.pageHorizontal,
+            BBSpacing.base,
+            BBSpacing.pageHorizontal,
+            BBSpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Top bar: location + actions ──
+              Row(
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceVariant,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: colors.border),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        size: 18,
-                        color: colors.textSecondary,
-                      ),
+                  GestureDetector(
+                    onTap: () => ref.read(locationProvider.notifier).refresh(),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.location_on_rounded,
+                            size: 16, color: BBColors.amber),
+                        const SizedBox(width: 4),
+                        locationAsync.isLoading
+                            ? Container(
+                                width: 80,
+                                height: 12,
+                                decoration: BoxDecoration(
+                                  color: colors.surfaceVariant,
+                                  borderRadius: BorderRadius.circular(BBRadius.xs),
+                                ),
+                              )
+                            : Text(
+                                cityName ?? 'Your Location',
+                                style: BBTypography.textTheme.labelMedium?.copyWith(
+                                  color: colors.text,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                        if (cityName != null) ...[
+                          const SizedBox(width: 2),
+                          Icon(Icons.keyboard_arrow_down_rounded,
+                              size: 16, color: colors.textSecondary),
+                        ],
+                      ],
                     ),
                   ),
-                  if (unread > 0)
-                    Positioned(
-                      top: -3,
-                      right: -3,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: BBColors.amber,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            unread > 9 ? '9+' : '$unread',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
+                  const Spacer(),
+                  // Notification
+                  _IconAction(
+                    onTap: () {
+                      ref.read(notificationsProvider.notifier).markAllRead();
+                      context.push('/notifications');
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(Icons.notifications_outlined,
+                            size: 22, color: colors.textSecondary),
+                        if (unread > 0)
+                          Positioned(
+                            top: -4,
+                            right: -4,
+                            child: Container(
+                              width: 16,
+                              height: 16,
+                              decoration: const BoxDecoration(
+                                color: BBColors.amber,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  unread > 9 ? '9+' : '$unread',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: BBSpacing.sm),
+                  // Avatar
+                  _IconAction(
+                    onTap: () => context.push('/profile'),
+                    accent: true,
+                    child: Text(
+                      (userName?.isNotEmpty == true) ? userName![0].toUpperCase() : '?',
+                      style: BBTypography.textTheme.titleMedium?.copyWith(
+                        color: BBColors.amber,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(width: BBSpacing.sm),
-            // Avatar
-            GestureDetector(
-              onTap: () => context.push('/profile'),
-              child: Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: BBColors.amber.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    (userName?.isNotEmpty == true)
-                        ? userName![0].toUpperCase()
-                        : '?',
-                    style: BBTypography.textTheme.titleMedium?.copyWith(
-                      color: BBColors.amber,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+
+              const SizedBox(height: BBSpacing.lg),
+
+              // ── Greeting ──
+              Text(
+                'Good ${_greeting()},',
+                style: BBTypography.textTheme.bodyLarge?.copyWith(
+                  color: colors.textSecondary,
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: BBSpacing.base),
-        // ── Greeting ─────────────────────────────────────────
-        Text(
-          'Good ${_greeting()},',
-          style: BBTypography.textTheme.bodyLarge?.copyWith(
-            color: colors.textSecondary,
+              Text(
+                first,
+                style: BBTypography.textTheme.displaySmall?.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.0,
+                  height: 1.1,
+                ),
+              ),
+
+              const SizedBox(height: BBSpacing.lg),
+
+              // ── Search bar ──
+              _SearchBar(),
+            ],
           ),
         ),
-        Text(
-          first,
-          style: BBTypography.textTheme.displaySmall?.copyWith(
-            color: colors.text,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -280,6 +277,32 @@ class _Header extends ConsumerWidget {
   }
 }
 
+class _IconAction extends StatelessWidget {
+  const _IconAction({required this.onTap, required this.child, this.accent = false});
+  final VoidCallback onTap;
+  final Widget child;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: accent
+              ? BBColors.amber.withValues(alpha: 0.15)
+              : colors.surfaceVariant,
+          shape: BoxShape.circle,
+        ),
+        child: Center(child: child),
+      ),
+    );
+  }
+}
+
 class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -287,37 +310,50 @@ class _SearchBar extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/shops'),
       child: Container(
-        height: 50,
+        height: 52,
         padding: const EdgeInsets.symmetric(horizontal: BBSpacing.base),
         decoration: BoxDecoration(
-          color: colors.surfaceVariant,
-          borderRadius: BorderRadius.circular(BBRadius.md),
-          border: Border.all(color: colors.border),
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.full),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(Icons.search_rounded,
-                size: 20, color: colors.textTertiary),
+            Icon(Icons.search_rounded, size: 20, color: colors.textTertiary),
             const SizedBox(width: BBSpacing.sm),
             Expanded(
               child: Text(
-                'Search barber shops...',
+                'Search barbers, shops...',
                 style: BBTypography.textTheme.bodyLarge?.copyWith(
                   color: colors.textTertiary,
                 ),
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: colors.border,
-                borderRadius: BorderRadius.circular(BBRadius.sm),
+                color: BBColors.amber.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(BBRadius.full),
               ),
-              child: Text(
-                'Search',
-                style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: colors.textTertiary,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.tune_rounded, size: 14, color: BBColors.amber),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Filter',
+                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                      color: BBColors.amber,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -327,39 +363,138 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
+// ─── Quick Actions ────────────────────────────────────────────────────────────
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.xl),
+      child: Row(
+        children: [
+          _QuickActionChip(
+            icon: Icons.bolt_rounded,
+            label: 'Book Now',
+            color: BBColors.amber,
+            onTap: () => context.go('/shops'),
+          ),
+          const SizedBox(width: BBSpacing.sm),
+          _QuickActionChip(
+            icon: Icons.near_me_rounded,
+            label: 'Nearby',
+            color: BBColors.info,
+            onTap: () => context.go('/shops'),
+          ),
+          const SizedBox(width: BBSpacing.sm),
+          _QuickActionChip(
+            icon: Icons.star_rounded,
+            label: 'Top Rated',
+            color: BBColors.warning,
+            onTap: () => context.go('/shops'),
+          ),
+          const SizedBox(width: BBSpacing.sm),
+          _QuickActionChip(
+            icon: Icons.history_rounded,
+            label: 'History',
+            color: BBColors.success,
+            onTap: () => context.go('/bookings'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickActionChip extends StatelessWidget {
+  const _QuickActionChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: BBSpacing.md),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: context.isDark ? 0.3 : 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Icon(icon, size: 18, color: color),
+                ),
+              ),
+              const SizedBox(height: BBSpacing.xs),
+              Text(
+                label,
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: colors.textSecondary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Location Nudge ───────────────────────────────────────────────────────────
+
 class _LocationNudge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locationAsync = ref.watch(locationProvider);
-    // Only show nudge when we know location is unavailable (not loading)
     if (locationAsync.isLoading || locationAsync.valueOrNull != null) {
       return const SliverToBoxAdapter(child: SizedBox.shrink());
     }
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          BBSpacing.pageHorizontal,
-          0,
-          BBSpacing.pageHorizontal,
-          BBSpacing.md,
-        ),
+          BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.base),
         child: GestureDetector(
           onTap: () => ref.read(locationProvider.notifier).refresh(),
           child: Container(
             padding: const EdgeInsets.symmetric(
-              horizontal: BBSpacing.base,
-              vertical: BBSpacing.sm,
-            ),
+              horizontal: BBSpacing.base, vertical: BBSpacing.sm),
             decoration: BoxDecoration(
               color: BBColors.info.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(BBRadius.md),
-              border: Border.all(
-                  color: BBColors.info.withValues(alpha: 0.2)),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
             ),
             child: Row(
               children: [
-                const Icon(Icons.location_off_rounded,
-                    size: 16, color: BBColors.info),
+                const Icon(Icons.location_off_rounded, size: 16, color: BBColors.info),
                 const SizedBox(width: BBSpacing.sm),
                 Expanded(
                   child: Text(
@@ -385,46 +520,48 @@ class _LocationNudge extends ConsumerWidget {
   }
 }
 
+// ─── Active Booking Banner ────────────────────────────────────────────────────
+
 class _ActiveBookingBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(activeBookingsProvider);
     final bookings = async.valueOrNull ?? [];
-    if (bookings.isEmpty) {
-      return const SliverToBoxAdapter(child: SizedBox.shrink());
-    }
+    if (bookings.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
     final booking = bookings.first;
     final colors = context.bbColors;
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
-          BBSpacing.pageHorizontal,
-          0,
-          BBSpacing.pageHorizontal,
-          BBSpacing.base,
-        ),
+          BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.base),
         child: GestureDetector(
           onTap: () => context.push('/queue/${booking.id}'),
           child: Container(
             padding: const EdgeInsets.all(BBSpacing.base),
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(BBRadius.lg),
-              border: Border.all(
-                  color: BBColors.amber.withValues(alpha: 0.3)),
+              gradient: LinearGradient(
+                colors: [
+                  BBColors.amber.withValues(alpha: 0.15),
+                  BBColors.amber.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
+              border: Border.all(color: BBColors.amber.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.15),
+                    color: BBColors.amber.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.queue_rounded,
-                    size: 18,
+                    size: 20,
                     color: BBColors.amber,
                   ),
                 ),
@@ -434,25 +571,37 @@ class _ActiveBookingBanner extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Active booking at ${booking.shopName}',
-                        style: BBTypography.textTheme.labelLarge?.copyWith(
-                          color: colors.text,
+                        'Active booking',
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: BBColors.amber,
                           fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       Text(
-                        'Tap to track your queue position',
-                        style: BBTypography.textTheme.labelSmall?.copyWith(
-                          color: colors.textSecondary,
+                        booking.shopName,
+                        style: BBTypography.textTheme.titleMedium?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: BBColors.amber,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: BBColors.amber,
+                    borderRadius: BorderRadius.circular(BBRadius.full),
+                  ),
+                  child: const Text(
+                    'Track',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -463,7 +612,7 @@ class _ActiveBookingBanner extends ConsumerWidget {
   }
 }
 
-// ─── Discovery sections ───────────────────────────────────────────────────────
+// ─── Discovery Sections ───────────────────────────────────────────────────────
 
 class _NearbySection extends ConsumerWidget {
   @override
@@ -476,20 +625,17 @@ class _NearbySection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: BBSpacing.pageHorizontal),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
             child: _SectionHeader(title: 'Nearby'),
           ),
           const SizedBox(height: BBSpacing.md),
           SizedBox(
-            height: 220,
+            height: 230,
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: BBSpacing.pageHorizontal),
+              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
               scrollDirection: Axis.horizontal,
               itemCount: shops.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(width: BBSpacing.md),
+              separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
               itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
             ),
           ),
@@ -511,8 +657,7 @@ class _TopRatedSection extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: BBSpacing.pageHorizontal),
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
             child: _SectionHeader(
               title: 'Top Rated',
               onSeeAll: () => context.go('/shops'),
@@ -520,14 +665,12 @@ class _TopRatedSection extends ConsumerWidget {
           ),
           const SizedBox(height: BBSpacing.md),
           SizedBox(
-            height: 220,
+            height: 230,
             child: ListView.separated(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: BBSpacing.pageHorizontal),
+              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
               scrollDirection: Axis.horizontal,
               itemCount: shops.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(width: BBSpacing.md),
+              separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
               itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
             ),
           ),
@@ -553,17 +696,25 @@ class _SectionHeader extends StatelessWidget {
           title,
           style: BBTypography.textTheme.titleLarge?.copyWith(
             color: colors.text,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
           ),
         ),
         if (onSeeAll != null)
           GestureDetector(
             onTap: onSeeAll,
-            child: Text(
-              'See all',
-              style: BBTypography.textTheme.labelMedium?.copyWith(
-                color: BBColors.amber,
-                fontWeight: FontWeight.w600,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: BBColors.amber.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(BBRadius.full),
+              ),
+              child: Text(
+                'See all',
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: BBColors.amber,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -572,6 +723,8 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+// ─── Shop Card (horizontal scroll) ───────────────────────────────────────────
+
 class _ShopCard extends StatelessWidget {
   const _ShopCard({required this.shop});
   final Shop shop;
@@ -579,29 +732,97 @@ class _ShopCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final isDark = context.isDark;
     return GestureDetector(
       onTap: () => context.push('/shops/${shop.id}'),
       child: Container(
-        width: 190,
+        width: 200,
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: BorderRadius.circular(BBRadius.lg),
-          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(BBRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.07),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 110,
-              color: colors.surfaceVariant,
-              child: Center(
-                child: Icon(
-                  Icons.content_cut_rounded,
-                  size: 40,
-                  color: colors.textTertiary,
+            // Image area with gradient overlay
+            Stack(
+              children: [
+                Container(
+                  height: 120,
+                  color: colors.surfaceVariant,
+                  child: Center(
+                    child: Icon(
+                      Icons.content_cut_rounded,
+                      size: 42,
+                      color: colors.textTertiary.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
-              ),
+                // Open/Closed pill on image
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: shop.isOpen
+                          ? BBColors.success.withValues(alpha: 0.9)
+                          : Colors.black54,
+                      borderRadius: BorderRadius.circular(BBRadius.full),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: shop.isOpen ? Colors.white : Colors.grey[400],
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          shop.isOpen ? 'Open' : 'Closed',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (shop.distanceKm != null)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(BBRadius.full),
+                      ),
+                      child: Text(
+                        shop.distanceLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(BBSpacing.md),
@@ -612,57 +833,37 @@ class _ShopCard extends StatelessWidget {
                     shop.name,
                     style: BBTypography.textTheme.titleMedium?.copyWith(
                       color: colors.text,
+                      fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded,
-                          size: 13, color: BBColors.amber),
+                      const Icon(Icons.star_rounded, size: 13, color: BBColors.amber),
                       const SizedBox(width: 3),
                       Text(
-                        '${shop.rating.toStringAsFixed(1)} · ${shop.waitLabel}',
+                        shop.rating.toStringAsFixed(1),
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        ' · ',
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.textTertiary,
+                        ),
+                      ),
+                      Icon(Icons.timer_outlined, size: 12, color: colors.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        shop.waitLabel,
                         style: BBTypography.textTheme.labelSmall?.copyWith(
                           color: colors.textSecondary,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: shop.isOpen
-                              ? BBColors.success.withValues(alpha: 0.12)
-                              : BBColors.error.withValues(alpha: 0.12),
-                          borderRadius:
-                              BorderRadius.circular(BBRadius.full),
-                        ),
-                        child: Text(
-                          shop.isOpen ? 'Open' : 'Closed',
-                          style: BBTypography.textTheme.labelSmall?.copyWith(
-                            color: shop.isOpen
-                                ? BBColors.success
-                                : BBColors.error,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      if (shop.distanceKm != null) ...[
-                        const SizedBox(width: 6),
-                        Text(
-                          shop.distanceLabel,
-                          style:
-                              BBTypography.textTheme.labelSmall?.copyWith(
-                            color: colors.textTertiary,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ],
@@ -675,6 +876,8 @@ class _ShopCard extends StatelessWidget {
   }
 }
 
+// ─── Shop List Tile (vertical list) ──────────────────────────────────────────
+
 class _ShopListTile extends StatelessWidget {
   const _ShopListTile({required this.shop});
   final Shop shop;
@@ -682,28 +885,35 @@ class _ShopListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final isDark = context.isDark;
     return GestureDetector(
       onTap: () => context.push('/shops/${shop.id}'),
       child: Container(
-        padding: const EdgeInsets.all(BBSpacing.md),
+        padding: const EdgeInsets.all(BBSpacing.base),
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: BorderRadius.circular(BBRadius.lg),
-          border: Border.all(color: colors.border),
+          borderRadius: BorderRadius.circular(BBRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: colors.surfaceVariant,
-                borderRadius: BorderRadius.circular(BBRadius.md),
+                borderRadius: BorderRadius.circular(BBRadius.lg),
               ),
               child: Center(
                 child: Icon(
                   Icons.content_cut_rounded,
-                  size: 22,
+                  size: 24,
                   color: colors.textTertiary,
                 ),
               ),
@@ -717,6 +927,7 @@ class _ShopListTile extends StatelessWidget {
                     shop.name,
                     style: BBTypography.textTheme.titleMedium?.copyWith(
                       color: colors.text,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -728,22 +939,20 @@ class _ShopListTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded,
-                          size: 13, color: BBColors.amber),
+                      const Icon(Icons.star_rounded, size: 13, color: BBColors.amber),
                       const SizedBox(width: 3),
                       Text(
                         shop.rating.toStringAsFixed(1),
                         style: BBTypography.textTheme.labelSmall?.copyWith(
                           color: colors.text,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(width: BBSpacing.sm),
-                      Icon(Icons.timer_outlined,
-                          size: 13, color: colors.textTertiary),
+                      Icon(Icons.timer_outlined, size: 12, color: colors.textTertiary),
                       const SizedBox(width: 3),
                       Text(
                         shop.waitLabel,
@@ -753,13 +962,11 @@ class _ShopListTile extends StatelessWidget {
                       ),
                       if (shop.distanceKm != null) ...[
                         const SizedBox(width: BBSpacing.sm),
-                        Icon(Icons.near_me_outlined,
-                            size: 13, color: colors.textTertiary),
+                        Icon(Icons.near_me_outlined, size: 12, color: colors.textTertiary),
                         const SizedBox(width: 3),
                         Text(
                           shop.distanceLabel,
-                          style:
-                              BBTypography.textTheme.labelSmall?.copyWith(
+                          style: BBTypography.textTheme.labelSmall?.copyWith(
                             color: colors.textTertiary,
                           ),
                         ),
@@ -770,10 +977,22 @@ class _ShopListTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: BBSpacing.sm),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: colors.textTertiary,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: shop.isOpen
+                    ? BBColors.success.withValues(alpha: 0.1)
+                    : colors.surfaceVariant,
+                borderRadius: BorderRadius.circular(BBRadius.full),
+              ),
+              child: Text(
+                shop.isOpen ? 'Open' : 'Closed',
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: shop.isOpen ? BBColors.success : colors.textTertiary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 10,
+                ),
+              ),
             ),
           ],
         ),

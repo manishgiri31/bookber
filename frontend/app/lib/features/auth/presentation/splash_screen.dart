@@ -24,17 +24,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
       vsync: this,
     );
     _fadeIn = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.65, curve: Curves.easeOut),
     );
-    _scaleIn = Tween<double>(begin: 0.85, end: 1.0).animate(
+    _scaleIn = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.65, curve: Curves.easeOutCubic),
       ),
     );
     _controller.forward();
@@ -67,7 +67,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFF09090B),
+      backgroundColor: const Color(0xFF000000),
       body: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) => Opacity(
@@ -78,13 +78,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _LogoMark(),
-                  const SizedBox(height: BBSpacing.lg),
+                  // Logo image
+                  Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(BBRadius.xxl),
+                      boxShadow: [
+                        BoxShadow(
+                          color: BBColors.amber.withValues(alpha: 0.4),
+                          blurRadius: 32,
+                          offset: const Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(BBRadius.xxl),
+                      child: Image.asset(
+                        'assets/logo.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: BBSpacing.xl),
                   const Text(
                     'BookBer',
                     style: TextStyle(
                       fontFamily: 'Satoshi',
-                      fontSize: 36,
+                      fontSize: 40,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       letterSpacing: -1.5,
@@ -94,14 +115,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   Text(
                     'Premium Barber Booking',
                     style: BBTypography.textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      letterSpacing: 0.5,
+                      color: Colors.white.withValues(alpha: 0.45),
+                      letterSpacing: 0.8,
                     ),
                   ),
                   const SizedBox(height: BBSpacing.xxxl),
                   SizedBox(
-                    width: 24,
-                    height: 24,
+                    width: 20,
+                    height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
@@ -112,32 +133,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LogoMark extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: BBColors.amber,
-        borderRadius: BorderRadius.circular(BBRadius.xl),
-      ),
-      child: const Center(
-        child: Text(
-          'B',
-          style: TextStyle(
-            fontFamily: 'Satoshi',
-            fontSize: 42,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF09090B),
-            height: 1,
           ),
         ),
       ),

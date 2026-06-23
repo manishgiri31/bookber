@@ -34,12 +34,12 @@ class BBButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.bbColors;
     final isDisabled = disabled || loading;
-    final height = small ? 40.0 : 52.0;
+    final height = small ? 44.0 : 56.0;
     final fontSize = small ? 13.0 : 15.0;
 
     Color bg;
     Color fg;
-    BorderSide? side;
+    List<BoxShadow>? shadows;
 
     switch (variant) {
       case BBButtonVariant.primary:
@@ -47,34 +47,38 @@ class BBButton extends StatelessWidget {
         fg = isDisabled
             ? colors.accentForeground.withValues(alpha: 0.5)
             : colors.accentForeground;
-        side = null;
+        shadows = isDisabled
+            ? null
+            : [
+                BoxShadow(
+                  color: BBColors.amber.withValues(alpha: 0.35),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ];
       case BBButtonVariant.secondary:
         bg = colors.surfaceVariant;
         fg = isDisabled ? colors.textTertiary : colors.text;
-        side = BorderSide(color: colors.border);
+        shadows = null;
       case BBButtonVariant.ghost:
         bg = Colors.transparent;
         fg = isDisabled ? colors.textTertiary : colors.text;
-        side = BorderSide(color: colors.border);
+        shadows = null;
       case BBButtonVariant.destructive:
         bg = isDisabled
-            ? BBColors.error.withValues(alpha: 0.3)
-            : BBColors.error.withValues(alpha: 0.15);
+            ? BBColors.error.withValues(alpha: 0.1)
+            : BBColors.error.withValues(alpha: 0.12);
         fg = isDisabled ? BBColors.error.withValues(alpha: 0.4) : BBColors.error;
-        side = BorderSide(
-          color: isDisabled
-              ? BBColors.error.withValues(alpha: 0.2)
-              : BBColors.error.withValues(alpha: 0.4),
-        );
+        shadows = null;
     }
 
     Widget child;
     if (loading) {
       child = SizedBox(
-        width: small ? 16 : 20,
-        height: small ? 16 : 20,
+        width: small ? 18 : 22,
+        height: small ? 18 : 22,
         child: CircularProgressIndicator(
-          strokeWidth: 2,
+          strokeWidth: 2.5,
           valueColor: AlwaysStoppedAnimation<Color>(fg),
         ),
       );
@@ -85,6 +89,7 @@ class BBButton extends StatelessWidget {
           color: fg,
           fontSize: fontSize,
           fontWeight: FontWeight.w700,
+          letterSpacing: 0.1,
         ),
       );
 
@@ -105,24 +110,26 @@ class BBButton extends StatelessWidget {
     return SizedBox(
       height: height,
       width: expand ? double.infinity : null,
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(BBRadius.md),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: isDisabled ? null : onPressed,
-          child: Container(
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: side != null
-                  ? Border.all(color: side.color, width: side.width)
-                  : null,
-              borderRadius: BorderRadius.circular(BBRadius.md),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(BBRadius.full),
+          boxShadow: shadows,
+        ),
+        child: Material(
+          color: bg,
+          borderRadius: BorderRadius.circular(BBRadius.full),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: isDisabled ? null : onPressed,
+            splashColor: fg.withValues(alpha: 0.08),
+            highlightColor: fg.withValues(alpha: 0.04),
+            child: Container(
+              alignment: Alignment.center,
+              padding: EdgeInsets.symmetric(
+                horizontal: small ? BBSpacing.md : BBSpacing.xl,
+              ),
+              child: child,
             ),
-            padding: EdgeInsets.symmetric(
-              horizontal: small ? BBSpacing.md : BBSpacing.lg,
-            ),
-            child: child,
           ),
         ),
       ),

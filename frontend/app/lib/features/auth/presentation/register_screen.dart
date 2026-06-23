@@ -122,13 +122,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Logo
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(BBRadius.xl),
+                  boxShadow: [
+                    BoxShadow(
+                      color: BBColors.amber.withValues(alpha: context.isDark ? 0.3 : 0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(BBRadius.xl),
+                  child: Image.asset('assets/logo.png', fit: BoxFit.cover),
+                ),
+              ),
+              const SizedBox(height: BBSpacing.xl),
               Text(
                 'Join BookBer',
                 style: BBTypography.textTheme.displaySmall?.copyWith(
                   color: colors.text,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.0,
                 ),
               ),
-              const SizedBox(height: BBSpacing.sm),
+              const SizedBox(height: BBSpacing.xs),
               Text(
                 'Create your account to get started',
                 style: BBTypography.textTheme.bodyLarge?.copyWith(

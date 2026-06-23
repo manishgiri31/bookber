@@ -68,6 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final isDark = context.isDark;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -83,23 +84,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const SizedBox(height: BBSpacing.xl),
               // Logo
               Container(
-                width: 52,
-                height: 52,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: BBColors.amber,
-                  borderRadius: BorderRadius.circular(BBRadius.md),
-                ),
-                child: const Center(
-                  child: Text(
-                    'B',
-                    style: TextStyle(
-                      fontFamily: 'Satoshi',
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1,
+                  borderRadius: BorderRadius.circular(BBRadius.xl),
+                  boxShadow: [
+                    BoxShadow(
+                      color: BBColors.amber.withValues(alpha: isDark ? 0.3 : 0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
-                  ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(BBRadius.xl),
+                  child: Image.asset('assets/logo.png', fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: BBSpacing.xl),
@@ -107,7 +106,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 'Welcome back',
                 style: BBTypography.textTheme.displaySmall?.copyWith(
                   color: colors.text,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -1.0,
                 ),
               ),
               const SizedBox(height: BBSpacing.xs),
@@ -168,9 +168,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     vertical: BBSpacing.sm,
                   ),
                   decoration: BoxDecoration(
-                    color: BBColors.errorSurface,
-                    borderRadius: BorderRadius.circular(BBRadius.md),
-                    border: Border.all(color: BBColors.error.withValues(alpha: 0.4)),
+                    color: isDark ? BBColors.errorSurfaceDark : BBColors.errorSurface,
+                    borderRadius: BorderRadius.circular(BBRadius.xl),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

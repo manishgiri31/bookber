@@ -40,6 +40,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final isDark = context.isDark;
     final shopAsync = ref.watch(shopDetailProvider(widget.shopId));
 
     return shopAsync.when(
@@ -47,61 +48,96 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
       error: (e, _) => BBErrorWidget(error: e, fullScreen: true),
       data: (shop) => Scaffold(
         backgroundColor: colors.background,
+        extendBodyBehindAppBar: true,
         body: NestedScrollView(
           headerSliverBuilder: (ctx, _) => [
             SliverAppBar(
-              expandedHeight: 200,
+              expandedHeight: 260,
               pinned: true,
-              backgroundColor: colors.background,
-              leading: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: colors.surface.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.arrow_back_rounded,
-                    size: 18,
-                    color: colors.text,
+              backgroundColor: colors.background.withValues(alpha: 0.95),
+              leading: Padding(
+                padding: const EdgeInsets.all(8),
+                child: GestureDetector(
+                  onTap: () => context.pop(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.black.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.85),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_rounded,
+                      size: 20,
+                      color: colors.text,
+                    ),
                   ),
                 ),
-                onPressed: () => context.pop(),
               ),
               actions: [
                 if (shop.latitude != null && shop.longitude != null)
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: colors.surface.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.directions_rounded,
-                        size: 18,
-                        color: colors.text,
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: GestureDetector(
+                      onTap: () => _openDirections(shop),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.85),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.directions_rounded,
+                          size: 18,
+                          color: BBColors.info,
+                        ),
                       ),
                     ),
-                    onPressed: () => _openDirections(shop),
                   ),
               ],
               flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  color: colors.surfaceVariant,
-                  child: Center(
-                    child: Icon(
-                      Icons.content_cut_rounded,
-                      size: 64,
-                      color: colors.textTertiary,
+                background: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      color: colors.surfaceVariant,
+                      child: Center(
+                        child: Icon(
+                          Icons.content_cut_rounded,
+                          size: 72,
+                          color: colors.textTertiary.withValues(alpha: 0.4),
+                        ),
+                      ),
                     ),
-                  ),
+                    // Gradient overlay at bottom
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 80,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              colors.background,
+                              colors.background.withValues(alpha: 0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+                padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
                 child: _ShopHeader(shop: shop, onDirections: () => _openDirections(shop)),
               ),
             ),
@@ -114,6 +150,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                   unselectedLabelColor: colors.textSecondary,
                   indicatorColor: BBColors.amber,
                   indicatorSize: TabBarIndicatorSize.label,
+                  indicatorWeight: 2.5,
                   labelStyle: BBTypography.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -171,41 +208,58 @@ class _ShopHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 shop.name,
-                style: BBTypography.textTheme.headlineLarge?.copyWith(
+                style: BBTypography.textTheme.headlineMedium?.copyWith(
                   color: colors.text,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
               ),
             ),
+            const SizedBox(width: BBSpacing.sm),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
                 color: shop.isOpen
                     ? BBColors.success.withValues(alpha: 0.12)
-                    : BBColors.error.withValues(alpha: 0.12),
+                    : colors.surfaceVariant,
                 borderRadius: BorderRadius.circular(BBRadius.full),
               ),
-              child: Text(
-                shop.isOpen ? 'Open' : 'Closed',
-                style: BBTypography.textTheme.labelMedium?.copyWith(
-                  color: shop.isOpen ? BBColors.success : BBColors.error,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: shop.isOpen ? BBColors.success : colors.textTertiary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    shop.isOpen ? 'Open' : 'Closed',
+                    style: BBTypography.textTheme.labelMedium?.copyWith(
+                      color: shop.isOpen ? BBColors.success : colors.textTertiary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
         const SizedBox(height: BBSpacing.sm),
         GestureDetector(
-          onTap: (shop.latitude != null && shop.longitude != null)
-              ? onDirections
-              : null,
+          onTap: (shop.latitude != null && shop.longitude != null) ? onDirections : null,
           child: Row(
             children: [
-              Icon(Icons.location_on_outlined,
-                  size: 14,
-                  color: (shop.latitude != null && shop.longitude != null)
-                      ? BBColors.info
-                      : colors.textSecondary),
+              Icon(
+                Icons.location_on_outlined,
+                size: 14,
+                color: (shop.latitude != null && shop.longitude != null)
+                    ? BBColors.info
+                    : colors.textSecondary,
+              ),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -214,47 +268,47 @@ class _ShopHeader extends StatelessWidget {
                     color: (shop.latitude != null && shop.longitude != null)
                         ? BBColors.info
                         : colors.textSecondary,
-                    decoration:
-                        (shop.latitude != null && shop.longitude != null)
-                            ? TextDecoration.underline
-                            : null,
+                    decoration: (shop.latitude != null && shop.longitude != null)
+                        ? TextDecoration.underline
+                        : null,
                   ),
                 ),
               ),
-              if (shop.latitude != null && shop.longitude != null) ...[
-                const SizedBox(width: 4),
-                Icon(Icons.open_in_new_rounded,
-                    size: 13, color: BBColors.info),
-              ],
             ],
           ),
         ),
         const SizedBox(height: BBSpacing.md),
-        Wrap(
-          spacing: BBSpacing.sm,
-          runSpacing: BBSpacing.xs,
-          children: [
-            _StatPill(
-              icon: Icons.star_rounded,
-              label: '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount})',
-              iconColor: BBColors.amber,
-            ),
-            _StatPill(
-              icon: Icons.timer_outlined,
-              label: shop.waitLabel,
-            ),
-            if (shop.availableChairs > 0)
-              _StatPill(
-                icon: Icons.chair_outlined,
-                label: '${shop.availableChairs} chairs free',
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _StatChip(
+                icon: Icons.star_rounded,
+                label: '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount})',
+                iconColor: BBColors.amber,
               ),
-            if (shop.distanceKm != null)
-              _StatPill(
-                icon: Icons.near_me_outlined,
-                label: shop.distanceLabel,
-                iconColor: BBColors.info,
+              const SizedBox(width: BBSpacing.sm),
+              _StatChip(
+                icon: Icons.timer_outlined,
+                label: shop.waitLabel,
               ),
-          ],
+              if (shop.availableChairs > 0) ...[
+                const SizedBox(width: BBSpacing.sm),
+                _StatChip(
+                  icon: Icons.chair_outlined,
+                  label: '${shop.availableChairs} free',
+                ),
+              ],
+              if (shop.distanceKm != null) ...[
+                const SizedBox(width: BBSpacing.sm),
+                _StatChip(
+                  icon: Icons.near_me_outlined,
+                  label: shop.distanceLabel,
+                  iconColor: BBColors.info,
+                ),
+              ],
+            ],
+          ),
         ),
         if (shop.phone != null && shop.phone!.isNotEmpty) ...[
           const SizedBox(height: BBSpacing.sm),
@@ -284,8 +338,8 @@ class _ShopHeader extends StatelessWidget {
   }
 }
 
-class _StatPill extends StatelessWidget {
-  const _StatPill({required this.icon, required this.label, this.iconColor});
+class _StatChip extends StatelessWidget {
+  const _StatChip({required this.icon, required this.label, this.iconColor});
   final IconData icon;
   final String label;
   final Color? iconColor;
@@ -294,17 +348,16 @@ class _StatPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.bbColors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: colors.surfaceVariant,
         borderRadius: BorderRadius.circular(BBRadius.full),
-        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: iconColor ?? colors.textSecondary),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             label,
             style: BBTypography.textTheme.labelMedium?.copyWith(
@@ -334,8 +387,7 @@ class _ServicesTab extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
               itemCount: services.length,
-              separatorBuilder: (_, _) =>
-                  Divider(color: colors.border, height: 1),
+              separatorBuilder: (_, _) => Divider(color: colors.border, height: 1),
               itemBuilder: (ctx, i) => _ServiceRow(service: services[i]),
             ),
     );
@@ -353,6 +405,18 @@ class _ServiceRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: BBSpacing.md),
       child: Row(
         children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: BBColors.amber.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(BBRadius.md),
+            ),
+            child: const Center(
+              child: Icon(Icons.content_cut_rounded, size: 18, color: BBColors.amber),
+            ),
+          ),
+          const SizedBox(width: BBSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,6 +425,7 @@ class _ServiceRow extends StatelessWidget {
                   service.name,
                   style: BBTypography.textTheme.titleMedium?.copyWith(
                     color: colors.text,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -373,11 +438,18 @@ class _ServiceRow extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            service.priceLabel,
-            style: BBTypography.textTheme.titleMedium?.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w700,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: BBColors.amber.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(BBRadius.full),
+            ),
+            child: Text(
+              service.priceLabel,
+              style: BBTypography.textTheme.labelLarge?.copyWith(
+                color: BBColors.amber,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -406,8 +478,7 @@ class _BarbersTab extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
               itemCount: barbers.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: BBSpacing.sm),
+              separatorBuilder: (_, _) => const SizedBox(height: BBSpacing.sm),
               itemBuilder: (ctx, i) => _BarberCard(barber: barbers[i]),
             ),
     );
@@ -425,31 +496,50 @@ class _BarberCard extends StatelessWidget {
       padding: const EdgeInsets.all(BBSpacing.base),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(BBRadius.lg),
-        border: Border.all(
-          color: barber.isAvailable
-              ? BBColors.success.withValues(alpha: 0.3)
-              : colors.border,
-        ),
+        borderRadius: BorderRadius.circular(BBRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: context.isDark ? 0.3 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                barber.name.isNotEmpty ? barber.name[0].toUpperCase() : 'B',
-                style: BBTypography.textTheme.titleLarge?.copyWith(
-                  color: BBColors.amber,
-                  fontWeight: FontWeight.w700,
+          Stack(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: BBColors.amber.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    barber.name.isNotEmpty ? barber.name[0].toUpperCase() : 'B',
+                    style: BBTypography.textTheme.titleLarge?.copyWith(
+                      color: BBColors.amber,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: barber.isAvailable ? BBColors.success : colors.textTertiary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: colors.surface, width: 2),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: BBSpacing.md),
           Expanded(
@@ -460,6 +550,7 @@ class _BarberCard extends StatelessWidget {
                   barber.name,
                   style: BBTypography.textTheme.titleMedium?.copyWith(
                     color: colors.text,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 if (barber.bio != null && barber.bio!.isNotEmpty)
@@ -471,48 +562,39 @@ class _BarberCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                if (barber.rating != null) ...[
-                  const SizedBox(height: 2),
+                if (barber.rating != null)
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded,
-                          size: 13, color: BBColors.amber),
-                      const SizedBox(width: 2),
+                      const Icon(Icons.star_rounded, size: 12, color: BBColors.amber),
+                      const SizedBox(width: 3),
                       Text(
                         barber.rating!.toStringAsFixed(1),
                         style: BBTypography.textTheme.labelSmall?.copyWith(
                           color: colors.textSecondary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                ],
               ],
             ),
           ),
-          Column(
-            children: [
-              Container(
-                width: 9,
-                height: 9,
-                decoration: BoxDecoration(
-                  color: barber.isAvailable
-                      ? BBColors.success
-                      : colors.textTertiary,
-                  shape: BoxShape.circle,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: barber.isAvailable
+                  ? BBColors.success.withValues(alpha: 0.1)
+                  : colors.surfaceVariant,
+              borderRadius: BorderRadius.circular(BBRadius.full),
+            ),
+            child: Text(
+              barber.isAvailable ? 'Available' : 'Busy',
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: barber.isAvailable ? BBColors.success : colors.textTertiary,
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
               ),
-              const SizedBox(height: 3),
-              Text(
-                barber.isAvailable ? 'Free' : 'Busy',
-                style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: barber.isAvailable
-                      ? BBColors.success
-                      : colors.textTertiary,
-                  fontSize: 10,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -535,8 +617,7 @@ class _ReviewsTab extends ConsumerWidget {
           : ListView.separated(
               padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
               itemCount: reviews.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(height: BBSpacing.sm),
+              separatorBuilder: (_, _) => const SizedBox(height: BBSpacing.sm),
               itemBuilder: (ctx, i) => _ReviewCard(review: reviews[i]),
             ),
     );
@@ -554,8 +635,14 @@ class _ReviewCard extends StatelessWidget {
       padding: const EdgeInsets.all(BBSpacing.base),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(BBRadius.lg),
-        border: Border.all(color: colors.border),
+        borderRadius: BorderRadius.circular(BBRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: context.isDark ? 0.3 : 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,8 +650,8 @@ class _ReviewCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: BBColors.amber.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -576,6 +663,7 @@ class _ReviewCard extends StatelessWidget {
                         : 'A',
                     style: BBTypography.textTheme.labelLarge?.copyWith(
                       color: BBColors.amber,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -587,8 +675,10 @@ class _ReviewCard extends StatelessWidget {
                   children: [
                     Text(
                       review.customerName,
-                      style: BBTypography.textTheme.labelLarge
-                          ?.copyWith(color: colors.text),
+                      style: BBTypography.textTheme.labelLarge?.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Row(
                       children: [
@@ -598,16 +688,16 @@ class _ReviewCard extends StatelessWidget {
                             i < review.rating
                                 ? Icons.star_rounded
                                 : Icons.star_outline_rounded,
-                            size: 13,
+                            size: 12,
                             color: BBColors.amber,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 5),
                         Text(
-                          DateFormat('MMM d, yyyy')
-                              .format(review.createdAt),
-                          style: BBTypography.textTheme.labelSmall
-                              ?.copyWith(color: colors.textTertiary),
+                          DateFormat('MMM d, yyyy').format(review.createdAt),
+                          style: BBTypography.textTheme.labelSmall?.copyWith(
+                            color: colors.textTertiary,
+                          ),
                         ),
                       ],
                     ),
@@ -639,10 +729,17 @@ class _BottomActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.bbColors;
     return Container(
-      padding: const EdgeInsets.all(BBSpacing.base),
+      padding: const EdgeInsets.fromLTRB(
+        BBSpacing.pageHorizontal, BBSpacing.base, BBSpacing.pageHorizontal, 0),
       decoration: BoxDecoration(
         color: colors.surface,
-        border: Border(top: BorderSide(color: colors.border)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: context.isDark ? 0.4 : 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
+          ),
+        ],
       ),
       child: SafeArea(
         child: Row(
@@ -696,11 +793,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => tabBar.preferredSize.height;
 
   @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) =>
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>
       Container(color: color, child: tabBar);
 
   @override

@@ -63,7 +63,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   const notificationDeps = buildNotificationDependencies(app);
   const analyticsDeps = buildAnalyticsContainer();
   const paymentDeps = buildPaymentDependencies(app);
-  const reviewDeps = buildReviewDependencies(app);
+  const reviewDeps = buildReviewDependencies();
   const geoDeps = buildGeolocationDependencies(app);
   const adminDeps = buildAdminDependencies(app);
   const walletDeps = buildWalletDependencies();

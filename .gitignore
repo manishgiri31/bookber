@@ -7,9 +7,16 @@
 # Node
 
 node_modules/
+package-lock.json
 dist/
 coverage/
 npm-debug.log*
+
+# Test/debug scripts
+
+backend/test-flow*.ts
+backend/test-flow*.cjs
+backend/test-flow*.mjs
 
 # Prisma
 

@@ -16,45 +16,58 @@ class CustomerShell extends StatelessWidget {
     final currentIndex = _indexFor(location);
 
     return Scaffold(
+      extendBody: true,
       body: child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: colors.surface,
-          border: Border(top: BorderSide(color: colors.border)),
-        ),
-        child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Home',
-                selected: currentIndex == 0,
-                onTap: () => context.go('/home'),
-              ),
-              _NavItem(
-                icon: Icons.store_outlined,
-                activeIcon: Icons.store_rounded,
-                label: 'Shops',
-                selected: currentIndex == 1,
-                onTap: () => context.go('/shops'),
-              ),
-              _NavItem(
-                icon: Icons.queue_outlined,
-                activeIcon: Icons.queue_rounded,
-                label: 'Queue',
-                selected: currentIndex == 2,
-                onTap: () => context.go('/bookings'),
-              ),
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                activeIcon: Icons.person_rounded,
-                label: 'Profile',
-                selected: currentIndex == 3,
-                onTap: () => context.go('/profile'),
-              ),
-            ],
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(BBRadius.xxl),
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(BBRadius.xxl),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: context.isDark ? 0.6 : 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'Home',
+                  selected: currentIndex == 0,
+                  onTap: () => context.go('/home'),
+                ),
+                _NavItem(
+                  icon: Icons.storefront_outlined,
+                  activeIcon: Icons.storefront_rounded,
+                  label: 'Shops',
+                  selected: currentIndex == 1,
+                  onTap: () => context.go('/shops'),
+                ),
+                _NavItem(
+                  icon: Icons.receipt_long_outlined,
+                  activeIcon: Icons.receipt_long_rounded,
+                  label: 'Bookings',
+                  selected: currentIndex == 2,
+                  onTap: () => context.go('/bookings'),
+                ),
+                _NavItem(
+                  icon: Icons.person_outline_rounded,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  selected: currentIndex == 3,
+                  onTap: () => context.go('/profile'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -90,28 +103,41 @@ class _NavItem extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: BBSpacing.sm),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Icon(
                 selected ? activeIcon : icon,
+                key: ValueKey(selected),
                 size: 22,
                 color: selected ? BBColors.amber : colors.textTertiary,
               ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: selected ? BBColors.amber : colors.textTertiary,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: selected ? BBColors.amber : colors.textTertiary,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 10,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 2),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: selected ? 18 : 0,
+              height: 2.5,
+              decoration: BoxDecoration(
+                color: BBColors.amber,
+                borderRadius: BorderRadius.circular(BBRadius.full),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
+

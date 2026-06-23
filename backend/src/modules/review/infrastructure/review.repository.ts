@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../../shared/prisma/client.js";
 import type { ReviewDTO, CreateReviewRequest } from "../domain/review.types.js";
 
 export class PrismaReviewRepository {
-  constructor(private readonly prisma: PrismaClient) { }
 
   async create(data: CreateReviewRequest, userId: string): Promise<ReviewDTO> {
     // Check if user already reviewed this shop

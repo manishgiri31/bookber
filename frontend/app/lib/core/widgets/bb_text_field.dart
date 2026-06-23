@@ -106,28 +106,28 @@ class _BBTextFieldState extends State<BBTextField> {
             filled: true,
             fillColor: widget.enabled ? colors.surfaceVariant : colors.surfaceHigh,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(BBRadius.md),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
               borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(BBRadius.md),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
               borderSide: BorderSide(
                 color: hasError ? BBColors.error : colors.border,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(BBRadius.md),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
               borderSide: BorderSide(
                 color: hasError ? BBColors.error : BBColors.amber,
                 width: 1.5,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(BBRadius.md),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
               borderSide: const BorderSide(color: BBColors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(BBRadius.md),
+              borderRadius: BorderRadius.circular(BBRadius.xl),
               borderSide: const BorderSide(color: BBColors.error, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(

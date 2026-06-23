@@ -125,14 +125,14 @@ class BookingSubmitNotifier extends StateNotifier<BookingSubmitState> {
       if (form.joinQueue) {
         body = {
           'shopId': form.shopId,
-          'serviceIds': form.selectedServices.map((s) => s.id).toList(),
+          'serviceId': form.selectedServices.first.id,
           if (form.selectedBarberId != null) 'barberId': form.selectedBarberId,
           'walkIn': false,
         };
       } else {
         body = {
           'shopId': form.shopId,
-          'serviceIds': form.selectedServices.map((s) => s.id).toList(),
+          'serviceId': form.selectedServices.first.id,
           if (form.selectedBarberId != null) 'barberId': form.selectedBarberId,
         };
       }

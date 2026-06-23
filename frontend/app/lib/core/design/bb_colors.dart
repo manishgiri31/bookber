@@ -1,31 +1,31 @@
 import 'package:flutter/material.dart';
 
 abstract final class BBColors {
-  // Brand
-  static const Color amber = Color(0xFFDC2626);
-  static const Color amberLight = Color(0xFFEF4444);
-  static const Color amberDark = Color(0xFFB91C1C);
-  static const Color amberSurface = Color(0xFFFEE2E2);
-  static const Color amberSurfaceDark = Color(0xFF450A0A);
+  // Brand — vibrant red accent
+  static const Color amber = Color(0xFFE53935);
+  static const Color amberLight = Color(0xFFEF5350);
+  static const Color amberDark = Color(0xFFC62828);
+  static const Color amberSurface = Color(0xFFFFEBEE);
+  static const Color amberSurfaceDark = Color(0xFF3E0000);
 
   // Semantic
-  static const Color success = Color(0xFF10B981);
-  static const Color successSurface = Color(0xFFD1FAE5);
-  static const Color successSurfaceDark = Color(0xFF052E16);
-  static const Color error = Color(0xFFEF4444);
-  static const Color errorSurface = Color(0xFFFEE2E2);
-  static const Color errorSurfaceDark = Color(0xFF2D0707);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color info = Color(0xFF3B82F6);
+  static const Color success = Color(0xFF00C853);
+  static const Color successSurface = Color(0xFFE8F5E9);
+  static const Color successSurfaceDark = Color(0xFF0A2E0A);
+  static const Color error = Color(0xFFE53935);
+  static const Color errorSurface = Color(0xFFFFEBEE);
+  static const Color errorSurfaceDark = Color(0xFF3E0000);
+  static const Color warning = Color(0xFFFFA000);
+  static const Color info = Color(0xFF1E88E5);
 
   // Status chips
-  static const Color statusQueued = Color(0xFF3B82F6);
-  static const Color statusReady = Color(0xFF10B981);
-  static const Color statusCalled = Color(0xFFF59E0B);
-  static const Color statusInService = Color(0xFF8B5CF6);
-  static const Color statusCompleted = Color(0xFF6B7280);
-  static const Color statusCancelled = Color(0xFFEF4444);
-  static const Color statusNoShow = Color(0xFF9CA3AF);
+  static const Color statusQueued = Color(0xFF1E88E5);
+  static const Color statusReady = Color(0xFF00C853);
+  static const Color statusCalled = Color(0xFFFFA000);
+  static const Color statusInService = Color(0xFF7C4DFF);
+  static const Color statusCompleted = Color(0xFF757575);
+  static const Color statusCancelled = Color(0xFFE53935);
+  static const Color statusNoShow = Color(0xFF9E9E9E);
 
   // Transparent
   static const Color transparent = Colors.transparent;
@@ -69,6 +69,7 @@ class BBColorScheme {
     required this.accent,
     required this.accentForeground,
     required this.accentSurface,
+    required this.shadow,
   });
 
   final Color background;
@@ -85,39 +86,42 @@ class BBColorScheme {
   final Color accent;
   final Color accentForeground;
   final Color accentSurface;
+  final Color shadow;
 
   static const BBColorScheme light = BBColorScheme(
-    background: Color(0xFFF8F8F8),
-    backgroundSecondary: Color(0xFFF0EFEB),
+    background: Color(0xFFF7F7F7),
+    backgroundSecondary: Color(0xFFEEEEEE),
     surface: Color(0xFFFFFFFF),
-    surfaceVariant: Color(0xFFF5F4F0),
-    surfaceHigh: Color(0xFFEEEDE9),
-    border: Color(0xFFE5E5E5),
+    surfaceVariant: Color(0xFFF5F5F5),
+    surfaceHigh: Color(0xFFEDEDED),
+    border: Color(0xFFE0E0E0),
     borderSubtle: Color(0xFFF0F0F0),
-    text: Color(0xFF0A0A0B),
-    textSecondary: Color(0xFF6B7280),
-    textTertiary: Color(0xFF9CA3AF),
+    text: Color(0xFF0D0D0D),
+    textSecondary: Color(0xFF616161),
+    textTertiary: Color(0xFF9E9E9E),
     textInverse: Color(0xFFFFFFFF),
-    accent: Color(0xFFDC2626),
+    accent: Color(0xFFE53935),
     accentForeground: Color(0xFFFFFFFF),
-    accentSurface: Color(0xFFFEE2E2),
+    accentSurface: Color(0xFFFFEBEE),
+    shadow: Color(0x1A000000),
   );
 
   static const BBColorScheme dark = BBColorScheme(
-    background: Color(0xFF09090B),
-    backgroundSecondary: Color(0xFF0D0D0F),
-    surface: Color(0xFF111113),
-    surfaceVariant: Color(0xFF1A1A1C),
-    surfaceHigh: Color(0xFF242426),
-    border: Color(0xFF27272A),
-    borderSubtle: Color(0xFF1E1E21),
-    text: Color(0xFFFAFAFA),
-    textSecondary: Color(0xFF9CA3AF),
-    textTertiary: Color(0xFF6B7280),
-    textInverse: Color(0xFF0A0A0B),
-    accent: Color(0xFFDC2626),
+    background: Color(0xFF000000),
+    backgroundSecondary: Color(0xFF0A0A0A),
+    surface: Color(0xFF141414),
+    surfaceVariant: Color(0xFF1E1E1E),
+    surfaceHigh: Color(0xFF282828),
+    border: Color(0xFF2A2A2A),
+    borderSubtle: Color(0xFF1F1F1F),
+    text: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFAAAAAA),
+    textTertiary: Color(0xFF666666),
+    textInverse: Color(0xFF000000),
+    accent: Color(0xFFE53935),
     accentForeground: Color(0xFFFFFFFF),
-    accentSurface: Color(0xFF450A0A),
+    accentSurface: Color(0xFF3E0000),
+    shadow: Color(0x66000000),
   );
 }
 
