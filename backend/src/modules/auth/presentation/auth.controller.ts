@@ -1,7 +1,7 @@
 import type { CookieSerializeOptions } from "@fastify/cookie";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { env } from "../../../shared/config/env.js";
-import { loginSchema, logoutSchema, refreshSchema, registerSchema } from "../application/auth.schemas.js";
+import { loginSchema, logoutSchema, refreshSchema, registerSchema, updateProfileSchema } from "../application/auth.schemas.js";
 import type { AuthService } from "../application/auth.service.js";
 
 function cookieOptions(): CookieSerializeOptions {
@@ -75,6 +75,12 @@ export class AuthController {
     reply.clearCookie(env.ACCESS_TOKEN_COOKIE_NAME, cookieOptions());
     reply.clearCookie(env.REFRESH_TOKEN_COOKIE_NAME, cookieOptions());
     return reply.send({ ok: true });
+  };
+
+  updateMe = async (request: FastifyRequest, reply: FastifyReply) => {
+    const dto = updateProfileSchema.parse(request.body);
+    const user = await this.authService.updateProfile(request.user.sub, dto);
+    return reply.send({ user });
   };
 
   changePassword = async (request: FastifyRequest, reply: FastifyReply) => {

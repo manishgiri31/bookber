@@ -25,12 +25,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   String _selectedRole = 'customer';
   bool _submitting = false;
+  String _passwordText = '';
 
   String? _nameError;
   String? _emailError;
   String? _passError;
   String? _confirmError;
   String? _serverError;
+
+  @override
+  void initState() {
+    super.initState();
+    _passCtrl.addListener(() => setState(() => _passwordText = _passCtrl.text));
+  }
 
   @override
   void dispose() {
@@ -49,6 +56,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   };
 
   bool _isCommonPassword(String p) => _commonPasswords.contains(p.toLowerCase());
+
+  static bool _hasUppercase(String p) => p.contains(RegExp(r'[A-Z]'));
+  static bool _hasLowercase(String p) => p.contains(RegExp(r'[a-z]'));
+  static bool _hasDigit(String p) => p.contains(RegExp(r'[0-9]'));
 
   bool _validate() {
     setState(() {
@@ -69,6 +80,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     }
     if (_passCtrl.text.trim().isEmpty) {
       setState(() => _passError = 'Password cannot be empty');
+      ok = false;
+    } else if (_passCtrl.text.length < 8 ||
+        !_hasUppercase(_passCtrl.text) ||
+        !_hasLowercase(_passCtrl.text) ||
+        !_hasDigit(_passCtrl.text)) {
+      setState(() => _passError = 'Password must meet all requirements below');
       ok = false;
     } else if (_isCommonPassword(_passCtrl.text)) {
       setState(() => _passError = 'Password is too common, please choose another');
@@ -130,7 +147,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   borderRadius: BorderRadius.circular(BBRadius.xl),
                   boxShadow: [
                     BoxShadow(
-                      color: BBColors.amber.withValues(alpha: context.isDark ? 0.3 : 0.2),
+                      color: colors.accent.withValues(alpha: context.isDark ? 0.3 : 0.12),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -223,6 +240,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 textInputAction: TextInputAction.next,
                 errorText: _passError,
               ),
+              if (_passwordText.isNotEmpty) ...[
+                const SizedBox(height: BBSpacing.sm),
+                _PasswordChecklist(password: _passwordText),
+              ],
               const SizedBox(height: BBSpacing.base),
               BBTextField(
                 label: 'Confirm Password',
@@ -283,7 +304,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       child: Text(
                         'Sign in',
                         style: BBTypography.textTheme.bodyMedium?.copyWith(
-                          color: BBColors.amber,
+                          color: colors.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -295,6 +316,83 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _PasswordChecklist extends StatelessWidget {
+  const _PasswordChecklist({required this.password});
+  final String password;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: BBSpacing.base,
+        vertical: BBSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surfaceVariant,
+        borderRadius: BorderRadius.circular(BBRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'PASSWORD REQUIREMENTS',
+            style: BBTypography.textTheme.labelSmall?.copyWith(
+              color: colors.textTertiary,
+              fontSize: 10,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.xs),
+          Wrap(
+            spacing: BBSpacing.base,
+            runSpacing: 3,
+            children: [
+              _CheckItem(label: '8+ characters', met: password.length >= 8),
+              _CheckItem(label: 'Uppercase', met: password.contains(RegExp(r'[A-Z]'))),
+              _CheckItem(label: 'Lowercase', met: password.contains(RegExp(r'[a-z]'))),
+              _CheckItem(label: 'Number', met: password.contains(RegExp(r'[0-9]'))),
+              _CheckItem(
+                label: 'Special char',
+                met: password.contains(RegExp(r'[!@#$%^&*()\-_=+\[\]{}|;:,.<>?/\\]')),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckItem extends StatelessWidget {
+  const _CheckItem({required this.label, required this.met});
+  final String label;
+  final bool met;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          met ? Icons.check_circle_rounded : Icons.circle_outlined,
+          size: 13,
+          color: met ? BBColors.success : colors.textTertiary,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: BBTypography.textTheme.labelSmall?.copyWith(
+            color: met ? colors.text : colors.textTertiary,
+            fontSize: 11,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -324,10 +422,10 @@ class _RoleTile extends StatelessWidget {
             horizontal: BBSpacing.md,
           ),
           decoration: BoxDecoration(
-            color: selected ? BBColors.amber.withValues(alpha: 0.12) : colors.surfaceVariant,
+            color: selected ? colors.accent.withValues(alpha: 0.08) : colors.surfaceVariant,
             borderRadius: BorderRadius.circular(BBRadius.md),
             border: Border.all(
-              color: selected ? BBColors.amber : colors.border,
+              color: selected ? colors.accent : colors.border,
               width: selected ? 1.5 : 1,
             ),
           ),
@@ -337,13 +435,13 @@ class _RoleTile extends StatelessWidget {
               Icon(
                 icon,
                 size: 18,
-                color: selected ? BBColors.amber : colors.textSecondary,
+                color: selected ? colors.accent : colors.textSecondary,
               ),
               const SizedBox(width: BBSpacing.sm),
               Text(
                 label,
                 style: BBTypography.textTheme.labelLarge?.copyWith(
-                  color: selected ? BBColors.amber : colors.text,
+                  color: selected ? colors.accent : colors.text,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),

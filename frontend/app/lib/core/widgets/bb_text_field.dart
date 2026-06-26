@@ -118,7 +118,7 @@ class _BBTextFieldState extends State<BBTextField> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(BBRadius.xl),
               borderSide: BorderSide(
-                color: hasError ? BBColors.error : BBColors.amber,
+                color: hasError ? BBColors.error : colors.accent,
                 width: 1.5,
               ),
             ),

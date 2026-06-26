@@ -140,6 +140,24 @@ export class PrismaAuthRepository {
     });
   }
 
+  async updateProfile(userId: string, input: { phoneNumber?: string | null | undefined; fullName?: string | undefined }): Promise<AuthUser> {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(input.fullName !== undefined ? { fullName: input.fullName } : {}),
+        ...(input.phoneNumber !== undefined ? { phoneNumber: input.phoneNumber } : {}),
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        phoneNumber: true,
+        role: true,
+        profileImage: true,
+      }
+    });
+  }
+
   async rotateRefreshToken(oldToken: string, newToken: StoreRefreshTokenInput): Promise<void> {
     await prisma.$transaction([
       prisma.refreshToken.update({

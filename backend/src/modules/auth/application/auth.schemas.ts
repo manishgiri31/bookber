@@ -39,7 +39,13 @@ export const authHeaderSchema = z.object({
   authorization: z.string().startsWith("Bearer ").optional()
 });
 
+export const updateProfileSchema = z.object({
+  phoneNumber: z.string().regex(/^\+?[1-9]\d{1,14}$/).optional().nullable(),
+  fullName: z.string().min(2).max(100).optional(),
+});
+
 export type RegisterDto = z.infer<typeof registerSchema>;
 export type LoginDto = z.infer<typeof loginSchema>;
 export type RefreshDto = z.infer<typeof refreshSchema>;
 export type LogoutDto = z.infer<typeof logoutSchema>;
+export type UpdateProfileDto = z.infer<typeof updateProfileSchema>;

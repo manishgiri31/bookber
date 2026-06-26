@@ -43,7 +43,7 @@ class BBButton extends StatelessWidget {
 
     switch (variant) {
       case BBButtonVariant.primary:
-        bg = isDisabled ? BBColors.amber.withValues(alpha: 0.4) : BBColors.amber;
+        bg = isDisabled ? colors.accent.withValues(alpha: 0.4) : colors.accent;
         fg = isDisabled
             ? colors.accentForeground.withValues(alpha: 0.5)
             : colors.accentForeground;
@@ -51,7 +51,7 @@ class BBButton extends StatelessWidget {
             ? null
             : [
                 BoxShadow(
-                  color: BBColors.amber.withValues(alpha: 0.35),
+                  color: colors.accent.withValues(alpha: 0.2),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),

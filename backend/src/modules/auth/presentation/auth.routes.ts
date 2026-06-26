@@ -10,6 +10,7 @@ export const authRoutes: FastifyPluginAsync = async (app) => {
   app.post("/refresh", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, controller.refresh);
   app.post("/logout", controller.logout);
   app.patch("/change-password", { preHandler: app.authenticate }, controller.changePassword);
+  app.patch("/me", { preHandler: app.authenticate }, controller.updateMe);
   app.get("/me", { preHandler: app.authenticate }, async (request) => {
     const payload = request.user as AccessTokenPayload;
     const user = await app.authDeps.authService.getMe(payload.sub);

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 abstract final class BBColors {
-  // Brand — vibrant red accent
-  static const Color amber = Color(0xFFE53935);
-  static const Color amberLight = Color(0xFFEF5350);
-  static const Color amberDark = Color(0xFFC62828);
-  static const Color amberSurface = Color(0xFFFFEBEE);
-  static const Color amberSurfaceDark = Color(0xFF3E0000);
+  // Brand — minimal black/white accent
+  static const Color amber = Color(0xFF0D0D0D);
+  static const Color amberLight = Color(0xFF333333);
+  static const Color amberDark = Color(0xFF000000);
+  static const Color amberSurface = Color(0xFFF0F0F0);
+  static const Color amberSurfaceDark = Color(0xFF1A1A1A);
 
   // Semantic
   static const Color success = Color(0xFF00C853);
@@ -100,9 +100,9 @@ class BBColorScheme {
     textSecondary: Color(0xFF616161),
     textTertiary: Color(0xFF9E9E9E),
     textInverse: Color(0xFFFFFFFF),
-    accent: Color(0xFFE53935),
+    accent: Color(0xFF0D0D0D),
     accentForeground: Color(0xFFFFFFFF),
-    accentSurface: Color(0xFFFFEBEE),
+    accentSurface: Color(0xFFF0F0F0),
     shadow: Color(0x1A000000),
   );
 
@@ -118,9 +118,9 @@ class BBColorScheme {
     textSecondary: Color(0xFFAAAAAA),
     textTertiary: Color(0xFF666666),
     textInverse: Color(0xFF000000),
-    accent: Color(0xFFE53935),
-    accentForeground: Color(0xFFFFFFFF),
-    accentSurface: Color(0xFF3E0000),
+    accent: Color(0xFFFFFFFF),
+    accentForeground: Color(0xFF0D0D0D),
+    accentSurface: Color(0xFF1A1A1A),
     shadow: Color(0x66000000),
   );
 }

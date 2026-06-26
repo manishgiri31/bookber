@@ -17,7 +17,7 @@ class BBLoader extends StatelessWidget {
       child: CircularProgressIndicator(
         strokeWidth: 2.5,
         valueColor: AlwaysStoppedAnimation<Color>(
-          color ?? BBColors.amber,
+          color ?? context.bbColors.accent,
         ),
       ),
     );

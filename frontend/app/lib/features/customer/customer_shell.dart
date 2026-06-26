@@ -112,14 +112,14 @@ class _NavItem extends StatelessWidget {
                 selected ? activeIcon : icon,
                 key: ValueKey(selected),
                 size: 22,
-                color: selected ? BBColors.amber : colors.textTertiary,
+                color: selected ? colors.accent : colors.textTertiary,
               ),
             ),
             const SizedBox(height: 3),
             Text(
               label,
               style: BBTypography.textTheme.labelSmall?.copyWith(
-                color: selected ? BBColors.amber : colors.textTertiary,
+                color: selected ? colors.accent : colors.textTertiary,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                 fontSize: 10,
               ),
@@ -130,7 +130,7 @@ class _NavItem extends StatelessWidget {
               width: selected ? 18 : 0,
               height: 2.5,
               decoration: BoxDecoration(
-                color: BBColors.amber,
+                color: colors.accent,
                 borderRadius: BorderRadius.circular(BBRadius.full),
               ),
             ),

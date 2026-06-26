@@ -15,8 +15,8 @@ abstract final class BBTheme {
 
     final colorScheme = ColorScheme(
       brightness: brightness,
-      primary: BBColors.amber,
-      onPrimary: Colors.white,
+      primary: colors.accent,
+      onPrimary: colors.accentForeground,
       primaryContainer: colors.accentSurface,
       onPrimaryContainer: colors.text,
       secondary: colors.textSecondary,
@@ -41,7 +41,7 @@ abstract final class BBTheme {
       scrim: Colors.black,
       inverseSurface: isDark ? colors.surface : const Color(0xFF1A1A1A),
       onInverseSurface: isDark ? colors.text : const Color(0xFFFFFFFF),
-      inversePrimary: BBColors.amberLight,
+      inversePrimary: colors.accent,
     );
 
     return ThemeData(
@@ -101,7 +101,7 @@ abstract final class BBTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(BBRadius.xl),
-          borderSide: BorderSide(color: BBColors.amber, width: 1.5),
+          borderSide: BorderSide(color: colors.accent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(BBRadius.xl),
@@ -127,10 +127,10 @@ abstract final class BBTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: BBColors.amber,
+          backgroundColor: colors.accent,
           foregroundColor: colors.accentForeground,
           disabledBackgroundColor: isDark
-              ? const Color(0xFF2D0000)
+              ? const Color(0xFF2D2D2D)
               : const Color(0xFFD1D5DB),
           disabledForegroundColor: colors.textTertiary,
           elevation: 0,
@@ -162,7 +162,7 @@ abstract final class BBTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: BBColors.amber,
+          foregroundColor: colors.accent,
           textStyle: BBTypography.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -173,7 +173,7 @@ abstract final class BBTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: colors.surfaceVariant,
-        selectedColor: BBColors.amber,
+        selectedColor: colors.accent,
         disabledColor: colors.surfaceVariant,
         labelStyle: BBTypography.textTheme.labelMedium?.copyWith(
           color: colors.text,
@@ -195,7 +195,7 @@ abstract final class BBTheme {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
-        selectedItemColor: BBColors.amber,
+        selectedItemColor: colors.accent,
         unselectedItemColor: colors.textTertiary,
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
@@ -213,7 +213,7 @@ abstract final class BBTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return IconThemeData(color: BBColors.amber, size: 22);
+            return IconThemeData(color: colors.accent, size: 22);
           }
           return IconThemeData(color: colors.textTertiary, size: 22);
         }),
@@ -221,7 +221,7 @@ abstract final class BBTheme {
           final base = BBTypography.textTheme.labelSmall!;
           if (states.contains(WidgetState.selected)) {
             return base.copyWith(
-              color: BBColors.amber,
+              color: colors.accent,
               fontWeight: FontWeight.w700,
             );
           }
@@ -272,12 +272,12 @@ abstract final class BBTheme {
           vertical: BBSpacing.xs,
         ),
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: BBColors.amber,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: colors.accent,
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: BBColors.amber,
-        foregroundColor: Colors.white,
+        backgroundColor: colors.accent,
+        foregroundColor: colors.accentForeground,
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(BBRadius.full),

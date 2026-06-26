@@ -36,6 +36,17 @@ class AuthRepository {
     return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
   }
 
+  Future<UserProfile> updateProfile({String? phone}) async {
+    final data = await _api.patch<Map<String, dynamic>>(
+      ApiEndpoints.updateMe,
+      body: {
+        if (phone != null && phone.isNotEmpty) 'phoneNumber': phone,
+        if (phone != null && phone.isEmpty) 'phoneNumber': null,
+      },
+    );
+    return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
+  }
+
   Future<void> logout() async {
     try {
       await _api.post<void>(ApiEndpoints.logout, body: {});

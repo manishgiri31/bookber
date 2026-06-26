@@ -93,6 +93,14 @@ export class AuthService {
     await this.repository.revokeRefreshToken(input.refreshToken);
   }
 
+  async updateProfile(userId: string, input: { phoneNumber?: string | null | undefined; fullName?: string | undefined }): Promise<AuthUser> {
+    if (input.phoneNumber) {
+      const existing = await this.repository.findByPhoneNumber(input.phoneNumber);
+      if (existing && existing.id !== userId) throw Errors.conflict("Phone number already registered");
+    }
+    return this.repository.updateProfile(userId, input);
+  }
+
   async changePassword(userId: string, input: { currentPassword: string; newPassword: string }) {
     const authUser = await this.repository.findById(userId);
     if (!authUser) throw Errors.unauthenticated();

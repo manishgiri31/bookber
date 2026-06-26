@@ -98,13 +98,13 @@ class _NavItem extends StatelessWidget {
               Icon(
                 selected ? activeIcon : icon,
                 size: 22,
-                color: selected ? BBColors.amber : colors.textTertiary,
+                color: selected ? colors.accent : colors.textTertiary,
               ),
               const SizedBox(height: 3),
               Text(
                 label,
                 style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: selected ? BBColors.amber : colors.textTertiary,
+                  color: selected ? colors.accent : colors.textTertiary,
                   fontWeight:
                       selected ? FontWeight.w600 : FontWeight.w400,
                 ),

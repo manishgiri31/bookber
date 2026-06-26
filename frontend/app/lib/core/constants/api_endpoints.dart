@@ -16,6 +16,7 @@ abstract final class ApiEndpoints {
   static const String logout = '/auth/logout';
   static const String changePassword = '/auth/change-password';
   static const String me = '/auth/me';
+  static const String updateMe = '/auth/me';
 
   // Shops
   static const String shops = '/shops';

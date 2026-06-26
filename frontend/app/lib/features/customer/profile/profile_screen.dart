@@ -6,6 +6,7 @@ import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
 import '../../../core/widgets/bb_button.dart';
+import '../../../core/widgets/bb_text_field.dart';
 import '../../auth/data/auth_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -37,14 +38,14 @@ class ProfileScreen extends ConsumerWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.15),
+                    color: colors.accent.withValues(alpha: context.isDark ? 0.15 : 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
                       style: BBTypography.textTheme.displaySmall?.copyWith(
-                        color: BBColors.amber,
+                        color: colors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -62,13 +63,13 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: BBSpacing.sm, vertical: 3),
                   decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.12),
+                    color: colors.accent.withValues(alpha: context.isDark ? 0.15 : 0.08),
                     borderRadius: BorderRadius.circular(BBRadius.full),
                   ),
                   child: Text(
                     user.role.toUpperCase(),
                     style: BBTypography.textTheme.labelSmall?.copyWith(
-                      color: BBColors.amber,
+                      color: colors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -90,7 +91,8 @@ class ProfileScreen extends ConsumerWidget {
               _InfoRow(
                 icon: Icons.phone_outlined,
                 label: 'Phone',
-                value: user.phone.isNotEmpty ? user.phone : 'Not set',
+                value: user.phone.isNotEmpty ? user.phone : 'Tap to add',
+                onEdit: () => _editPhone(context, ref, user.phone),
               ),
             ],
           ),
@@ -169,6 +171,28 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
+  void _editPhone(BuildContext context, WidgetRef ref, String currentPhone) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(BBRadius.xxl)),
+      ),
+      builder: (ctx) => _EditPhoneSheet(
+        currentPhone: currentPhone,
+        onSave: (phone) async {
+          final ok = await ref.read(authProvider.notifier).updateProfile(phone: phone);
+          if (ctx.mounted) Navigator.of(ctx).pop();
+          if (!ok && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to update phone number')),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -192,6 +216,112 @@ class ProfileScreen extends ConsumerWidget {
     );
     if (ok == true && context.mounted) {
       await ref.read(authProvider.notifier).logout();
+    }
+  }
+}
+
+class _EditPhoneSheet extends StatefulWidget {
+  const _EditPhoneSheet({required this.currentPhone, required this.onSave});
+  final String currentPhone;
+  final Future<void> Function(String) onSave;
+
+  @override
+  State<_EditPhoneSheet> createState() => _EditPhoneSheetState();
+}
+
+class _EditPhoneSheetState extends State<_EditPhoneSheet> {
+  late final TextEditingController _ctrl;
+  bool _saving = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(
+      text: widget.currentPhone.isNotEmpty ? widget.currentPhone : '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: EdgeInsets.only(
+        left: BBSpacing.pageHorizontal,
+        right: BBSpacing.pageHorizontal,
+        top: BBSpacing.lg,
+        bottom: MediaQuery.of(context).viewInsets.bottom + BBSpacing.xl,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Phone Number',
+                style: BBTypography.textTheme.headlineSmall?.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(Icons.close, color: colors.textTertiary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.xs),
+          Text(
+            'Add your phone number to enable SMS notifications and faster check-in.',
+            style: BBTypography.textTheme.bodySmall?.copyWith(
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.base),
+          BBTextField(
+            label: 'Phone',
+            hint: '+91 98765 43210',
+            controller: _ctrl,
+            keyboardType: TextInputType.phone,
+            prefixIcon: Icons.phone_outlined,
+            errorText: _error,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _save(),
+          ),
+          const SizedBox(height: BBSpacing.base),
+          BBButton(
+            label: 'Save',
+            onPressed: _save,
+            loading: _saving,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _save() async {
+    setState(() {
+      _error = null;
+      _saving = true;
+    });
+    try {
+      await widget.onSave(_ctrl.text.trim());
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString().replaceFirst('Exception: ', '');
+          _saving = false;
+        });
+      }
     }
   }
 }
@@ -251,43 +381,56 @@ class _InfoRow extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.onEdit,
   });
   final IconData icon;
   final String label;
   final String value;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: BBSpacing.base,
-        vertical: BBSpacing.md,
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: colors.textSecondary),
-          const SizedBox(width: BBSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: BBTypography.textTheme.labelSmall?.copyWith(
-                    color: colors.textTertiary,
+    return InkWell(
+      onTap: onEdit,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.base,
+          vertical: BBSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: colors.textSecondary),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                    ),
                   ),
-                ),
-                Text(
-                  value,
-                  style: BBTypography.textTheme.bodyMedium?.copyWith(
-                    color: colors.text,
+                  Text(
+                    value,
+                    style: BBTypography.textTheme.bodyMedium?.copyWith(
+                      color: onEdit != null && value == 'Tap to add'
+                          ? colors.textTertiary
+                          : colors.text,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            if (onEdit != null)
+              Icon(
+                Icons.edit_outlined,
+                size: 16,
+                color: colors.textTertiary,
+              ),
+          ],
+        ),
       ),
     );
   }
