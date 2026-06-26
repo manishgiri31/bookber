@@ -91,7 +91,7 @@ async function main() {
       fullName: "Marcus Thompson",
       email: "owner.marcus@bookber.dev",
       password: hash,
-      role: UserRole.CLIENT,
+      role: UserRole.BARBER,
       phoneNumber: "+919000000002",
     },
   });
@@ -103,7 +103,7 @@ async function main() {
       fullName: "James Rivera",
       email: "owner.james@bookber.dev",
       password: hash,
-      role: UserRole.CLIENT,
+      role: UserRole.BARBER,
       phoneNumber: "+919000000003",
     },
   });

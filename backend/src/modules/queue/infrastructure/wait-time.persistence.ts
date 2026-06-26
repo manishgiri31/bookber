@@ -24,7 +24,6 @@ export class WaitTimePersistence {
       await db.queueEntry.updateMany({
         where: { bookingId: est.bookingId, shopId },
         data: {
-          position: est.position,
           estimatedWaitMinutes: est.estimatedWaitMinutes,
           estimatedServiceStart: est.estimatedServiceStart,
           version: { increment: 1 }
