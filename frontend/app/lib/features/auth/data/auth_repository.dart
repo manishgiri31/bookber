@@ -47,9 +47,15 @@ class AuthRepository {
     return UserProfile.fromJson(data['user'] as Map<String, dynamic>);
   }
 
+  void clearLocalSession() {
+    _storage.clearSession();
+    _api.clearAuthToken();
+  }
+
   Future<void> logout() async {
     try {
-      await _api.post<void>(ApiEndpoints.logout, body: {});
+      await _api.post<void>(ApiEndpoints.logout, body: {})
+          .timeout(const Duration(seconds: 3));
     } catch (_) {}
     await _storage.clearSession();
     _api.clearAuthToken();

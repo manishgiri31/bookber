@@ -8,7 +8,7 @@ import '../errors/exceptions.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
-  ApiClient({SecureStorage? storage})
+  ApiClient({SecureStorage? storage, this.onSessionExpired})
       : _storage = storage ?? SecureStorage.instance {
     _dio = Dio(
       BaseOptions(
@@ -24,12 +24,13 @@ class ApiClient {
     );
 
     _dio.interceptors.addAll([
-      _AuthInterceptor(_storage, _dio),
+      _AuthInterceptor(_storage, _dio, onSessionExpired),
       if (kDebugMode) LogInterceptor(requestBody: true, responseBody: true),
     ]);
   }
 
   final SecureStorage _storage;
+  final void Function()? onSessionExpired;
   late final Dio _dio;
 
   Future<T> get<T>(
@@ -124,10 +125,11 @@ class ApiClient {
 }
 
 class _AuthInterceptor extends Interceptor {
-  _AuthInterceptor(this._storage, this._dio);
+  _AuthInterceptor(this._storage, this._dio, this._onSessionExpired);
 
   final SecureStorage _storage;
   final Dio _dio;
+  final void Function()? _onSessionExpired;
   bool _isRefreshing = false;
 
   @override
@@ -179,6 +181,7 @@ class _AuthInterceptor extends Interceptor {
         }
       } catch (_) {
         await _storage.clearSession();
+        _onSessionExpired?.call();
       }
       _isRefreshing = false;
     }

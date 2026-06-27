@@ -42,6 +42,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
   Widget build(BuildContext context) {
     final colors = context.bbColors;
     final state = ref.watch(shopsProvider);
+    final shops = state.displayed;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -94,7 +95,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(BBRadius.md),
-                  borderSide: const BorderSide(color: BBColors.amber, width: 1.5),
+                  borderSide: BorderSide(color: colors.accent, width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: BBSpacing.base,
@@ -105,34 +106,178 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
           ),
         ),
       ),
-      body: state.isLoading
-          ? const Center(child: BBLoader())
-          : state.error != null
-              ? BBErrorWidget(
-                  error: state.error!,
-                  onRetry: () => ref.read(shopsProvider.notifier).refresh(),
-                )
-              : state.shops.isEmpty
-                  ? BBEmptyState(
-                      title: 'No shops found',
-                      subtitle: state.query.isNotEmpty
-                          ? 'Try a different search term.'
-                          : 'No barber shops available yet.',
-                      icon: Icons.store_outlined,
-                    )
-                  : RefreshIndicator(
-                      color: BBColors.amber,
-                      onRefresh: () =>
-                          ref.read(shopsProvider.notifier).refresh(),
-                      child: ListView.separated(
-                        padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
-                        itemCount: state.shops.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: BBSpacing.sm),
-                        itemBuilder: (ctx, i) =>
-                            _ShopCard(shop: state.shops[i]),
-                      ),
-                    ),
+      body: Column(
+        children: [
+          _FilterBar(
+            sortBy: state.sortBy,
+            openOnly: state.openOnly,
+            onSortChanged: (s) => ref.read(shopsProvider.notifier).setSortBy(s),
+            onOpenOnlyChanged: (v) =>
+                ref.read(shopsProvider.notifier).setOpenOnly(v),
+          ),
+          Expanded(
+            child: state.isLoading
+                ? const Center(child: BBLoader())
+                : state.error != null
+                    ? BBErrorWidget(
+                        error: state.error!,
+                        onRetry: () =>
+                            ref.read(shopsProvider.notifier).refresh(),
+                      )
+                    : shops.isEmpty
+                        ? BBEmptyState(
+                            title: state.openOnly && state.shops.isNotEmpty
+                                ? 'No open shops'
+                                : 'No shops found',
+                            subtitle: state.query.isNotEmpty
+                                ? 'Try a different search term.'
+                                : state.openOnly && state.shops.isNotEmpty
+                                    ? 'All nearby shops are currently closed.'
+                                    : 'No barber shops available yet.',
+                            icon: Icons.store_outlined,
+                          )
+                        : RefreshIndicator(
+                            color: colors.accent,
+                            onRefresh: () =>
+                                ref.read(shopsProvider.notifier).refresh(),
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(
+                                  BBSpacing.pageHorizontal),
+                              itemCount: shops.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: BBSpacing.sm),
+                              itemBuilder: (ctx, i) =>
+                                  _ShopCard(shop: shops[i]),
+                            ),
+                          ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({
+    required this.sortBy,
+    required this.openOnly,
+    required this.onSortChanged,
+    required this.onOpenOnlyChanged,
+  });
+
+  final ShopSortBy sortBy;
+  final bool openOnly;
+  final void Function(ShopSortBy) onSortChanged;
+  final void Function(bool) onOpenOnlyChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.background,
+        border: Border(bottom: BorderSide(color: colors.border)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.pageHorizontal,
+          vertical: BBSpacing.sm,
+        ),
+        child: Row(
+          children: [
+            _SortChip(
+              label: 'Nearest',
+              icon: Icons.near_me_outlined,
+              selected: sortBy == ShopSortBy.nearest,
+              onTap: () => onSortChanged(ShopSortBy.nearest),
+            ),
+            const SizedBox(width: BBSpacing.xs),
+            _SortChip(
+              label: 'Top Rated',
+              icon: Icons.star_outline_rounded,
+              selected: sortBy == ShopSortBy.topRated,
+              onTap: () => onSortChanged(ShopSortBy.topRated),
+            ),
+            const SizedBox(width: BBSpacing.xs),
+            _SortChip(
+              label: 'Fastest',
+              icon: Icons.timer_outlined,
+              selected: sortBy == ShopSortBy.fastest,
+              onTap: () => onSortChanged(ShopSortBy.fastest),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Container(
+              width: 1,
+              height: 20,
+              color: colors.border,
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            _SortChip(
+              label: 'Open Now',
+              icon: Icons.circle_rounded,
+              selected: openOnly,
+              selectedIconColor: BBColors.success,
+              onTap: () => onOpenOnlyChanged(!openOnly),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SortChip extends StatelessWidget {
+  const _SortChip({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+    this.selectedIconColor,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  final Color? selectedIconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? colors.accent : colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.full),
+          border: Border.all(
+            color: selected ? colors.accent : colors.border,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: selected
+                  ? (selectedIconColor ?? colors.accentForeground)
+                  : colors.textSecondary,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: selected ? colors.accentForeground : colors.textSecondary,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -198,7 +343,8 @@ class _ShopCard extends StatelessWidget {
                         child: Text(
                           shop.isOpen ? 'Open' : 'Closed',
                           style: BBTypography.textTheme.labelSmall?.copyWith(
-                            color: shop.isOpen ? BBColors.success : BBColors.error,
+                            color:
+                                shop.isOpen ? BBColors.success : BBColors.error,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

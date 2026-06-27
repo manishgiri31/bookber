@@ -78,6 +78,8 @@ final shopWaitEstimatesProvider =
 
 // ─────────────── Shop search ───────────────
 
+enum ShopSortBy { none, nearest, topRated, fastest }
+
 class ShopsSearchState {
   const ShopsSearchState({
     this.query = '',
@@ -85,6 +87,8 @@ class ShopsSearchState {
     this.isLoading = false,
     this.error,
     this.hasSearched = false,
+    this.sortBy = ShopSortBy.none,
+    this.openOnly = false,
   });
 
   final String query;
@@ -92,6 +96,28 @@ class ShopsSearchState {
   final bool isLoading;
   final String? error;
   final bool hasSearched;
+  final ShopSortBy sortBy;
+  final bool openOnly;
+
+  List<Shop> get displayed {
+    var list = openOnly ? shops.where((s) => s.isOpen).toList() : [...shops];
+    switch (sortBy) {
+      case ShopSortBy.nearest:
+        list.sort((a, b) {
+          if (a.distanceKm == null && b.distanceKm == null) return 0;
+          if (a.distanceKm == null) return 1;
+          if (b.distanceKm == null) return -1;
+          return a.distanceKm!.compareTo(b.distanceKm!);
+        });
+      case ShopSortBy.topRated:
+        list.sort((a, b) => b.rating.compareTo(a.rating));
+      case ShopSortBy.fastest:
+        list.sort((a, b) => a.waitTimeMinutes.compareTo(b.waitTimeMinutes));
+      case ShopSortBy.none:
+        break;
+    }
+    return list;
+  }
 
   ShopsSearchState copyWith({
     String? query,
@@ -99,6 +125,8 @@ class ShopsSearchState {
     bool? isLoading,
     String? error,
     bool? hasSearched,
+    ShopSortBy? sortBy,
+    bool? openOnly,
   }) =>
       ShopsSearchState(
         query: query ?? this.query,
@@ -106,13 +134,14 @@ class ShopsSearchState {
         isLoading: isLoading ?? this.isLoading,
         error: error,
         hasSearched: hasSearched ?? this.hasSearched,
+        sortBy: sortBy ?? this.sortBy,
+        openOnly: openOnly ?? this.openOnly,
       );
 }
 
 class ShopsNotifier extends AutoDisposeNotifier<ShopsSearchState> {
   @override
   ShopsSearchState build() {
-    // React to location changes — reload shops when location becomes available
     ref.listen(locationProvider, (_, next) {
       if (next.hasValue && state.hasSearched) {
         _loadAll();
@@ -169,6 +198,14 @@ class ShopsNotifier extends AutoDisposeNotifier<ShopsSearchState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  void setSortBy(ShopSortBy sort) {
+    state = state.copyWith(
+      sortBy: state.sortBy == sort ? ShopSortBy.none : sort,
+    );
+  }
+
+  void setOpenOnly(bool val) => state = state.copyWith(openOnly: val);
 
   void clear() => state = const ShopsSearchState();
   Future<void> refresh() => _loadAll();

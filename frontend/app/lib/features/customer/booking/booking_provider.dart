@@ -11,7 +11,7 @@ class BookingFormData {
   const BookingFormData({
     required this.shopId,
     required this.shopName,
-    this.selectedServices = const [],
+    this.selectedService,
     this.selectedBarberId,
     this.selectedBarberName,
     this.joinQueue = false,
@@ -19,18 +19,17 @@ class BookingFormData {
 
   final String shopId;
   final String shopName;
-  final List<ServiceItem> selectedServices;
+  final ServiceItem? selectedService;
   final String? selectedBarberId;
   final String? selectedBarberName;
   final bool joinQueue;
 
-  double get totalAmount =>
-      selectedServices.fold(0, (s, e) => s + e.price);
-  int get totalDuration =>
-      selectedServices.fold(0, (s, e) => s + e.durationMin);
+  double get totalAmount => selectedService?.price ?? 0;
+  int get totalDuration => selectedService?.durationMin ?? 0;
 
   BookingFormData copyWith({
-    List<ServiceItem>? selectedServices,
+    ServiceItem? selectedService,
+    bool clearService = false,
     String? selectedBarberId,
     String? selectedBarberName,
     bool? joinQueue,
@@ -39,7 +38,8 @@ class BookingFormData {
       BookingFormData(
         shopId: shopId,
         shopName: shopName,
-        selectedServices: selectedServices ?? this.selectedServices,
+        selectedService:
+            clearService ? null : (selectedService ?? this.selectedService),
         selectedBarberId:
             clearBarber ? null : (selectedBarberId ?? this.selectedBarberId),
         selectedBarberName: clearBarber
@@ -48,7 +48,7 @@ class BookingFormData {
         joinQueue: joinQueue ?? this.joinQueue,
       );
 
-  bool get canSubmit => selectedServices.isNotEmpty;
+  bool get canSubmit => selectedService != null;
 }
 
 // ─────────────── Booking form notifier ───────────────
@@ -57,14 +57,12 @@ class BookingFormNotifier extends StateNotifier<BookingFormData> {
   BookingFormNotifier({required String shopId, required String shopName})
       : super(BookingFormData(shopId: shopId, shopName: shopName));
 
-  void toggleService(ServiceItem service) {
-    final current = state.selectedServices;
-    if (current.any((s) => s.id == service.id)) {
-      state = state.copyWith(
-        selectedServices: current.where((s) => s.id != service.id).toList(),
-      );
+  void selectService(ServiceItem service) {
+    // Single-select: selecting same service deselects, selecting different one replaces
+    if (state.selectedService?.id == service.id) {
+      state = state.copyWith(clearService: true);
     } else {
-      state = state.copyWith(selectedServices: [...current, service]);
+      state = state.copyWith(selectedService: service);
     }
   }
 
@@ -83,7 +81,8 @@ class BookingFormNotifier extends StateNotifier<BookingFormData> {
 }
 
 final bookingFormFamily = StateNotifierProvider.autoDispose
-    .family<BookingFormNotifier, BookingFormData, ({String shopId, String shopName})>(
+    .family<BookingFormNotifier, BookingFormData,
+        ({String shopId, String shopName})>(
   (ref, arg) =>
       BookingFormNotifier(shopId: arg.shopId, shopName: arg.shopName),
 );
@@ -106,8 +105,8 @@ class BookingFailed extends BookingSubmitState {
   final String message;
 }
 
-final bookingSubmitProvider =
-    StateNotifierProvider.autoDispose<BookingSubmitNotifier, BookingSubmitState>(
+final bookingSubmitProvider = StateNotifierProvider.autoDispose<
+    BookingSubmitNotifier, BookingSubmitState>(
   (ref) => BookingSubmitNotifier(ref),
 );
 
@@ -117,25 +116,19 @@ class BookingSubmitNotifier extends StateNotifier<BookingSubmitState> {
   final Ref _ref;
 
   Future<Booking?> submit(BookingFormData form) async {
+    if (form.selectedService == null) return null;
     state = BookingSubmitting();
     try {
       final api = _ref.read(apiClientProvider);
 
-      final Map<String, dynamic> body;
-      if (form.joinQueue) {
-        body = {
-          'shopId': form.shopId,
-          'serviceId': form.selectedServices.first.id,
-          if (form.selectedBarberId != null) 'barberId': form.selectedBarberId,
-          'walkIn': false,
-        };
-      } else {
-        body = {
-          'shopId': form.shopId,
-          'serviceId': form.selectedServices.first.id,
-          if (form.selectedBarberId != null) 'barberId': form.selectedBarberId,
-        };
-      }
+      // POST /bookings already calls reserveQueue which creates the queue entry.
+      // walkIn=true for "Join Queue" flow, walkIn=false for "Book" flow.
+      final body = {
+        'shopId': form.shopId,
+        'serviceId': form.selectedService!.id,
+        if (form.selectedBarberId != null) 'barberId': form.selectedBarberId,
+        'walkIn': form.joinQueue,
+      };
 
       final data = await api.post<Map<String, dynamic>>(
         ApiEndpoints.bookings,
@@ -146,17 +139,10 @@ class BookingSubmitNotifier extends StateNotifier<BookingSubmitState> {
         data['booking'] as Map<String, dynamic>? ?? data,
       );
 
-      if (form.joinQueue) {
-        await _ref.read(apiClientProvider).post<void>(
-          ApiEndpoints.enqueue(form.shopId),
-          body: {'bookingId': booking.id},
-        );
-      }
-
       state = BookingSuccess(booking);
       return booking;
     } catch (e) {
-      state = BookingFailed(e.toString());
+      state = BookingFailed(e.toString().replaceFirst('Exception: ', ''));
       return null;
     }
   }

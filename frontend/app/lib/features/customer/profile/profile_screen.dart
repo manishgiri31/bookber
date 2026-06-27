@@ -9,11 +9,18 @@ import '../../../core/widgets/bb_button.dart';
 import '../../../core/widgets/bb_text_field.dart';
 import '../../auth/data/auth_provider.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _signingOut = false;
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final colors = context.bbColors;
 
@@ -92,7 +99,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.phone_outlined,
                 label: 'Phone',
                 value: user.phone.isNotEmpty ? user.phone : 'Tap to add',
-                onEdit: () => _editPhone(context, ref, user.phone),
+                onEdit: () => _editPhone(context, user.phone),
               ),
             ],
           ),
@@ -162,7 +169,8 @@ class ProfileScreen extends ConsumerWidget {
           BBButton(
             label: 'Sign Out',
             variant: BBButtonVariant.destructive,
-            onPressed: () => _confirmSignOut(context, ref),
+            onPressed: _signingOut ? null : () => _confirmSignOut(context),
+            loading: _signingOut,
             icon: Icons.logout_rounded,
           ),
           const SizedBox(height: BBSpacing.base),
@@ -171,7 +179,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  void _editPhone(BuildContext context, WidgetRef ref, String currentPhone) {
+  void _editPhone(BuildContext context, String currentPhone) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -193,7 +201,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmSignOut(BuildContext context) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -214,9 +222,10 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
-    if (ok == true && context.mounted) {
-      await ref.read(authProvider.notifier).logout();
-    }
+    if (ok != true || !context.mounted) return;
+    setState(() => _signingOut = true);
+    await ref.read(authProvider.notifier).logout();
+    if (mounted) setState(() => _signingOut = false);
   }
 }
 

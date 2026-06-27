@@ -90,7 +90,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   borderRadius: BorderRadius.circular(BBRadius.xl),
                   boxShadow: [
                     BoxShadow(
-                      color: BBColors.amber.withValues(alpha: isDark ? 0.3 : 0.2),
+                      color: colors.accent.withValues(alpha: isDark ? 0.3 : 0.2),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -153,7 +153,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Text(
                     'Forgot password?',
                     style: BBTypography.textTheme.bodySmall?.copyWith(
-                      color: BBColors.amber,
+                      color: colors.accent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -207,7 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Text(
                       'Create one',
                       style: BBTypography.textTheme.bodyMedium?.copyWith(
-                        color: BBColors.amber,
+                        color: colors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

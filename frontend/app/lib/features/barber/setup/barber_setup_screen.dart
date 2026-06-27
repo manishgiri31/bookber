@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
+import '../../../core/providers/location_provider.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/widgets/bb_button.dart';
 import '../../../core/widgets/bb_text_field.dart';
 import '../dashboard/barber_provider.dart';
+import '../../../core/design/bb_colors.dart';
 
 class BarberSetupScreen extends ConsumerStatefulWidget {
   const BarberSetupScreen({super.key});
@@ -26,6 +27,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
   bool _loading = false;
   String? _error;
   int _step = 0;
+  int _chairs = 2;
 
   @override
   void dispose() {
@@ -53,6 +55,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
     });
 
     try {
+      final location = ref.read(locationProvider).valueOrNull;
       final api = ref.read(apiClientProvider);
       await api.post<Map<String, dynamic>>(
         '/shops',
@@ -65,16 +68,13 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
           'city': _cityCtrl.text.trim(),
           'state': _stateCtrl.text.trim(),
           'country': _countryCtrl.text.trim(),
-          'latitude': 0.0,
-          'longitude': 0.0,
+          'latitude': location?.latitude ?? 0.0,
+          'longitude': location?.longitude ?? 0.0,
           'services': [],
-          'chairs': [
-            {'number': 1},
-          ],
+          'chairs': List.generate(_chairs, (i) => {'number': i + 1}),
         },
       );
       if (!mounted) return;
-      // Reload barber dashboard after setup
       await ref.read(barberDashProvider.notifier).refresh();
     } catch (e) {
       if (!mounted) return;
@@ -179,6 +179,105 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               prefixIcon: Icons.public_rounded,
               textInputAction: TextInputAction.done,
             ),
+            const SizedBox(height: BBSpacing.base),
+            // Chairs stepper
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.base,
+                vertical: BBSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(BBRadius.lg),
+                border: Border.all(color: colors.border),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.chair_outlined,
+                      size: 18, color: colors.textSecondary),
+                  const SizedBox(width: BBSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Number of Chairs',
+                          style: BBTypography.textTheme.labelSmall?.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                        Text(
+                          '$_chairs chair${_chairs == 1 ? '' : 's'}',
+                          style: BBTypography.textTheme.bodyMedium?.copyWith(
+                            color: colors.text,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _StepperButton(
+                        icon: Icons.remove_rounded,
+                        onTap: _chairs > 1
+                            ? () => setState(() => _chairs--)
+                            : null,
+                      ),
+                      const SizedBox(width: BBSpacing.sm),
+                      SizedBox(
+                        width: 28,
+                        child: Text(
+                          '$_chairs',
+                          textAlign: TextAlign.center,
+                          style: BBTypography.textTheme.titleMedium?.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: BBSpacing.sm),
+                      _StepperButton(
+                        icon: Icons.add_rounded,
+                        onTap: _chairs < 20
+                            ? () => setState(() => _chairs++)
+                            : null,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Location indicator
+            Consumer(
+              builder: (context, ref, _) {
+                final locationAsync = ref.watch(locationProvider);
+                return locationAsync.when(
+                  data: (loc) {
+                    if (loc == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: BBSpacing.sm),
+                      child: Row(
+                        children: [
+                          Icon(Icons.my_location_rounded,
+                              size: 14, color: BBColors.success),
+                          const SizedBox(width: 4),
+                          Text(
+                            loc.cityName != null
+                                ? 'Location detected: ${loc.cityName}'
+                                : 'Location detected',
+                            style: BBTypography.textTheme.labelSmall?.copyWith(
+                              color: BBColors.success,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, _) => const SizedBox.shrink(),
+                );
+              },
+            ),
             if (_error != null) ...[
               const SizedBox(height: BBSpacing.base),
               Container(
@@ -223,6 +322,35 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
   }
 }
 
+class _StepperButton extends StatelessWidget {
+  const _StepperButton({required this.icon, this.onTap});
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final enabled = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: enabled ? colors.surfaceVariant : colors.surfaceVariant.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(BBRadius.md),
+          border: Border.all(color: colors.border),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: enabled ? colors.text : colors.textTertiary,
+        ),
+      ),
+    );
+  }
+}
+
 class _WelcomeStep extends StatelessWidget {
   const _WelcomeStep({required this.onContinue});
   final VoidCallback onContinue;
@@ -246,13 +374,13 @@ class _WelcomeStep extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.12),
+                  color: colors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(BBRadius.lg),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.content_cut_rounded,
                   size: 32,
-                  color: BBColors.amber,
+                  color: colors.accent,
                 ),
               ),
               const SizedBox(height: BBSpacing.xl),
@@ -323,10 +451,10 @@ class _FeatureRow extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: BBColors.amber.withValues(alpha: 0.08),
+            color: colors.accent.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(BBRadius.md),
           ),
-          child: Icon(icon, size: 20, color: BBColors.amber),
+          child: Icon(icon, size: 20, color: colors.accent),
         ),
         const SizedBox(width: BBSpacing.md),
         Expanded(

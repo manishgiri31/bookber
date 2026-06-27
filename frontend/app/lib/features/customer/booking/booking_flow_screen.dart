@@ -7,7 +7,6 @@ import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
 import '../../../core/widgets/bb_button.dart';
 import '../../../core/widgets/bb_loading.dart';
-import '../../../core/widgets/bb_snackbar.dart';
 import '../../shared/domain/shop_models.dart';
 import '../shops/shops_provider.dart';
 import 'booking_provider.dart';
@@ -31,6 +30,7 @@ class BookingFlowScreen extends ConsumerStatefulWidget {
 class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
   int _step = 0; // 0=services, 1=barber, 2=confirm
   bool _submitting = false;
+  String? _submitError;
 
   late final _formArg = (shopId: widget.shopId, shopName: widget.shopName);
 
@@ -48,12 +48,11 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
           onPressed: () => context.pop(),
         ),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
+          preferredSize: const Size.fromHeight(3),
           child: LinearProgressIndicator(
             value: (_step + 1) / 3,
             backgroundColor: colors.border,
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(BBColors.amber),
+            valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
             minHeight: 3,
           ),
         ),
@@ -67,12 +66,17 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
                 child: _buildStep(_step),
               ),
             ),
+            if (_submitError != null)
+              _ErrorBanner(
+                message: _submitError!,
+                onDismiss: () => setState(() => _submitError = null),
+              ),
             _BottomBar(
               step: _step,
-              canProceed: form.selectedServices.isNotEmpty,
+              canProceed: form.selectedService != null,
               submitting: _submitting,
-              onBack: _step > 0 ? () => setState(() => _step--) : null,
-              onNext: _step == 0 && form.selectedServices.isEmpty
+              onBack: _step > 0 ? () => setState(() { _step--; _submitError = null; }) : null,
+              onNext: _step == 0 && form.selectedService == null
                   ? null
                   : _handleNext,
             ),
@@ -83,7 +87,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
   }
 
   String get _stepTitle => switch (_step) {
-        0 => 'Select Services',
+        0 => 'Select Service',
         1 => 'Choose Barber',
         _ => 'Confirm Booking',
       };
@@ -108,10 +112,10 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
 
   Future<void> _handleNext() async {
     if (_step < 2) {
-      setState(() => _step++);
+      setState(() { _step++; _submitError = null; });
       return;
     }
-    setState(() => _submitting = true);
+    setState(() { _submitting = true; _submitError = null; });
     final form = ref.read(bookingFormFamily(_formArg));
     final result = await ref
         .read(bookingSubmitProvider.notifier)
@@ -122,12 +126,50 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
       context.go('/queue/${result.id}');
     } else {
       final st = ref.read(bookingSubmitProvider);
-      showBBSnackbar(
-        context,
-        message: st is BookingFailed ? st.message : 'Booking failed.',
-        isError: true,
-      );
+      setState(() => _submitError =
+          st is BookingFailed ? st.message : 'Booking failed. Please try again.');
     }
+  }
+}
+
+// ─────────────── Error banner ───────────────
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message, required this.onDismiss});
+  final String message;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: BBSpacing.base,
+        vertical: BBSpacing.sm,
+      ),
+      color: BBColors.errorSurface,
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              color: BBColors.error, size: 18),
+          const SizedBox(width: BBSpacing.sm),
+          Expanded(
+            child: Text(
+              message,
+              style: BBTypography.textTheme.bodySmall
+                  ?.copyWith(color: BBColors.error),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded,
+                color: BBColors.error, size: 18),
+            onPressed: onDismiss,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -151,7 +193,11 @@ class _ServicesStep extends ConsumerWidget {
 
     return async.when(
       loading: () => const Center(child: BBLoader()),
-      error: (e, _) => Center(child: Text(e.toString())),
+      error: (e, _) => Center(
+        child: Text(e.toString(),
+            style: BBTypography.textTheme.bodyMedium
+                ?.copyWith(color: BBColors.error)),
+      ),
       data: (services) => ListView(
         padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
         children: [
@@ -159,11 +205,12 @@ class _ServicesStep extends ConsumerWidget {
             'What do you need?',
             style: BBTypography.textTheme.headlineSmall?.copyWith(
               color: colors.text,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: BBSpacing.sm),
+          const SizedBox(height: BBSpacing.xs),
           Text(
-            'Select one or more services',
+            'Select one service to continue.',
             style: BBTypography.textTheme.bodyMedium?.copyWith(
               color: colors.textSecondary,
             ),
@@ -172,10 +219,10 @@ class _ServicesStep extends ConsumerWidget {
           ...services.map(
             (s) => Padding(
               padding: const EdgeInsets.only(bottom: BBSpacing.sm),
-              child: _ServiceCheckRow(
+              child: _ServiceRadioRow(
                 service: s,
-                selected: form.selectedServices.any((ss) => ss.id == s.id),
-                onTap: () => notifier.toggleService(s),
+                selected: form.selectedService?.id == s.id,
+                onTap: () => notifier.selectService(s),
               ),
             ),
           ),
@@ -185,8 +232,8 @@ class _ServicesStep extends ConsumerWidget {
   }
 }
 
-class _ServiceCheckRow extends StatelessWidget {
-  const _ServiceCheckRow({
+class _ServiceRadioRow extends StatelessWidget {
+  const _ServiceRadioRow({
     required this.service,
     required this.selected,
     required this.onTap,
@@ -205,11 +252,11 @@ class _ServiceCheckRow extends StatelessWidget {
         padding: const EdgeInsets.all(BBSpacing.base),
         decoration: BoxDecoration(
           color: selected
-              ? BBColors.amber.withValues(alpha: 0.08)
+              ? colors.accent.withValues(alpha: 0.08)
               : colors.surface,
           borderRadius: BorderRadius.circular(BBRadius.md),
           border: Border.all(
-            color: selected ? BBColors.amber : colors.border,
+            color: selected ? colors.accent : colors.border,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -223,33 +270,49 @@ class _ServiceCheckRow extends StatelessWidget {
                     service.name,
                     style: BBTypography.textTheme.titleMedium?.copyWith(
                       color: colors.text,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     '${service.durationLabel} · ${service.priceLabel}',
                     style: BBTypography.textTheme.bodySmall?.copyWith(
                       color: colors.textSecondary,
                     ),
                   ),
+                  if (service.description != null &&
+                      service.description!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      service.description!,
+                      style: BBTypography.textTheme.labelSmall?.copyWith(
+                        color: colors.textTertiary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),
+            const SizedBox(width: BBSpacing.md),
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               width: 22,
               height: 22,
               decoration: BoxDecoration(
-                color: selected ? BBColors.amber : Colors.transparent,
+                color: selected ? colors.accent : Colors.transparent,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: selected ? BBColors.amber : colors.textTertiary,
+                  color: selected ? colors.accent : colors.textTertiary,
+                  width: 1.5,
                 ),
               ),
               child: selected
-                  ? const Icon(
+                  ? Icon(
                       Icons.check_rounded,
                       size: 14,
-                      color: Color(0xFF09090B),
+                      color: colors.accentForeground,
                     )
                   : null,
             ),
@@ -313,9 +376,10 @@ class _BarberList extends StatelessWidget {
           'Choose a barber',
           style: BBTypography.textTheme.headlineSmall?.copyWith(
             color: colors.text,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: BBSpacing.sm),
+        const SizedBox(height: BBSpacing.xs),
         Text(
           'Optional — or let us pick the fastest.',
           style: BBTypography.textTheme.bodyMedium?.copyWith(
@@ -348,14 +412,14 @@ class _BarberList extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.15),
+                  color: colors.accent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     b.name.isNotEmpty ? b.name[0].toUpperCase() : 'B',
                     style: BBTypography.textTheme.titleMedium?.copyWith(
-                      color: BBColors.amber,
+                      color: colors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -403,13 +467,13 @@ class _SelectableTile extends StatelessWidget {
         padding: const EdgeInsets.all(BBSpacing.base),
         decoration: BoxDecoration(
           color: selected
-              ? BBColors.amber.withValues(alpha: 0.08)
+              ? colors.accent.withValues(alpha: 0.08)
               : disabled
                   ? colors.surfaceVariant.withValues(alpha: 0.5)
                   : colors.surface,
           borderRadius: BorderRadius.circular(BBRadius.md),
           border: Border.all(
-            color: selected ? BBColors.amber : colors.border,
+            color: selected ? colors.accent : colors.border,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -437,9 +501,9 @@ class _SelectableTile extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(
+              Icon(
                 Icons.check_circle_rounded,
-                color: BBColors.amber,
+                color: colors.accent,
                 size: 22,
               ),
           ],
@@ -469,9 +533,17 @@ class _ConfirmStep extends ConsumerWidget {
       padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
       children: [
         Text(
-          'Confirm Booking',
+          'Review your booking',
           style: BBTypography.textTheme.headlineSmall?.copyWith(
             color: colors.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xs),
+        Text(
+          'Everything look right? Tap Confirm to book.',
+          style: BBTypography.textTheme.bodyMedium?.copyWith(
+            color: colors.textSecondary,
           ),
         ),
         const SizedBox(height: BBSpacing.xl),
@@ -489,8 +561,8 @@ class _SummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final service = form.selectedService;
     return Container(
-      padding: const EdgeInsets.all(BBSpacing.base),
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(BBRadius.lg),
@@ -498,54 +570,54 @@ class _SummaryCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _Row(
-            label: 'Shop',
-            value: form.shopName,
-            colors: colors,
+          _SummaryRow(label: 'Shop', value: form.shopName),
+          Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+          _SummaryRow(
+            label: 'Service',
+            value: service?.name ?? '—',
           ),
-          Divider(color: colors.border, height: BBSpacing.base * 2),
-          _Row(
-            label: 'Services',
-            value: form.selectedServices.map((s) => s.name).join(', '),
-            colors: colors,
-          ),
-          Divider(color: colors.border, height: BBSpacing.base * 2),
-          _Row(
+          Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+          _SummaryRow(
             label: 'Barber',
             value: form.selectedBarberName ?? 'Any Available',
-            colors: colors,
           ),
-          Divider(color: colors.border, height: BBSpacing.base * 2),
-          _Row(
+          Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+          _SummaryRow(
             label: 'Mode',
             value: joinQueue ? 'Join Queue' : 'Book',
-            colors: colors,
           ),
-          Divider(color: colors.border, height: BBSpacing.base * 2),
-          _Row(
-            label: 'Duration',
-            value: '${form.totalDuration} min',
-            colors: colors,
-          ),
-          Divider(color: colors.border, height: BBSpacing.base * 2),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total',
-                style: BBTypography.textTheme.titleLarge?.copyWith(
-                  color: colors.text,
-                  fontWeight: FontWeight.w700,
+          if (service != null) ...[
+            Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+            _SummaryRow(
+              label: 'Duration',
+              value: service.durationLabel,
+            ),
+          ],
+          Divider(color: colors.border, height: 1),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: BBSpacing.base,
+              vertical: BBSpacing.base,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total',
+                  style: BBTypography.textTheme.titleMedium?.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              Text(
-                '₹${form.totalAmount.toStringAsFixed(0)}',
-                style: BBTypography.textTheme.titleLarge?.copyWith(
-                  color: BBColors.amber,
-                  fontWeight: FontWeight.w700,
+                Text(
+                  service != null ? service.priceLabel : '₹0',
+                  style: BBTypography.textTheme.titleMedium?.copyWith(
+                    color: colors.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -553,41 +625,43 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _Row extends StatelessWidget {
-  const _Row({
-    required this.label,
-    required this.value,
-    required this.colors,
-  });
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({required this.label, required this.value});
   final String label;
   final String value;
-  final BBColorScheme colors;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 70,
-          child: Text(
-            label,
-            style: BBTypography.textTheme.bodyMedium?.copyWith(
-              color: colors.textSecondary,
+    final colors = context.bbColors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: BBSpacing.base,
+        vertical: BBSpacing.md,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 72,
+            child: Text(
+              label,
+              style: BBTypography.textTheme.bodyMedium?.copyWith(
+                color: colors.textSecondary,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: BBSpacing.base),
-        Expanded(
-          child: Text(
-            value,
-            style: BBTypography.textTheme.bodyMedium?.copyWith(
-              color: colors.text,
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: BBSpacing.base),
+          Expanded(
+            child: Text(
+              value,
+              style: BBTypography.textTheme.bodyMedium?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -618,6 +692,7 @@ class _BottomBar extends StatelessWidget {
         border: Border(top: BorderSide(color: colors.border)),
       ),
       child: SafeArea(
+        top: false,
         child: Row(
           children: [
             if (onBack != null) ...[
@@ -631,7 +706,7 @@ class _BottomBar extends StatelessWidget {
             ],
             Expanded(
               child: BBButton(
-                label: step == 2 ? 'Confirm' : 'Continue',
+                label: step == 2 ? 'Confirm Booking' : 'Continue',
                 onPressed: step == 0 && !canProceed ? null : onNext,
                 loading: submitting,
                 disabled: step == 0 && !canProceed,

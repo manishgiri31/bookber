@@ -118,8 +118,14 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
-    await ref.read(notificationsProvider.notifier).revokeToken();
-    await _repo.logout();
+    // Fire-and-forget FCM token revocation — don't block logout on it
+    ref.read(notificationsProvider.notifier).revokeToken().ignore();
+    await _repo.logout(); // Has built-in 3-second timeout on the API call
+    state = const AuthUnauthenticated();
+  }
+
+  void forceLogout() {
+    _repo.clearLocalSession();
     state = const AuthUnauthenticated();
   }
 
