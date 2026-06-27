@@ -71,7 +71,7 @@ class MyReviewsScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       appBar: AppBar(title: const Text('My Reviews')),
       body: async.when(
-        loading: () => const Center(child: BBLoader()),
+        loading: () => const BBSkeletonListView(itemCount: 3),
         error: (_, _) => const BBEmptyState(
           title: 'Couldn\'t load reviews',
           subtitle: 'Pull down to retry.',

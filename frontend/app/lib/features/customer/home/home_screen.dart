@@ -9,8 +9,10 @@ import '../../../core/providers/location_provider.dart';
 import '../../../core/providers/notifications_provider.dart';
 import '../../../core/widgets/bb_empty_state.dart';
 import '../../../core/widgets/bb_error_widget.dart';
+import '../../../core/widgets/bb_loading.dart';
 import '../../auth/data/auth_provider.dart';
 import '../../shared/domain/shop_models.dart';
+import '../booking/booking_provider.dart';
 import 'discovery_provider.dart';
 import 'home_provider.dart';
 
@@ -27,7 +29,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.background,
       body: RefreshIndicator(
-        color: BBColors.amber,
+        color: colors.accent,
         backgroundColor: colors.surface,
         onRefresh: () => ref.read(homeProvider.notifier).refresh(),
         child: CustomScrollView(
@@ -44,13 +46,19 @@ class HomeScreen extends ConsumerWidget {
             // Active booking banner
             _ActiveBookingBanner(),
 
+            // Quick rebook (last completed booking)
+            _QuickRebookCard(),
+
+            // Service category chips
+            const SliverToBoxAdapter(child: _ServiceCategoriesSection()),
+
             // Quick actions row
             const SliverToBoxAdapter(child: _QuickActions()),
 
-            // Discovery: nearby shops
+            // Discovery: nearby shops (with skeleton)
             _NearbySection(),
 
-            // Discovery: top-rated shops
+            // Discovery: top-rated shops (with skeleton)
             _TopRatedSection(),
 
             // All shops list
@@ -619,7 +627,9 @@ class _NearbySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final nearbyAsync = ref.watch(nearbyShopsProvider);
     final shops = nearbyAsync.valueOrNull ?? [];
-    if (shops.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    if (!nearbyAsync.isLoading && shops.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -629,16 +639,20 @@ class _NearbySection extends ConsumerWidget {
             child: _SectionHeader(title: 'Nearby'),
           ),
           const SizedBox(height: BBSpacing.md),
-          SizedBox(
-            height: 230,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
-              scrollDirection: Axis.horizontal,
-              itemCount: shops.length,
-              separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
-              itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
+          if (nearbyAsync.isLoading)
+            const _HorizontalShopsSkeleton()
+          else
+            SizedBox(
+              height: 230,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.pageHorizontal),
+                scrollDirection: Axis.horizontal,
+                itemCount: shops.length,
+                separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
+                itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
+              ),
             ),
-          ),
           const SizedBox(height: BBSpacing.xl),
         ],
       ),
@@ -651,7 +665,9 @@ class _TopRatedSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final topAsync = ref.watch(topRatedShopsProvider);
     final shops = topAsync.valueOrNull ?? [];
-    if (shops.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    if (!topAsync.isLoading && shops.isEmpty) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -664,16 +680,20 @@ class _TopRatedSection extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: BBSpacing.md),
-          SizedBox(
-            height: 230,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
-              scrollDirection: Axis.horizontal,
-              itemCount: shops.length,
-              separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
-              itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
+          if (topAsync.isLoading)
+            const _HorizontalShopsSkeleton()
+          else
+            SizedBox(
+              height: 230,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.pageHorizontal),
+                scrollDirection: Axis.horizontal,
+                itemCount: shops.length,
+                separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
+                itemBuilder: (ctx, i) => _ShopCard(shop: shops[i]),
+              ),
             ),
-          ),
           const SizedBox(height: BBSpacing.xl),
         ],
       ),
@@ -870,6 +890,196 @@ class _ShopCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Horizontal skeleton (3 shimmer cards) ───────────────────────────────────
+
+class _HorizontalShopsSkeleton extends StatelessWidget {
+  const _HorizontalShopsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 230,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
+        scrollDirection: Axis.horizontal,
+        itemCount: 3,
+        separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
+        itemBuilder: (_, _) =>
+            BBShimmerBox(width: 200, height: 230, radius: BBRadius.xl),
+      ),
+    );
+  }
+}
+
+// ─── Service category chips ───────────────────────────────────────────────────
+
+class _ServiceCategoriesSection extends StatelessWidget {
+  const _ServiceCategoriesSection();
+
+  static const _cats = [
+    (icon: Icons.content_cut_rounded, label: 'Haircut'),
+    (icon: Icons.auto_fix_high_rounded, label: 'Fade'),
+    (icon: Icons.face_6_rounded, label: 'Beard'),
+    (icon: Icons.spa_rounded, label: 'Facial'),
+    (icon: Icons.water_drop_outlined, label: 'Hair Wash'),
+    (icon: Icons.self_improvement_rounded, label: 'Massage'),
+    (icon: Icons.child_care_rounded, label: 'Kids'),
+    (icon: Icons.palette_outlined, label: 'Color'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.md),
+          child: _SectionHeader(title: 'Services'),
+        ),
+        SizedBox(
+          height: 86,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.pageHorizontal),
+            scrollDirection: Axis.horizontal,
+            itemCount: _cats.length,
+            separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
+            itemBuilder: (ctx, i) {
+              final cat = _cats[i];
+              return GestureDetector(
+                onTap: () => ctx.push('/shops'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(BBRadius.xl),
+                        border: Border.all(color: colors.border),
+                      ),
+                      child: Center(
+                        child: Icon(cat.icon, size: 22, color: colors.accent),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      cat.label,
+                      style: BBTypography.textTheme.labelSmall?.copyWith(
+                        color: colors.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+      ],
+    );
+  }
+}
+
+// ─── Quick Rebook card ────────────────────────────────────────────────────────
+
+class _QuickRebookCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bookingsAsync = ref.watch(myBookingsProvider);
+    final last = bookingsAsync.valueOrNull
+        ?.where((b) => b.status == 'COMPLETED' && b.shopId.isNotEmpty)
+        .firstOrNull;
+    if (last == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    final colors = context.bbColors;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.base),
+        child: GestureDetector(
+          onTap: () => context.push('/shops/${last.shopId}'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: BBSpacing.base, vertical: BBSpacing.md),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(BBRadius.xl),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: colors.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(BBRadius.md),
+                  ),
+                  child:
+                      Icon(Icons.replay_rounded, size: 18, color: colors.accent),
+                ),
+                const SizedBox(width: BBSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Quick Rebook',
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.textTertiary,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      Text(
+                        last.shopName.isNotEmpty ? last.shopName : 'Last shop',
+                        style: BBTypography.textTheme.titleSmall?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (last.serviceNames.isNotEmpty)
+                        Text(
+                          last.serviceNames,
+                          style: BBTypography.textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: BBSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: colors.accent,
+                    borderRadius: BorderRadius.circular(BBRadius.full),
+                  ),
+                  child: Text(
+                    'Rebook',
+                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                      color: colors.accentForeground,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

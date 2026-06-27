@@ -380,7 +380,7 @@ class _ServicesTab extends ConsumerWidget {
     final colors = context.bbColors;
     final async = ref.watch(shopServicesProvider(shopId));
     return async.when(
-      loading: () => const Center(child: BBLoader()),
+      loading: () => const BBSkeletonListView(itemCount: 5),
       error: (e, _) => BBErrorWidget(error: e),
       data: (services) => services.isEmpty
           ? const Center(child: Text('No services listed'))
@@ -466,7 +466,7 @@ class _BarbersTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(shopBarbersProvider(shopId));
     return async.when(
-      loading: () => const Center(child: BBLoader()),
+      loading: () => const BBSkeletonListView(itemCount: 3),
       error: (e, _) => BBErrorWidget(error: e),
       data: (barbers) => barbers.isEmpty
           ? const Center(
@@ -610,7 +610,7 @@ class _ReviewsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(shopReviewsProvider(shopId));
     return async.when(
-      loading: () => const Center(child: BBLoader()),
+      loading: () => const BBSkeletonListView(itemCount: 3),
       error: (e, _) => BBErrorWidget(error: e),
       data: (reviews) => reviews.isEmpty
           ? const Center(child: Text('No reviews yet'))

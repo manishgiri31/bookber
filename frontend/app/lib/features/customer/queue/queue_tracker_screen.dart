@@ -40,7 +40,7 @@ class QueueTrackerScreen extends ConsumerWidget {
         ],
       ),
       body: state.isLoading
-          ? const Center(child: BBLoader())
+          ? const BBSkeletonListView(itemCount: 2, padding: EdgeInsets.all(20))
           : state.error != null
               ? BBErrorWidget(
                   error: state.error!,

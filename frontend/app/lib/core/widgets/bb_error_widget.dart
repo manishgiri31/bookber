@@ -32,13 +32,13 @@ class BBErrorWidget extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: BBColors.errorSurface,
+              color: colors.surfaceVariant,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.error_outline_rounded,
+            child: Icon(
+              info.icon,
               size: 28,
-              color: BBColors.error,
+              color: colors.textSecondary,
             ),
           ),
           const SizedBox(height: BBSpacing.base),

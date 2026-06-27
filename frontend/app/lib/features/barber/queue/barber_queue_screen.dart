@@ -32,9 +32,9 @@ class BarberQueueScreen extends ConsumerWidget {
         ],
       ),
       body: state.isLoading
-          ? const Center(child: BBLoader())
+          ? const BBSkeletonListView()
           : RefreshIndicator(
-              color: BBColors.amber,
+              color: colors.accent,
               onRefresh: () =>
                   ref.read(barberDashProvider.notifier).refresh(),
               child: state.queueEntries.isEmpty

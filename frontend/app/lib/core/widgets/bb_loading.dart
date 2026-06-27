@@ -104,3 +104,106 @@ class BBShimmerList extends StatelessWidget {
     );
   }
 }
+
+/// Generic skeleton for list screens. Shows [itemCount] placeholder card items
+/// (icon box + two text lines) while data is loading.
+class BBSkeletonListView extends StatelessWidget {
+  const BBSkeletonListView({
+    super.key,
+    this.itemCount = 4,
+    this.padding,
+  });
+  final int itemCount;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return ListView.separated(
+      padding: padding ?? const EdgeInsets.all(BBSpacing.pageHorizontal),
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: itemCount,
+      separatorBuilder: (_, _) => const SizedBox(height: BBSpacing.sm),
+      itemBuilder: (_, _) => Container(
+        padding: const EdgeInsets.all(BBSpacing.base),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            BBShimmerBox(width: 44, height: 44, radius: BBRadius.md),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 2),
+                  BBShimmerBox(width: double.infinity, height: 14),
+                  const SizedBox(height: 8),
+                  BBShimmerBox(width: 160, height: 12),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Profile skeleton — avatar, name, stats row, section blocks.
+class BBSkeletonProfile extends StatelessWidget {
+  const BBSkeletonProfile({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: BBSpacing.pageHorizontal,
+        vertical: BBSpacing.pageVertical,
+      ),
+      children: [
+        Center(
+          child: Column(
+            children: [
+              BBShimmerBox(width: 80, height: 80, radius: 40),
+              const SizedBox(height: BBSpacing.md),
+              BBShimmerBox(width: 140, height: 18),
+              const SizedBox(height: BBSpacing.xs),
+              BBShimmerBox(width: 100, height: 14),
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+        Row(
+          children: [
+            Expanded(
+              child: BBShimmerBox(
+                  width: double.infinity, height: 80, radius: BBRadius.lg),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: BBShimmerBox(
+                  width: double.infinity, height: 80, radius: BBRadius.lg),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: BBShimmerBox(
+                  width: double.infinity, height: 80, radius: BBRadius.lg),
+            ),
+          ],
+        ),
+        const SizedBox(height: BBSpacing.xl),
+        BBShimmerBox(
+            width: double.infinity, height: 110, radius: BBRadius.lg),
+        const SizedBox(height: BBSpacing.base),
+        BBShimmerBox(width: double.infinity, height: 60, radius: BBRadius.lg),
+        const SizedBox(height: BBSpacing.base),
+        BBShimmerBox(width: double.infinity, height: 60, radius: BBRadius.lg),
+      ],
+    );
+  }
+}

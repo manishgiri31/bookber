@@ -141,28 +141,29 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.bbColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: BBSpacing.base,
         vertical: BBSpacing.sm,
       ),
-      color: BBColors.errorSurface,
+      color: colors.surfaceVariant,
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: BBColors.error, size: 18),
+          Icon(Icons.error_outline_rounded,
+              color: colors.textSecondary, size: 18),
           const SizedBox(width: BBSpacing.sm),
           Expanded(
             child: Text(
               message,
               style: BBTypography.textTheme.bodySmall
-                  ?.copyWith(color: BBColors.error),
+                  ?.copyWith(color: colors.text),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.close_rounded,
-                color: BBColors.error, size: 18),
+            icon: Icon(Icons.close_rounded,
+                color: colors.textSecondary, size: 18),
             onPressed: onDismiss,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -192,11 +193,11 @@ class _ServicesStep extends ConsumerWidget {
     final notifier = ref.read(bookingFormFamily(formArg).notifier);
 
     return async.when(
-      loading: () => const Center(child: BBLoader()),
+      loading: () => const BBSkeletonListView(itemCount: 3),
       error: (e, _) => Center(
         child: Text(e.toString(),
             style: BBTypography.textTheme.bodyMedium
-                ?.copyWith(color: BBColors.error)),
+                ?.copyWith(color: context.bbColors.textSecondary)),
       ),
       data: (services) => ListView(
         padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
@@ -341,7 +342,7 @@ class _BarberStep extends ConsumerWidget {
     final notifier = ref.read(bookingFormFamily(formArg).notifier);
 
     return async.when(
-      loading: () => const Center(child: BBLoader()),
+      loading: () => const BBSkeletonListView(itemCount: 3),
       error: (_, _) => _BarberList(
         barbers: const [],
         form: form,

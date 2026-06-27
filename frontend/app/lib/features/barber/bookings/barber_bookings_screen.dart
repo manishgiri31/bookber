@@ -98,7 +98,7 @@ class _BarberBookingsScreenState extends ConsumerState<BarberBookingsScreen>
         ),
       ),
       body: async.when(
-        loading: () => const Center(child: BBLoader()),
+        loading: () => const BBSkeletonListView(),
         error: (_, _) => BBEmptyState(
           title: 'Couldn\'t load bookings',
           subtitle: 'Pull to retry.',

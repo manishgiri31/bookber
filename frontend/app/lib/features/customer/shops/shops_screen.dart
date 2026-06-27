@@ -117,7 +117,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
           ),
           Expanded(
             child: state.isLoading
-                ? const Center(child: BBLoader())
+                ? const _ShopsSkeletonLoader()
                 : state.error != null
                     ? BBErrorWidget(
                         error: state.error!,
@@ -152,6 +152,64 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                           ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ShopsSkeletonLoader extends StatelessWidget {
+  const _ShopsSkeletonLoader();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return ListView.separated(
+      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+      itemCount: 4,
+      physics: const NeverScrollableScrollPhysics(),
+      separatorBuilder: (_, _) => const SizedBox(height: BBSpacing.sm),
+      itemBuilder: (_, _) => Container(
+        padding: const EdgeInsets.all(BBSpacing.base),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            BBShimmerBox(width: 72, height: 72, radius: BBRadius.md),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: BBShimmerBox(
+                            width: double.infinity, height: 16),
+                      ),
+                      const SizedBox(width: 8),
+                      BBShimmerBox(
+                          width: 48, height: 20, radius: BBRadius.full),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  BBShimmerBox(width: 140, height: 12),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      BBShimmerBox(width: 36, height: 12),
+                      const SizedBox(width: 8),
+                      BBShimmerBox(width: 52, height: 12),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -337,14 +395,15 @@ class _ShopCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: shop.isOpen
                               ? BBColors.success.withValues(alpha: 0.12)
-                              : BBColors.error.withValues(alpha: 0.12),
+                              : colors.surfaceVariant,
                           borderRadius: BorderRadius.circular(BBRadius.full),
                         ),
                         child: Text(
                           shop.isOpen ? 'Open' : 'Closed',
                           style: BBTypography.textTheme.labelSmall?.copyWith(
-                            color:
-                                shop.isOpen ? BBColors.success : BBColors.error,
+                            color: shop.isOpen
+                                ? BBColors.success
+                                : colors.textSecondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -367,7 +426,6 @@ class _ShopCard extends StatelessWidget {
                       _InfoChip(
                         icon: Icons.star_rounded,
                         label: shop.rating.toStringAsFixed(1),
-                        iconColor: BBColors.amber,
                       ),
                       _InfoChip(
                         icon: Icons.timer_outlined,
@@ -391,14 +449,9 @@ class _ShopCard extends StatelessWidget {
 }
 
 class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-    this.iconColor,
-  });
+  const _InfoChip({required this.icon, required this.label});
   final IconData icon;
   final String label;
-  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
@@ -406,7 +459,7 @@ class _InfoChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: iconColor ?? colors.textSecondary),
+        Icon(icon, size: 13, color: colors.textSecondary),
         const SizedBox(width: 3),
         Text(
           label,

@@ -47,7 +47,7 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
         child: Builder(
           builder: (context) {
             if (dash.isLoading && dash.profile == null) {
-              return const Center(child: BBLoader());
+              return const BBSkeletonProfile();
             }
 
             if (dash.error != null && dash.profile == null) {

@@ -2,11 +2,11 @@ abstract final class ApiEndpoints {
   // Base
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    defaultValue: 'https://clump-passion-cruelty.ngrok-free.dev',
+    defaultValue: 'http://localhost:3000',
   );
   static const String socketUrl = String.fromEnvironment(
     'SOCKET_URL',
-    defaultValue: 'https://clump-passion-cruelty.ngrok-free.dev',
+    defaultValue: 'http://localhost:3000',
   );
 
   // Auth

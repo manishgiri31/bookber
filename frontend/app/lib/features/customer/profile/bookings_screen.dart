@@ -24,7 +24,7 @@ class BookingsScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       appBar: AppBar(title: const Text('My Bookings')),
       body: async.when(
-        loading: () => const Center(child: BBLoader()),
+        loading: () => const BBSkeletonListView(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (bookings) => bookings.isEmpty
             ? const BBEmptyState(
