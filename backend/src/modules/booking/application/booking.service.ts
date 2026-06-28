@@ -62,9 +62,10 @@ export class BookingService {
   async listShopBookings(user: AuthUser, shopId: string) {
     const bookings = await this.repository.findActiveBookingsForShop(prisma, shopId);
     if (user.role === "ADMIN") return bookings;
-    return bookings.filter(
-      (b) => b.userId === user.id || b.barber?.userId === user.id
-    );
+    // Shop owners see all bookings; barber employees see their own assignments
+    const isOwner = await prisma.shop.findFirst({ where: { id: shopId, ownerId: user.id } });
+    if (isOwner) return bookings;
+    return bookings.filter((b) => b.barber?.userId === user.id);
   }
 
   async listUserBookings(user: AuthUser, status?: string) {
