@@ -518,6 +518,42 @@ async function main() {
     data: { status: ChairStatus.AVAILABLE, activeServiceStart: null, activeServiceEnd: null },
   });
 
+  // Clear new transactional seed data for idempotency
+  const seedCustomerIds = customers.map((c) => c.id);
+
+  // Wallet transactions (need wallet IDs first — relation filter not supported in deleteMany)
+  const seedWallets = await prisma.wallet.findMany({
+    where: { userId: { in: seedCustomerIds } },
+    select: { id: true },
+  });
+  await prisma.walletTransaction.deleteMany({
+    where: { walletId: { in: seedWallets.map((w) => w.id) } },
+  });
+
+  // Loyalty transactions
+  const seedLoyaltyAccs = await prisma.loyaltyAccount.findMany({
+    where: { userId: { in: seedCustomerIds } },
+    select: { id: true },
+  });
+  await prisma.loyaltyTransaction.deleteMany({
+    where: { loyaltyAccountId: { in: seedLoyaltyAccs.map((a) => a.id) } },
+  });
+
+  // Coupon redemptions
+  await prisma.couponRedemption.deleteMany({
+    where: { userId: { in: seedCustomerIds } },
+  });
+
+  // Rebooking reminders
+  await prisma.rebookingReminder.deleteMany({
+    where: { userId: { in: seedCustomerIds } },
+  });
+
+  // Event log entries for seed users / shops
+  await prisma.eventLog.deleteMany({
+    where: { OR: [{ userId: { in: seedCustomerIds } }, { shopId: { in: seedShopIds } }] },
+  });
+
   console.log("   ✓  Done");
 
   // ─────────────────────────────────────────────────────────
@@ -1139,6 +1175,326 @@ async function main() {
   // SUMMARY
   // ─────────────────────────────────────────────────────────
 
+  // ─────────────────────────────────────────────────────────
+  // 15. WALLETS
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n💰  Creating customer wallets …");
+
+  // [index] = customer balance in ₹
+  const walletBalances = [500, 0, 1200, 250, 750, 0, 100, 900, 350, 600];
+
+  const wallets = await Promise.all(
+    customers.map((c, i) =>
+      prisma.wallet.upsert({
+        where: { userId: c.id },
+        update: { balance: walletBalances[i] },
+        create: { userId: c.id, balance: walletBalances[i] },
+      })
+    )
+  );
+
+  type WTx = { walletId: string; amount: number; type: string; reason: string; refId?: string };
+  const walletTxns: WTx[] = [
+    // Ravi — topped up ₹1000, paid ₹250 for booking, paid ₹250 for combo
+    { walletId: wallets[0].id, amount: 1000, type: "CREDIT", reason: "Wallet top-up" },
+    { walletId: wallets[0].id, amount: 250, type: "DEBIT",  reason: "Payment: Classic Haircut", refId: b_s1_1.id },
+    { walletId: wallets[0].id, amount: 250, type: "DEBIT",  reason: "Payment: Haircut + Beard Combo", refId: b_s1_3.id },
+    // Arjun — topped up
+    { walletId: wallets[2].id, amount: 1200, type: "CREDIT", reason: "Wallet top-up" },
+    // Kiran — referral reward
+    { walletId: wallets[3].id, amount: 250, type: "CREDIT", reason: "Referral reward — friend joined" },
+    // Deepak — top-up then one purchase
+    { walletId: wallets[4].id, amount: 1000, type: "CREDIT", reason: "Wallet top-up" },
+    { walletId: wallets[4].id, amount: 250,  type: "DEBIT",  reason: "Payment: Classic Haircut" },
+    // Rahul — small top-up
+    { walletId: wallets[6].id, amount: 100, type: "CREDIT", reason: "Wallet top-up" },
+    // Anita — top-up
+    { walletId: wallets[7].id, amount: 900, type: "CREDIT", reason: "Wallet top-up" },
+    // Vijay — two top-ups, one spend
+    { walletId: wallets[8].id, amount: 500, type: "CREDIT", reason: "Wallet top-up" },
+    { walletId: wallets[8].id, amount: 350, type: "DEBIT",  reason: "Payment: Haircut + Beard Combo", refId: b_s2_2.id },
+    { walletId: wallets[8].id, amount: 200, type: "CREDIT", reason: "Wallet top-up" },
+    // Neha — top-up
+    { walletId: wallets[9].id, amount: 600, type: "CREDIT", reason: "Wallet top-up" },
+  ];
+
+  for (const tx of walletTxns) {
+    await prisma.walletTransaction.create({ data: tx });
+  }
+
+  console.log(`   ✓  ${wallets.length} wallets · ${walletTxns.length} transactions`);
+
+  // ─────────────────────────────────────────────────────────
+  // 16. LOYALTY ACCOUNTS
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n🏆  Creating loyalty accounts …");
+
+  const loyaltyDefs = [
+    { points: 1250, tier: "SILVER"   }, // Ravi
+    { points: 150,  tier: "BRONZE"   }, // Priya
+    { points: 3200, tier: "GOLD"     }, // Arjun
+    { points: 80,   tier: "BRONZE"   }, // Kiran
+    { points: 720,  tier: "BRONZE"   }, // Deepak
+    { points: 50,   tier: "BRONZE"   }, // Sneha
+    { points: 0,    tier: "BRONZE"   }, // Rahul (cancelled booking)
+    { points: 2100, tier: "SILVER"   }, // Anita
+    { points: 3500, tier: "GOLD"     }, // Vijay
+    { points: 4800, tier: "PLATINUM" }, // Neha
+  ];
+
+  const loyaltyAccounts = await Promise.all(
+    customers.map((c, i) =>
+      prisma.loyaltyAccount.upsert({
+        where: { userId: c.id },
+        update: { points: loyaltyDefs[i].points, tier: loyaltyDefs[i].tier },
+        create: { userId: c.id, points: loyaltyDefs[i].points, tier: loyaltyDefs[i].tier },
+      })
+    )
+  );
+
+  type LTx = { loyaltyAccountId: string; points: number; type: string; reason: string; refId?: string };
+  const loyaltyTxns: LTx[] = [
+    // Ravi — earned from bookings + legacy migration
+    { loyaltyAccountId: loyaltyAccounts[0].id, points: 25,   type: "EARN",       reason: "Classic Haircut — ₹250 spend",          refId: b_s1_1.id },
+    { loyaltyAccountId: loyaltyAccounts[0].id, points: 35,   type: "EARN",       reason: "Haircut + Beard Combo — ₹350 spend",    refId: b_s1_3.id },
+    { loyaltyAccountId: loyaltyAccounts[0].id, points: 1190, type: "ADJUSTMENT", reason: "Migration from legacy system" },
+    // Priya
+    { loyaltyAccountId: loyaltyAccounts[1].id, points: 150,  type: "EARN",       reason: "Beard Trim — ₹150 spend",               refId: b_s1_2.id },
+    // Arjun — large accumulated balance
+    { loyaltyAccountId: loyaltyAccounts[2].id, points: 3200, type: "ADJUSTMENT", reason: "Migration from legacy system" },
+    // Kiran — small earn from queued booking
+    { loyaltyAccountId: loyaltyAccounts[3].id, points: 80,   type: "EARN",       reason: "Classic Haircut — queued spend" },
+    // Deepak — earn from queued booking
+    { loyaltyAccountId: loyaltyAccounts[4].id, points: 720,  type: "EARN",       reason: "Loyalty bonus from membership" },
+    // Sneha
+    { loyaltyAccountId: loyaltyAccounts[5].id, points: 50,   type: "EARN",       reason: "Beard Trim — ₹150 spend" },
+    // Anita — earned + legacy
+    { loyaltyAccountId: loyaltyAccounts[7].id, points: 25,   type: "EARN",       reason: "Classic Haircut — ₹250 spend",          refId: b_s2_1.id },
+    { loyaltyAccountId: loyaltyAccounts[7].id, points: 2075, type: "ADJUSTMENT", reason: "Migration from legacy system" },
+    // Vijay — earned + legacy
+    { loyaltyAccountId: loyaltyAccounts[8].id, points: 35,   type: "EARN",       reason: "Haircut + Beard Combo — ₹350 spend",    refId: b_s2_2.id },
+    { loyaltyAccountId: loyaltyAccounts[8].id, points: 3465, type: "ADJUSTMENT", reason: "Migration from legacy system" },
+    // Neha — big earn, then a redemption
+    { loyaltyAccountId: loyaltyAccounts[9].id, points: 5000, type: "EARN",       reason: "Lifetime bookings accumulation" },
+    { loyaltyAccountId: loyaltyAccounts[9].id, points: -200, type: "REDEEM",     reason: "Redeemed 200 pts → ₹20 wallet credit" },
+  ];
+
+  for (const tx of loyaltyTxns) {
+    await prisma.loyaltyTransaction.create({ data: tx });
+  }
+
+  console.log(`   ✓  ${loyaltyAccounts.length} accounts · ${loyaltyTxns.length} transactions`);
+
+  // ─────────────────────────────────────────────────────────
+  // 17. REFERRALS
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n🎁  Creating referral codes …");
+
+  const referralDefs = customers.map((c, i) => ({
+    referrerId: c.id,
+    code: `BB-${c.fullName.split(" ")[0].toUpperCase()}-${1001 + i}`,
+    status: i < 3 ? "COMPLETED" : "PENDING",
+    rewardGranted: i < 3,
+    // First 3 customers referred someone; use offset to avoid self-referral
+    refereeId: i < 3 ? customers[(i + 5) % 10].id : null,
+  }));
+
+  let referralCount = 0;
+  for (const def of referralDefs) {
+    const exists = await prisma.referral.findUnique({ where: { code: def.code } });
+    if (!exists) {
+      await prisma.referral.create({ data: def });
+      referralCount++;
+    }
+  }
+
+  console.log(`   ✓  ${referralCount} referral codes (3 completed · ${referralCount - 3} pending)`);
+
+  // ─────────────────────────────────────────────────────────
+  // 18. COUPONS
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n🎟️   Creating coupons …");
+
+  const couponDefs = [
+    {
+      code: "WELCOME20",
+      type: "PERCENT",
+      value: 20,
+      maxRedemptions: 100,
+      usedCount: 1,
+      minAmount: 200,
+      expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+      isActive: true,
+    },
+    {
+      code: "FLAT50",
+      type: "FLAT",
+      value: 50,
+      maxRedemptions: 50,
+      usedCount: 1,
+      minAmount: 300,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      isActive: true,
+    },
+    {
+      code: "SUMMER15",
+      type: "PERCENT",
+      value: 15,
+      maxRedemptions: 200,
+      usedCount: 0,
+      minAmount: 150,
+      expiresAt: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+      isActive: true,
+    },
+    {
+      code: "NEWUSER10",
+      type: "FLAT",
+      value: 10,
+      maxRedemptions: 500,
+      usedCount: 0,
+      minAmount: 0,
+      expiresAt: null,
+      isActive: true,
+    },
+    {
+      code: "EXPIRED10",
+      type: "PERCENT",
+      value: 10,
+      maxRedemptions: 10,
+      usedCount: 10,
+      minAmount: 0,
+      expiresAt: daysAgo(30),
+      isActive: false,
+    },
+  ];
+
+  const coupons: any[] = [];
+  for (const def of couponDefs) {
+    const existing = await prisma.coupon.findUnique({ where: { code: def.code } });
+    coupons.push(
+      existing ??
+        (await prisma.coupon.create({ data: def }))
+    );
+  }
+
+  // Redemptions tied to completed bookings
+  const redemptions = [
+    { couponId: coupons[0].id, userId: customers[0].id, bookingId: b_s1_1.id, discount: 50 },
+    { couponId: coupons[1].id, userId: customers[2].id, bookingId: b_s1_3.id, discount: 50 },
+  ];
+
+  for (const r of redemptions) {
+    const exists = await prisma.couponRedemption.findFirst({
+      where: { couponId: r.couponId, userId: r.userId },
+    });
+    if (!exists) {
+      await prisma.couponRedemption.create({ data: r });
+    }
+  }
+
+  console.log(`   ✓  ${coupons.length} coupons · ${redemptions.length} redemptions`);
+
+  // ─────────────────────────────────────────────────────────
+  // 19. REBOOKING REMINDERS
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n🔔  Creating rebooking reminders …");
+
+  const reminderDefs = [
+    {
+      // Ravi — Classic Haircut 3 days ago, 30-day rebook interval → remind in 27 days
+      userId: customers[0].id, shopId: shop1.id, serviceId: services1[0].id,
+      lastVisitAt: daysAgo(3),
+      reminderAt: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000),
+    },
+    {
+      // Priya — Beard Trim 5 days ago, 14-day interval → remind in 9 days
+      userId: customers[1].id, shopId: shop1.id, serviceId: services1[1].id,
+      lastVisitAt: daysAgo(5),
+      reminderAt: new Date(Date.now() + 9 * 24 * 60 * 60 * 1000),
+    },
+    {
+      // Arjun — Combo 2 days ago, 21-day interval → remind in 19 days
+      userId: customers[2].id, shopId: shop1.id, serviceId: services1[2].id,
+      lastVisitAt: daysAgo(2),
+      reminderAt: new Date(Date.now() + 19 * 24 * 60 * 60 * 1000),
+    },
+    {
+      // Anita — Classic Haircut 4 days ago → remind in 26 days
+      userId: customers[7].id, shopId: shop2.id, serviceId: services2[0].id,
+      lastVisitAt: daysAgo(4),
+      reminderAt: new Date(Date.now() + 26 * 24 * 60 * 60 * 1000),
+    },
+    {
+      // Vijay — Combo 6 days ago, 21-day interval → remind in 15 days
+      userId: customers[8].id, shopId: shop2.id, serviceId: services2[2].id,
+      lastVisitAt: daysAgo(6),
+      reminderAt: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000),
+    },
+  ];
+
+  await prisma.rebookingReminder.createMany({ data: reminderDefs });
+
+  console.log(`   ✓  ${reminderDefs.length} reminders`);
+
+  // ─────────────────────────────────────────────────────────
+  // 20. EVENT LOG (audit trail)
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n📝  Writing audit event log …");
+
+  const eventLogEntries = [
+    // Bookings created
+    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_1.id, userId: customers[0].id, payload: { service: "Classic Haircut",        walkIn: false } },
+    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_2.id, userId: customers[1].id, payload: { service: "Beard Trim",             walkIn: true  } },
+    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_3.id, userId: customers[2].id, payload: { service: "Haircut + Beard Combo",  walkIn: false } },
+    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_4.id, userId: customers[3].id, payload: { service: "Classic Haircut",        walkIn: false } },
+    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_5.id, userId: customers[4].id, payload: { service: "Classic Haircut",        walkIn: false } },
+    { type: "BOOKING_CREATED",   shopId: shop2.id, bookingId: b_s2_1.id, userId: customers[7].id, payload: { service: "Classic Haircut",        walkIn: false } },
+    { type: "BOOKING_CREATED",   shopId: shop2.id, bookingId: b_s2_2.id, userId: customers[8].id, payload: { service: "Haircut + Beard Combo",  walkIn: true  } },
+    // Queue joins
+    { type: "QUEUE_JOINED", shopId: shop1.id, bookingId: b_s1_5.id, userId: customers[4].id, payload: { lane: "BOOKBER", position: 10 } },
+    { type: "QUEUE_JOINED", shopId: shop1.id, bookingId: b_s1_6.id, userId: customers[5].id, payload: { lane: "WALKIN",  position: 10 } },
+    { type: "QUEUE_JOINED", shopId: shop2.id, userId: customers[9].id,  payload: { lane: "BOOKBER", position: 10 } },
+    // Chair assignments
+    { type: "CHAIR_ASSIGNED", shopId: shop1.id, bookingId: b_s1_1.id, chairId: chairs1[0].id, userId: customers[0].id, payload: { chairNumber: 1 } },
+    { type: "CHAIR_ASSIGNED", shopId: shop1.id, bookingId: b_s1_3.id, chairId: chairs1[1].id, userId: customers[2].id, payload: { chairNumber: 2 } },
+    { type: "CHAIR_ASSIGNED", shopId: shop1.id, bookingId: b_s1_4.id, chairId: chairs1[0].id, userId: customers[3].id, payload: { chairNumber: 1 } },
+    { type: "CHAIR_ASSIGNED", shopId: shop2.id, bookingId: b_s2_1.id, chairId: chairs2[0].id, userId: customers[7].id, payload: { chairNumber: 1 } },
+    { type: "CHAIR_ASSIGNED", shopId: shop2.id, bookingId: b_s2_2.id, chairId: chairs2[1].id, userId: customers[8].id, payload: { chairNumber: 2 } },
+    // Chair releases
+    { type: "CHAIR_RELEASED", shopId: shop1.id, chairId: chairs1[0].id, payload: { chairNumber: 1, durationMinutes: 28 } },
+    { type: "CHAIR_RELEASED", shopId: shop1.id, chairId: chairs1[1].id, payload: { chairNumber: 2, durationMinutes: 48 } },
+    { type: "CHAIR_RELEASED", shopId: shop2.id, chairId: chairs2[0].id, payload: { chairNumber: 1, durationMinutes: 33 } },
+    { type: "CHAIR_RELEASED", shopId: shop2.id, chairId: chairs2[1].id, payload: { chairNumber: 2, durationMinutes: 46 } },
+    // Payments
+    { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_1.id, userId: customers[0].id, payload: { amount: 250, method: "UPI"  } },
+    { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_2.id, userId: customers[1].id, payload: { amount: 150, method: "CASH" } },
+    { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_3.id, userId: customers[2].id, payload: { amount: 350, method: "CARD" } },
+    { type: "PAYMENT_COMPLETED", shopId: shop2.id, bookingId: b_s2_1.id, userId: customers[7].id, payload: { amount: 250, method: "UPI"  } },
+    { type: "PAYMENT_COMPLETED", shopId: shop2.id, bookingId: b_s2_2.id, userId: customers[8].id, payload: { amount: 350, method: "CARD" } },
+    // Cancellation & no-show
+    { type: "BOOKING_CANCELLED", shopId: shop1.id, userId: customers[6].id, payload: { reason: "Customer no longer available" } },
+    { type: "BOOKING_NO_SHOW",   shopId: shop2.id, userId: customers[0].id, payload: { service: "Classic Haircut" } },
+    // Reviews
+    { type: "REVIEW_CREATED", shopId: shop1.id, userId: customers[0].id, payload: { rating: 5 } },
+    { type: "REVIEW_CREATED", shopId: shop1.id, userId: customers[1].id, payload: { rating: 4 } },
+    { type: "REVIEW_CREATED", shopId: shop1.id, userId: customers[2].id, payload: { rating: 5 } },
+    { type: "REVIEW_CREATED", shopId: shop2.id, userId: customers[7].id, payload: { rating: 5 } },
+    { type: "REVIEW_CREATED", shopId: shop2.id, userId: customers[8].id, payload: { rating: 5 } },
+    // Rebooking reminders sent (simulated past ones)
+    { type: "REBOOKING_REMINDER_SENT", shopId: shop1.id, userId: customers[0].id, payload: { serviceId: services1[0].id, daysUntilDue: 27 } },
+    { type: "REBOOKING_REMINDER_SENT", shopId: shop2.id, userId: customers[7].id, payload: { serviceId: services2[0].id, daysUntilDue: 26 } },
+  ];
+
+  await prisma.eventLog.createMany({ data: eventLogEntries });
+
+  console.log(`   ✓  ${eventLogEntries.length} event log entries`);
+
   console.log("\n" + "─".repeat(55));
   console.log("✅  BookBer seed complete!\n");
 
@@ -1170,6 +1526,15 @@ async function main() {
   console.log(`  Shop1 IN_SERVICE: Kiran (Classic Haircut, chair #1)`);
   console.log(`  Shop1 QUEUED:     Deepak (BookBer pos 10) · Sneha walk-in (pos 10)`);
   console.log(`  Shop2 QUEUED:     Neha (BookBer pos 10)`);
+
+  console.log("\n💰  Wallets & Loyalty");
+  console.log(`  10 wallets seeded (Ravi ₹500 · Arjun ₹1200 · Deepak ₹750 · Anita ₹900 …)`);
+  console.log(`  Tiers: Neha=PLATINUM · Arjun=GOLD · Vijay=GOLD · Ravi=SILVER · Anita=SILVER`);
+
+  console.log("\n🎁  Referrals & Coupons");
+  console.log(`  10 referral codes (3 completed). Codes: BB-RAVI-1001 … BB-NEHA-1010`);
+  console.log(`  Coupons: WELCOME20 (20%) · FLAT50 (₹50 off) · SUMMER15 (15%) · NEWUSER10 (₹10 off)`);
+
   console.log("─".repeat(55) + "\n");
 }
 

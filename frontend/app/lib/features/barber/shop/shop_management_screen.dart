@@ -27,7 +27,7 @@ class _ShopManagementScreenState
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -55,6 +55,8 @@ class _ShopManagementScreenState
           tabs: const [
             Tab(text: 'Services'),
             Tab(text: 'Schedule'),
+            Tab(text: 'Amenities'),
+            Tab(text: 'Gallery'),
             Tab(text: 'Info'),
           ],
         ),
@@ -72,6 +74,8 @@ class _ShopManagementScreenState
                   children: [
                     _ServicesTab(shop: state.shop),
                     _ScheduleTab(shop: state.shop),
+                    _AmenitiesTab(shop: state.shop),
+                    _GalleryTab(shop: state.shop),
                     _InfoTab(shop: state.shop),
                   ],
                 ),
@@ -629,6 +633,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
   bool _acceptBookings = true;
   bool _acceptWalkIns = true;
   bool _loading = false;
+  final Set<DateTime> _blockedDates = {};
 
   @override
   void initState() {
@@ -688,6 +693,29 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
           isError: !ok,
           isSuccess: ok);
     }
+  }
+
+  Future<void> _addHoliday() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && mounted) {
+      setState(() => _blockedDates
+          .add(DateTime(picked.year, picked.month, picked.day)));
+    }
+  }
+
+  void _removeDate(DateTime d) => setState(() => _blockedDates.remove(d));
+
+  String _formatDate(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[d.month - 1]} ${d.day}, ${d.year}';
   }
 
   @override
@@ -751,6 +779,59 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
           ),
         ),
 
+        const SizedBox(height: BBSpacing.xl),
+        _SectionHeader(
+            icon: Icons.event_busy_rounded, title: 'Holidays & Closed Days'),
+        const SizedBox(height: BBSpacing.md),
+        if (_blockedDates.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(BBSpacing.md),
+            decoration: BoxDecoration(
+              color: colors.surfaceVariant,
+              borderRadius: BorderRadius.circular(BBRadius.md),
+              border: Border.all(color: colors.border),
+            ),
+            child: Text(
+              'No holidays added. Mark days when your shop will be closed.',
+              style: BBTypography.textTheme.bodySmall
+                  ?.copyWith(color: colors.textSecondary),
+            ),
+          )
+        else
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(BBRadius.lg),
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              children: () {
+                final dates = _blockedDates.toList()..sort();
+                final widgets = <Widget>[];
+                for (var i = 0; i < dates.length; i++) {
+                  widgets.add(_HolidayRow(
+                    label: _formatDate(dates[i]),
+                    onRemove: () => _removeDate(dates[i]),
+                  ));
+                  if (i < dates.length - 1) {
+                    widgets.add(
+                        Divider(color: colors.border, height: 1, indent: 52));
+                  }
+                }
+                return widgets;
+              }(),
+            ),
+          ),
+        const SizedBox(height: BBSpacing.sm),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+            label: const Text('Add Holiday'),
+            style: TextButton.styleFrom(foregroundColor: BBColors.amber),
+            onPressed: _addHoliday,
+          ),
+        ),
         const SizedBox(height: BBSpacing.xl),
         BBButton(
           label: 'Save Schedule',
@@ -854,6 +935,336 @@ class _ToggleRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _HolidayRow extends StatelessWidget {
+  const _HolidayRow({required this.label, required this.onRemove});
+  final String label;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.base, vertical: BBSpacing.sm),
+      child: Row(
+        children: [
+          Icon(Icons.event_busy_rounded, size: 18, color: BBColors.error),
+          const SizedBox(width: BBSpacing.md),
+          Expanded(
+            child: Text(label,
+                style: BBTypography.textTheme.bodyMedium
+                    ?.copyWith(color: colors.text)),
+          ),
+          IconButton(
+            icon: Icon(Icons.close_rounded, size: 16, color: colors.textTertiary),
+            onPressed: onRemove,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Amenities Tab ────────────────────────────────────────────────────────────
+
+class _AmenitiesTab extends StatefulWidget {
+  const _AmenitiesTab({required this.shop});
+  final ShopDetail? shop;
+
+  @override
+  State<_AmenitiesTab> createState() => _AmenitiesTabState();
+}
+
+class _AmenitiesTabState extends State<_AmenitiesTab> {
+  bool _wifi = false;
+  bool _parking = false;
+  bool _ac = true;
+  bool _water = true;
+  bool _cardPayment = true;
+  bool _upi = true;
+  bool _kidsChairs = false;
+  bool _wheelchair = false;
+  bool _saving = false;
+
+  Future<void> _saveAmenities() async {
+    setState(() => _saving = true);
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+    setState(() => _saving = false);
+    showBBSnackbar(context, message: 'Amenities saved', isSuccess: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return ListView(
+      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+      children: [
+        _SectionHeader(
+            icon: Icons.local_convenience_store_outlined, title: 'Facilities'),
+        const SizedBox(height: BBSpacing.sm),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: [
+              _ToggleRow(
+                icon: Icons.wifi_rounded,
+                title: 'Free WiFi',
+                subtitle: 'Complimentary internet access',
+                value: _wifi,
+                onChanged: (v) => setState(() => _wifi = v),
+              ),
+              Divider(color: colors.border, height: 1, indent: 52),
+              _ToggleRow(
+                icon: Icons.local_parking_rounded,
+                title: 'Parking',
+                subtitle: 'Free or paid parking available',
+                value: _parking,
+                onChanged: (v) => setState(() => _parking = v),
+              ),
+              Divider(color: colors.border, height: 1, indent: 52),
+              _ToggleRow(
+                icon: Icons.ac_unit_rounded,
+                title: 'Air Conditioning',
+                subtitle: 'Temperature-controlled environment',
+                value: _ac,
+                onChanged: (v) => setState(() => _ac = v),
+              ),
+              Divider(color: colors.border, height: 1, indent: 52),
+              _ToggleRow(
+                icon: Icons.water_drop_outlined,
+                title: 'Drinking Water',
+                subtitle: 'Complimentary water for customers',
+                value: _water,
+                onChanged: (v) => setState(() => _water = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+        _SectionHeader(
+            icon: Icons.payment_rounded, title: 'Payment Methods'),
+        const SizedBox(height: BBSpacing.sm),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: [
+              _ToggleRow(
+                icon: Icons.credit_card_rounded,
+                title: 'Card Payment',
+                subtitle: 'Accept debit & credit cards',
+                value: _cardPayment,
+                onChanged: (v) => setState(() => _cardPayment = v),
+              ),
+              Divider(color: colors.border, height: 1, indent: 52),
+              _ToggleRow(
+                icon: Icons.qr_code_rounded,
+                title: 'UPI Payment',
+                subtitle: 'GPay, PhonePe, Paytm & more',
+                value: _upi,
+                onChanged: (v) => setState(() => _upi = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+        _SectionHeader(
+            icon: Icons.accessibility_new_rounded, title: 'Accessibility'),
+        const SizedBox(height: BBSpacing.sm),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: [
+              _ToggleRow(
+                icon: Icons.child_friendly_rounded,
+                title: 'Kids Chairs',
+                subtitle: 'Special chairs for young children',
+                value: _kidsChairs,
+                onChanged: (v) => setState(() => _kidsChairs = v),
+              ),
+              Divider(color: colors.border, height: 1, indent: 52),
+              _ToggleRow(
+                icon: Icons.accessible_rounded,
+                title: 'Wheelchair Access',
+                subtitle: 'Accessible entrance and facilities',
+                value: _wheelchair,
+                onChanged: (v) => setState(() => _wheelchair = v),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+        BBButton(
+          label: 'Save Amenities',
+          icon: Icons.save_rounded,
+          loading: _saving,
+          onPressed: _saving ? null : _saveAmenities,
+        ),
+        const SizedBox(height: BBSpacing.xxl),
+      ],
+    );
+  }
+}
+
+// ─── Gallery Tab ──────────────────────────────────────────────────────────────
+
+class _GalleryTab extends StatefulWidget {
+  const _GalleryTab({required this.shop});
+  final ShopDetail? shop;
+
+  @override
+  State<_GalleryTab> createState() => _GalleryTabState();
+}
+
+class _GalleryTabState extends State<_GalleryTab> {
+  int _photoCount = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return ListView(
+      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Shop Photos',
+                style: BBTypography.textTheme.titleMedium?.copyWith(
+                    color: colors.text, fontWeight: FontWeight.w700),
+              ),
+            ),
+            TextButton.icon(
+              icon:
+                  const Icon(Icons.add_photo_alternate_rounded, size: 18),
+              label: const Text('Add Photo'),
+              style: TextButton.styleFrom(foregroundColor: BBColors.amber),
+              onPressed: () {
+                setState(() => _photoCount++);
+                showBBSnackbar(context,
+                    message: 'Photo upload coming soon');
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: BBSpacing.xs),
+        Text(
+          'Show customers what your shop looks like.',
+          style: BBTypography.textTheme.bodySmall
+              ?.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: BBSpacing.base),
+        if (_photoCount == 0)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: BBSpacing.xl),
+            child: Column(
+              children: [
+                Icon(Icons.photo_camera_outlined,
+                    size: 56, color: colors.textTertiary),
+                const SizedBox(height: BBSpacing.sm),
+                Text(
+                  'No photos yet',
+                  style: BBTypography.textTheme.titleSmall
+                      ?.copyWith(color: colors.textSecondary),
+                ),
+                const SizedBox(height: BBSpacing.xs),
+                Text(
+                  'Add photos to attract more customers',
+                  style: BBTypography.textTheme.bodySmall
+                      ?.copyWith(color: colors.textTertiary),
+                ),
+              ],
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate:
+                const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+            ),
+            itemCount: _photoCount,
+            itemBuilder: (_, i) => Container(
+              decoration: BoxDecoration(
+                color: colors.surfaceVariant,
+                borderRadius: BorderRadius.circular(BBRadius.md),
+                border: Border.all(color: colors.border),
+              ),
+              child: Stack(
+                children: [
+                  Center(
+                    child: Icon(Icons.image_rounded,
+                        size: 32, color: colors.textTertiary),
+                  ),
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        if (_photoCount > 0) _photoCount--;
+                      }),
+                      child: Container(
+                        width: 22,
+                        height: 22,
+                        decoration: BoxDecoration(
+                          color: BBColors.error.withValues(alpha: 0.85),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close_rounded,
+                            size: 12, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        const SizedBox(height: BBSpacing.base),
+        Container(
+          padding: const EdgeInsets.all(BBSpacing.md),
+          decoration: BoxDecoration(
+            color: BBColors.info.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(BBRadius.md),
+            border: Border.all(color: BBColors.info.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline_rounded,
+                  size: 16, color: BBColors.info),
+              const SizedBox(width: BBSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Shops with photos get 3× more bookings.',
+                  style: BBTypography.textTheme.labelSmall
+                      ?.copyWith(color: BBColors.info),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xxl),
+      ],
     );
   }
 }
