@@ -145,6 +145,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 label: 'Referrals',
                 onTap: () => context.push('/referral'),
               ),
+              _ActionRow(
+                icon: Icons.favorite_border_rounded,
+                label: 'Favourites',
+                onTap: () => context.push('/favourites'),
+              ),
+              _ActionRow(
+                icon: Icons.emoji_events_outlined,
+                label: 'Achievements',
+                onTap: () => context.push('/gamification'),
+              ),
             ],
           ),
           const SizedBox(height: BBSpacing.base),
@@ -152,6 +162,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _Section(
             title: 'Settings',
             children: [
+              _ActionRow(
+                icon: Icons.notifications_outlined,
+                label: 'Notification Preferences',
+                onTap: () => context.push('/settings/notifications'),
+              ),
               _ActionRow(
                 icon: Icons.lock_outline_rounded,
                 label: 'Change Password',
@@ -161,6 +176,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.dark_mode_outlined,
                 label: 'Appearance',
                 onTap: () => context.push('/settings'),
+              ),
+              _ActionRow(
+                icon: Icons.privacy_tip_outlined,
+                label: 'Privacy & Security',
+                onTap: () => context.push('/settings/privacy'),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.base),
+
+          _Section(
+            title: 'Support',
+            children: [
+              _ActionRow(
+                icon: Icons.help_outline_rounded,
+                label: 'Help Centre',
+                onTap: () => context.push('/help'),
+              ),
+              _ActionRow(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Contact Support',
+                onTap: () => context.push('/support'),
+              ),
+              _ActionRow(
+                icon: Icons.info_outline_rounded,
+                label: 'About BookBer',
+                onTap: () => context.push('/about'),
+              ),
+              _ActionRow(
+                icon: Icons.description_outlined,
+                label: 'Terms & Privacy',
+                onTap: () => context.push('/terms'),
               ),
             ],
           ),
@@ -172,6 +219,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             onPressed: _signingOut ? null : () => _confirmSignOut(context),
             loading: _signingOut,
             icon: Icons.logout_rounded,
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          Center(
+            child: Text(
+              'BookBer v2.0.0',
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: context.bbColors.textTertiary,
+              ),
+            ),
           ),
           const SizedBox(height: BBSpacing.base),
         ],

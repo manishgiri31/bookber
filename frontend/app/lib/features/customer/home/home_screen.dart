@@ -61,6 +61,12 @@ class HomeScreen extends ConsumerWidget {
             // Discovery: top-rated shops (with skeleton)
             _TopRatedSection(),
 
+            // Trending barbers
+            const SliverToBoxAdapter(child: _TrendingBarbersSection()),
+
+            // Recently visited
+            _RecentlyVisitedSection(),
+
             // All shops list
             if (homeState.isLoading)
               const SliverToBoxAdapter(child: SizedBox(height: BBSpacing.md))
@@ -1081,6 +1087,190 @@ class _QuickRebookCard extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─── Trending Barbers ─────────────────────────────────────────────────────────
+
+class _TrendingBarbersSection extends StatelessWidget {
+  const _TrendingBarbersSection();
+
+  static const _barbers = [
+    ('Alex Silva', 'The Fade King', 4.9, 312),
+    ('Sam Khan', 'Beard Specialist', 4.8, 289),
+    ('Mike Patel', 'Classic Cuts', 4.7, 201),
+    ('Raj Verma', 'Creative Styles', 4.9, 178),
+    ('Arjun D.', 'Kids Expert', 4.6, 134),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.md),
+          child: _SectionHeader(
+            title: 'Trending Barbers',
+            onSeeAll: () => context.go('/shops'),
+          ),
+        ),
+        SizedBox(
+          height: 120,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
+            scrollDirection: Axis.horizontal,
+            itemCount: _barbers.length,
+            separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
+            itemBuilder: (ctx, i) {
+              final b = _barbers[i];
+              return GestureDetector(
+                onTap: () => ctx.go('/shops'),
+                child: Container(
+                  width: 90,
+                  padding: const EdgeInsets.all(BBSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(BBRadius.xl),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: BBColors.amber.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            b.$1[0],
+                            style: BBTypography.textTheme.titleLarge?.copyWith(
+                              color: BBColors.amber,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        b.$1.split(' ').first,
+                        style: BBTypography.textTheme.labelMedium?.copyWith(
+                          color: colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.star_rounded, size: 10, color: BBColors.amber),
+                          const SizedBox(width: 2),
+                          Text(
+                            b.$3.toString(),
+                            style: BBTypography.textTheme.labelSmall?.copyWith(
+                              color: colors.textSecondary,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+      ],
+    );
+  }
+}
+
+// ─── Recently Visited ─────────────────────────────────────────────────────────
+
+class _RecentlyVisitedSection extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bookingsAsync = ref.watch(myBookingsProvider);
+    final colors = context.bbColors;
+
+    final completed = bookingsAsync.valueOrNull
+            ?.where((b) => b.status == 'COMPLETED' && b.shopName.isNotEmpty)
+            .toList() ??
+        [];
+
+    final seen = <String>{};
+    final unique = completed
+        .where((b) => seen.add(b.shopId))
+        .take(8)
+        .toList();
+
+    if (unique.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.md),
+            child: Text(
+              'Recently Visited',
+              style: BBTypography.textTheme.titleLarge?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 36,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
+              scrollDirection: Axis.horizontal,
+              itemCount: unique.length,
+              separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.sm),
+              itemBuilder: (ctx, i) {
+                final b = unique[i];
+                return GestureDetector(
+                  onTap: () => ctx.push('/shops/${b.shopId}'),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(BBRadius.full),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.storefront_outlined,
+                            size: 14, color: colors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          b.shopName,
+                          style: BBTypography.textTheme.labelMedium?.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: BBSpacing.xl),
+        ],
       ),
     );
   }

@@ -18,6 +18,7 @@ class Shop {
     this.description,
     this.bookberReservedChairCount = 0,
     this.totalChairs = 0,
+    this.isVerified = false,
   });
 
   final String id;
@@ -38,6 +39,7 @@ class Shop {
   final String? description;
   final int bookberReservedChairCount;
   final int totalChairs;
+  final bool isVerified;
 
   String get distanceLabel {
     final dist = distanceKm;
@@ -68,6 +70,7 @@ class Shop {
         bookberReservedChairCount:
             (json['bookBerReservedChairCount'] as int?) ?? 0,
         totalChairs: (json['totalChairs'] as int?) ?? 0,
+        isVerified: (json['isVerified'] as bool?) ?? false,
       );
 }
 

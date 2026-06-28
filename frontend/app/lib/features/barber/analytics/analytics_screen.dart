@@ -89,6 +89,10 @@ class BarberAnalyticsScreen extends ConsumerWidget {
                         const SizedBox(height: BBSpacing.xl),
                         _UtilizationSection(report: state.utilization!),
                       ],
+                      const SizedBox(height: BBSpacing.xl),
+                      const _RevenueChartSection(),
+                      const SizedBox(height: BBSpacing.xl),
+                      const _PopularServicesSection(),
                       const SizedBox(height: BBSpacing.xxl),
                     ],
                   ),
@@ -674,6 +678,206 @@ class _UtilizationSection extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Revenue Line Chart ───────────────────────────────────────────────────────
+
+class _RevenueChartSection extends StatelessWidget {
+  const _RevenueChartSection();
+
+  static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _values = [1200.0, 1850.0, 1400.0, 2200.0, 1900.0, 3100.0, 2700.0];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final maxY = _values.reduce(math.max) * 1.2;
+    final spots = _values.asMap().entries
+        .map((e) => FlSpot(e.key.toDouble(), e.value))
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionTitle('7-Day Revenue'),
+        const SizedBox(height: BBSpacing.md),
+        Container(
+          height: 180,
+          padding: const EdgeInsets.fromLTRB(
+              BBSpacing.sm, BBSpacing.base, BBSpacing.base, BBSpacing.base),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: LineChart(
+            LineChartData(
+              maxY: maxY,
+              minY: 0,
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) => FlLine(
+                  color: colors.border,
+                  strokeWidth: 1,
+                  dashArray: [4, 4],
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 22,
+                    getTitlesWidget: (v, _) {
+                      final i = v.toInt();
+                      if (i < 0 || i >= _days.length) {
+                        return const SizedBox.shrink();
+                      }
+                      return Text(
+                        _days[i],
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: colors.textTertiary,
+                          fontSize: 9,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                touchTooltipData: LineTouchTooltipData(
+                  getTooltipColor: (_) => colors.surfaceVariant,
+                  getTooltipItems: (spots) => spots.map((s) {
+                    return LineTooltipItem(
+                      '₹${s.y.toStringAsFixed(0)}',
+                      BBTypography.textTheme.labelSmall!.copyWith(
+                        color: BBColors.amber,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  color: BBColors.amber,
+                  barWidth: 2.5,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (s, _, p, i) => FlDotCirclePainter(
+                      radius: 3,
+                      color: BBColors.amber,
+                      strokeWidth: 1.5,
+                      strokeColor: colors.surface,
+                    ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        BBColors.amber.withValues(alpha: 0.15),
+                        BBColors.amber.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── Popular Services ─────────────────────────────────────────────────────────
+
+class _PopularServicesSection extends StatelessWidget {
+  const _PopularServicesSection();
+
+  static const _services = [
+    ('Classic Haircut', 48, 9600.0),
+    ('Skin Fade', 35, 12250.0),
+    ('Beard Trim', 29, 4350.0),
+    ('Hair Wash', 22, 2640.0),
+    ('Head Massage', 15, 3000.0),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final maxCount = _services.map((s) => s.$2).reduce(math.max);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionTitle('Popular Services'),
+        const SizedBox(height: BBSpacing.md),
+        Container(
+          padding: const EdgeInsets.all(BBSpacing.base),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: _services.asMap().entries.map((e) {
+              final s = e.value;
+              final pct = s.$2 / maxCount;
+              return Padding(
+                padding: EdgeInsets.only(
+                    bottom: e.key < _services.length - 1 ? BBSpacing.md : 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            s.$1,
+                            style: BBTypography.textTheme.labelMedium?.copyWith(
+                              color: colors.text,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${s.$2} ·  ₹${s.$3.toStringAsFixed(0)}',
+                          style: BBTypography.textTheme.labelSmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      value: pct,
+                      backgroundColor: colors.border,
+                      valueColor:
+                          const AlwaysStoppedAnimation(BBColors.amber),
+                      borderRadius: BorderRadius.circular(BBRadius.full),
+                      minHeight: 5,
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ),
         ),
       ],

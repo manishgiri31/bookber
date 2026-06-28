@@ -89,6 +89,9 @@ class ShopsSearchState {
     this.hasSearched = false,
     this.sortBy = ShopSortBy.none,
     this.openOnly = false,
+    this.verifiedOnly = false,
+    this.minRating = 0.0,
+    this.maxDistanceKm,
   });
 
   final String query;
@@ -98,9 +101,24 @@ class ShopsSearchState {
   final bool hasSearched;
   final ShopSortBy sortBy;
   final bool openOnly;
+  final bool verifiedOnly;
+  final double minRating;
+  final double? maxDistanceKm;
+
+  bool get hasActiveFilters =>
+      openOnly || verifiedOnly || minRating > 0 || maxDistanceKm != null;
 
   List<Shop> get displayed {
-    var list = openOnly ? shops.where((s) => s.isOpen).toList() : [...shops];
+    var list = shops.where((s) {
+      if (openOnly && !s.isOpen) return false;
+      if (verifiedOnly && !(s.isVerified)) return false;
+      if (minRating > 0 && s.rating < minRating) return false;
+      if (maxDistanceKm != null &&
+          s.distanceKm != null &&
+          s.distanceKm! > maxDistanceKm!) return false;
+      return true;
+    }).toList();
+
     switch (sortBy) {
       case ShopSortBy.nearest:
         list.sort((a, b) {
@@ -127,6 +145,9 @@ class ShopsSearchState {
     bool? hasSearched,
     ShopSortBy? sortBy,
     bool? openOnly,
+    bool? verifiedOnly,
+    double? minRating,
+    Object? maxDistanceKm = _sentinel,
   }) =>
       ShopsSearchState(
         query: query ?? this.query,
@@ -136,8 +157,15 @@ class ShopsSearchState {
         hasSearched: hasSearched ?? this.hasSearched,
         sortBy: sortBy ?? this.sortBy,
         openOnly: openOnly ?? this.openOnly,
+        verifiedOnly: verifiedOnly ?? this.verifiedOnly,
+        minRating: minRating ?? this.minRating,
+        maxDistanceKm: maxDistanceKm == _sentinel
+            ? this.maxDistanceKm
+            : maxDistanceKm as double?,
       );
 }
+
+const _sentinel = Object();
 
 class ShopsNotifier extends AutoDisposeNotifier<ShopsSearchState> {
   @override
@@ -206,6 +234,16 @@ class ShopsNotifier extends AutoDisposeNotifier<ShopsSearchState> {
   }
 
   void setOpenOnly(bool val) => state = state.copyWith(openOnly: val);
+  void setVerifiedOnly(bool val) => state = state.copyWith(verifiedOnly: val);
+  void setMinRating(double val) => state = state.copyWith(minRating: val);
+  void setMaxDistance(double? val) =>
+      state = state.copyWith(maxDistanceKm: val);
+  void clearFilters() => state = state.copyWith(
+        openOnly: false,
+        verifiedOnly: false,
+        minRating: 0.0,
+        maxDistanceKm: null,
+      );
 
   void clear() => state = const ShopsSearchState();
   Future<void> refresh() => _loadAll();

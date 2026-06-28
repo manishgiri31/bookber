@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -10,6 +11,7 @@ import '../../../core/design/bb_typography.dart';
 import '../../../core/widgets/bb_button.dart';
 import '../../../core/widgets/bb_error_widget.dart';
 import '../../../core/widgets/bb_loading.dart';
+import '../../../core/widgets/bb_snackbar.dart';
 import '../../shared/domain/shop_models.dart';
 import 'shops_provider.dart';
 
@@ -24,11 +26,12 @@ class ShopDetailScreen extends ConsumerStatefulWidget {
 class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
+  bool _isFavourite = false;
 
   @override
   void initState() {
     super.initState();
-    _tab = TabController(length: 3, vsync: this);
+    _tab = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -75,9 +78,61 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                 ),
               ),
               actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 4, top: 8, bottom: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => _isFavourite = !_isFavourite);
+                      showBBSnackbar(
+                        context,
+                        message: _isFavourite
+                            ? 'Added to favourites'
+                            : 'Removed from favourites',
+                      );
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isFavourite
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        size: 18,
+                        color: _isFavourite ? BBColors.error : colors.text,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 4, top: 8, bottom: 8),
+                  child: GestureDetector(
+                    onTap: () => _shareShop(shop),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.black.withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.85),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.share_rounded,
+                        size: 18,
+                        color: colors.text,
+                      ),
+                    ),
+                  ),
+                ),
                 if (shop.latitude != null && shop.longitude != null)
                   Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
                     child: GestureDetector(
                       onTap: () => _openDirections(shop),
                       child: Container(
@@ -159,6 +214,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                     Tab(text: 'Services'),
                     Tab(text: 'Barbers'),
                     Tab(text: 'Reviews'),
+                    Tab(text: 'Info'),
                   ],
                   dividerColor: colors.border,
                 ),
@@ -172,6 +228,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
               _ServicesTab(shopId: widget.shopId),
               _BarbersTab(shopId: widget.shopId),
               _ReviewsTab(shopId: widget.shopId),
+              _InfoTab(shop: shop),
             ],
           ),
         ),
@@ -188,6 +245,14 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _shareShop(Shop shop) {
+    final text = '${shop.name}\n${shop.address}, ${shop.city}'
+        '${shop.phone != null ? '\nCall: ${shop.phone}' : ''}'
+        '\n\nBook via BookBer';
+    Clipboard.setData(ClipboardData(text: text));
+    if (mounted) showBBSnackbar(context, message: 'Shop info copied!');
   }
 }
 
@@ -774,6 +839,293 @@ class _BottomActions extends StatelessWidget {
                 variant: BBButtonVariant.secondary,
                 icon: Icons.calendar_today_rounded,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoTab extends StatelessWidget {
+  const _InfoTab({required this.shop});
+  final Shop shop;
+
+  static const _amenities = [
+    (Icons.wifi_rounded, 'WiFi'),
+    (Icons.ac_unit_rounded, 'AC'),
+    (Icons.local_parking_rounded, 'Parking'),
+    (Icons.wc_rounded, 'Washroom'),
+    (Icons.credit_card_rounded, 'Card'),
+    (Icons.currency_rupee_rounded, 'UPI'),
+  ];
+
+  static const _hours = [
+    ('Mon – Fri', '9:00 AM – 9:00 PM'),
+    ('Saturday', '9:00 AM – 8:00 PM'),
+    ('Sunday', '10:00 AM – 6:00 PM'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return ListView(
+      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+      children: [
+        // ── About ──────────────────────────────────────────────────────────
+        if (shop.description != null && shop.description!.isNotEmpty) ...[
+          _SectionLabel(title: 'About'),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(BBSpacing.base),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(BBRadius.lg),
+              border: Border.all(color: colors.border),
+            ),
+            child: Text(
+              shop.description!,
+              style: BBTypography.textTheme.bodyMedium?.copyWith(
+                color: colors.textSecondary,
+                height: 1.6,
+              ),
+            ),
+          ),
+          const SizedBox(height: BBSpacing.xl),
+        ],
+
+        // ── Amenities ──────────────────────────────────────────────────────
+        _SectionLabel(title: 'Amenities'),
+        Wrap(
+          spacing: BBSpacing.sm,
+          runSpacing: BBSpacing.sm,
+          children: _amenities
+              .map((a) => Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(BBRadius.full),
+                      border: Border.all(color: colors.border),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(a.$1,
+                            size: 15, color: colors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          a.$2,
+                          style:
+                              BBTypography.textTheme.labelMedium?.copyWith(
+                            color: colors.text,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ))
+              .toList(),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+
+        // ── Working Hours ──────────────────────────────────────────────────
+        _SectionLabel(title: 'Working Hours'),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < _hours.length; i++) ...[
+                if (i > 0) Divider(height: 1, color: colors.border, indent: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.base,
+                    vertical: BBSpacing.md,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _hours[i].$1,
+                          style: BBTypography.textTheme.bodyMedium?.copyWith(
+                            color: colors.text,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _hours[i].$2,
+                        style: BBTypography.textTheme.bodyMedium?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+
+        // ── Contact ────────────────────────────────────────────────────────
+        _SectionLabel(title: 'Contact'),
+        Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(BBRadius.lg),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: [
+              _ContactRow(
+                icon: Icons.location_on_outlined,
+                label: shop.address,
+                onTap: (shop.latitude != null && shop.longitude != null)
+                    ? () async {
+                        final uri = Uri.parse(
+                          'https://www.google.com/maps/search/?api=1&query=${shop.latitude},${shop.longitude}',
+                        );
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri,
+                              mode: LaunchMode.externalApplication);
+                        }
+                      }
+                    : null,
+              ),
+              if (shop.phone != null && shop.phone!.isNotEmpty) ...[
+                Divider(height: 1, color: colors.border, indent: 52),
+                _ContactRow(
+                  icon: Icons.phone_outlined,
+                  label: shop.phone!,
+                  onTap: () async {
+                    final uri = Uri.parse('tel:${shop.phone}');
+                    if (await canLaunchUrl(uri)) launchUrl(uri);
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+
+        // ── Stats ──────────────────────────────────────────────────────────
+        _SectionLabel(title: 'Stats'),
+        Row(
+          children: [
+            _StatBox(label: 'Total Chairs', value: '${shop.totalChairs}'),
+            const SizedBox(width: BBSpacing.sm),
+            _StatBox(
+                label: 'Free Now', value: '${shop.availableChairs}'),
+            const SizedBox(width: BBSpacing.sm),
+            _StatBox(
+                label: 'Reviews', value: '${shop.reviewCount}'),
+          ],
+        ),
+        const SizedBox(height: BBSpacing.xl),
+      ],
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BBSpacing.sm),
+      child: Text(
+        title.toUpperCase(),
+        style: BBTypography.textTheme.labelSmall?.copyWith(
+          color: colors.textTertiary,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactRow extends StatelessWidget {
+  const _ContactRow({
+    required this.icon,
+    required this.label,
+    this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.base,
+          vertical: BBSpacing.md,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: colors.textSecondary),
+            const SizedBox(width: BBSpacing.md),
+            Expanded(
+              child: Text(
+                label,
+                style: BBTypography.textTheme.bodyMedium?.copyWith(
+                  color: onTap != null ? BBColors.info : colors.text,
+                  decoration: onTap != null ? TextDecoration.underline : null,
+                ),
+              ),
+            ),
+            if (onTap != null)
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14, color: colors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatBox extends StatelessWidget {
+  const _StatBox({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            vertical: BBSpacing.md, horizontal: BBSpacing.sm),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: BBTypography.textTheme.headlineSmall?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              label,
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: colors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

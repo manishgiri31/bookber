@@ -52,6 +52,16 @@ class BarberDashboardScreen extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(
                               horizontal: BBSpacing.pageHorizontal,
                             ),
+                            child: _RevenueCard(stats: state.stats!),
+                          ),
+                        ),
+                        const SliverToBoxAdapter(
+                            child: SizedBox(height: BBSpacing.md)),
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: BBSpacing.pageHorizontal,
+                            ),
                             child: _StatsRow(stats: state.stats!),
                           ),
                         ),
@@ -319,6 +329,81 @@ class _Header extends ConsumerWidget {
   }
 }
 
+class _RevenueCard extends StatelessWidget {
+  const _RevenueCard({required this.stats});
+  final BarberStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      padding: const EdgeInsets.all(BBSpacing.base),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(BBRadius.xl),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Today's Revenue",
+                  style: BBTypography.textTheme.labelMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '₹${stats.revenueToday.toStringAsFixed(0)}',
+                  style: BBTypography.textTheme.headlineLarge?.copyWith(
+                    color: colors.text,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  'Week: ₹${stats.revenueWeek.toStringAsFixed(0)}',
+                  style: BBTypography.textTheme.bodySmall?.copyWith(
+                    color: colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (stats.averageRating > 0)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.star_rounded,
+                        size: 16, color: BBColors.amber),
+                    const SizedBox(width: 4),
+                    Text(
+                      stats.averageRating.toStringAsFixed(1),
+                      style: BBTypography.textTheme.titleMedium?.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  '${stats.totalReviews} reviews',
+                  style: BBTypography.textTheme.labelSmall?.copyWith(
+                    color: colors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatsRow extends StatelessWidget {
   const _StatsRow({required this.stats});
   final BarberStats stats;
@@ -435,7 +520,7 @@ class _QuickActions extends StatelessWidget {
             Expanded(
               child: _ActionCard(
                 icon: Icons.queue_rounded,
-                label: 'Manage Queue',
+                label: 'Queue',
                 color: BBColors.amber,
                 onTap: () => context.go('/barber/queue'),
               ),
@@ -458,6 +543,52 @@ class _QuickActions extends StatelessWidget {
                 onTap: () => context.go('/barber/analytics'),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: BBSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.store_outlined,
+                label: 'Shop',
+                color: const Color(0xFF8B5CF6),
+                onTap: () => context.push('/barber/shop'),
+              ),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.person_add_outlined,
+                label: 'Reception',
+                color: const Color(0xFFF97316),
+                onTap: () => context.push('/barber/reception'),
+              ),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.groups_outlined,
+                label: 'Employees',
+                color: const Color(0xFF0EA5E9),
+                onTap: () => context.push('/barber/employees'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: BBSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: _ActionCard(
+                icon: Icons.content_cut_rounded,
+                label: 'Services',
+                color: const Color(0xFF10B981),
+                onTap: () => context.push('/barber/services'),
+              ),
+            ),
+            const Spacer(),
+            const Spacer(),
           ],
         ),
       ],

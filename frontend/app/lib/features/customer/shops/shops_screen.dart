@@ -38,6 +38,33 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
     });
   }
 
+  void _showAdvancedFilters(
+      BuildContext context, WidgetRef ref, ShopsSearchState state) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(BBRadius.xxl)),
+      ),
+      builder: (_) => _AdvancedFiltersSheet(
+        state: state,
+        onApply: ({
+          required double minRating,
+          required double? maxDistanceKm,
+          required bool verifiedOnly,
+          required bool openOnly,
+        }) {
+          ref.read(shopsProvider.notifier).setMinRating(minRating);
+          ref.read(shopsProvider.notifier).setMaxDistance(maxDistanceKm);
+          ref.read(shopsProvider.notifier).setVerifiedOnly(verifiedOnly);
+          ref.read(shopsProvider.notifier).setOpenOnly(openOnly);
+        },
+        onClear: () => ref.read(shopsProvider.notifier).clearFilters(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
@@ -111,9 +138,11 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
           _FilterBar(
             sortBy: state.sortBy,
             openOnly: state.openOnly,
+            hasActiveFilters: state.hasActiveFilters,
             onSortChanged: (s) => ref.read(shopsProvider.notifier).setSortBy(s),
             onOpenOnlyChanged: (v) =>
                 ref.read(shopsProvider.notifier).setOpenOnly(v),
+            onAdvancedFilters: () => _showAdvancedFilters(context, ref, state),
           ),
           Expanded(
             child: state.isLoading
@@ -219,14 +248,18 @@ class _FilterBar extends StatelessWidget {
   const _FilterBar({
     required this.sortBy,
     required this.openOnly,
+    required this.hasActiveFilters,
     required this.onSortChanged,
     required this.onOpenOnlyChanged,
+    required this.onAdvancedFilters,
   });
 
   final ShopSortBy sortBy;
   final bool openOnly;
+  final bool hasActiveFilters;
   final void Function(ShopSortBy) onSortChanged;
   final void Function(bool) onOpenOnlyChanged;
+  final VoidCallback onAdvancedFilters;
 
   @override
   Widget build(BuildContext context) {
@@ -244,6 +277,50 @@ class _FilterBar extends StatelessWidget {
         ),
         child: Row(
           children: [
+            // Advanced filters button
+            GestureDetector(
+              onTap: onAdvancedFilters,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: hasActiveFilters ? BBColors.amber : colors.surface,
+                  borderRadius: BorderRadius.circular(BBRadius.full),
+                  border: Border.all(
+                    color:
+                        hasActiveFilters ? BBColors.amber : colors.border,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 13,
+                      color: hasActiveFilters
+                          ? colors.background
+                          : colors.textSecondary,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      hasActiveFilters ? 'Filtered' : 'Filters',
+                      style: BBTypography.textTheme.labelSmall?.copyWith(
+                        color: hasActiveFilters
+                            ? colors.background
+                            : colors.textSecondary,
+                        fontWeight: hasActiveFilters
+                            ? FontWeight.w700
+                            : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            Container(width: 1, height: 20, color: colors.border),
+            const SizedBox(width: BBSpacing.sm),
             _SortChip(
               label: 'Nearest',
               icon: Icons.near_me_outlined,

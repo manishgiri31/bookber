@@ -51,16 +51,28 @@ class BarberStats {
     required this.todayBookings,
     required this.activeQueue,
     required this.completedToday,
+    this.revenueToday = 0.0,
+    this.revenueWeek = 0.0,
+    this.totalReviews = 0,
+    this.averageRating = 0.0,
   });
 
   final int todayBookings;
   final int activeQueue;
   final int completedToday;
+  final double revenueToday;
+  final double revenueWeek;
+  final int totalReviews;
+  final double averageRating;
 
   factory BarberStats.fromJson(Map<String, dynamic> json) => BarberStats(
         todayBookings: (json['todayBookings'] as int?) ?? 0,
         activeQueue: (json['activeQueue'] as int?) ?? 0,
         completedToday: (json['completedToday'] as int?) ?? 0,
+        revenueToday: (json['revenueToday'] as num?)?.toDouble() ?? 0.0,
+        revenueWeek: (json['revenueWeek'] as num?)?.toDouble() ?? 0.0,
+        totalReviews: (json['totalReviews'] as int?) ?? 0,
+        averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0.0,
       );
 }
 

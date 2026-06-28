@@ -260,6 +260,13 @@ class _QueueView extends ConsumerWidget {
           ],
           if (status == 'WAITING' || status == 'QUEUED') ...[
             BBButton(
+              label: 'Smart Arrival',
+              onPressed: () => context.push('/arrival/$bookingId'),
+              variant: BBButtonVariant.secondary,
+              icon: Icons.navigation_rounded,
+            ),
+            const SizedBox(height: BBSpacing.sm),
+            BBButton(
               label: 'Cancel',
               onPressed: () => _confirmCancel(context, ref),
               variant: BBButtonVariant.destructive,
