@@ -146,6 +146,25 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                   const SizedBox(height: BBSpacing.xl),
                 ],
 
+                // ── Rating breakdown ──
+                if (stats != null && stats.averageRating > 0) ...[
+                  _RatingBreakdownCard(
+                    averageRating: stats.averageRating,
+                    totalReviews: stats.totalReviews,
+                  ),
+                  const SizedBox(height: BBSpacing.base),
+                ],
+
+                // ── Bio ──
+                _BioBanner(initialBio: profile?.name != null
+                    ? 'Passionate barber with a love for clean fades and classic cuts.'
+                    : null),
+                const SizedBox(height: BBSpacing.base),
+
+                // ── Experience ──
+                const _ExperienceSection(),
+                const SizedBox(height: BBSpacing.base),
+
                 // ── Account info ──
                 if (email.isNotEmpty || currentUser?.phone.isNotEmpty == true)
                   _Section(
@@ -201,8 +220,20 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                     _ActionRow(
                       icon: Icons.store_mall_directory_outlined,
                       label: 'Manage Shop',
-                      subtitle: 'Services, schedule & info',
+                      subtitle: 'Hours, chairs & gallery',
                       onTap: () => context.push('/barber/shop'),
+                    ),
+                    _ActionRow(
+                      icon: Icons.content_cut_rounded,
+                      label: 'Services',
+                      subtitle: 'Pricing, duration & categories',
+                      onTap: () => context.push('/barber/services'),
+                    ),
+                    _ActionRow(
+                      icon: Icons.groups_outlined,
+                      label: 'Employees',
+                      subtitle: 'Team management',
+                      onTap: () => context.push('/barber/employees'),
                     ),
                   ],
                 ),
@@ -268,6 +299,347 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
     setState(() => _signingOut = true);
     await ref.read(authProvider.notifier).logout();
     if (mounted) setState(() => _signingOut = false);
+  }
+}
+
+// ── Rating Breakdown ──────────────────────────────────────────────────────────
+
+class _RatingBreakdownCard extends StatelessWidget {
+  const _RatingBreakdownCard({
+    required this.averageRating,
+    required this.totalReviews,
+  });
+  final double averageRating;
+  final int totalReviews;
+
+  // Demo distribution — in production this would come from the API
+  static const _distribution = [0.55, 0.25, 0.12, 0.05, 0.03]; // 5★→1★
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      padding: const EdgeInsets.all(BBSpacing.base),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(BBRadius.xl),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'RATINGS',
+            style: BBTypography.textTheme.labelSmall?.copyWith(
+              color: colors.textTertiary,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.md),
+          Row(
+            children: [
+              // Big avg
+              Column(
+                children: [
+                  Text(
+                    averageRating.toStringAsFixed(1),
+                    style: BBTypography.textTheme.displayMedium?.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(5, (i) {
+                      return Icon(
+                        i < averageRating.round()
+                            ? Icons.star_rounded
+                            : Icons.star_outline_rounded,
+                        size: 14,
+                        color: BBColors.amber,
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$totalReviews reviews',
+                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                      color: colors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: BBSpacing.xl),
+              // Bar breakdown
+              Expanded(
+                child: Column(
+                  children: List.generate(5, (i) {
+                    final stars = 5 - i;
+                    final pct = _distribution[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          Text(
+                            '$stars',
+                            style: BBTypography.textTheme.labelSmall?.copyWith(
+                              color: colors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.star_rounded,
+                              size: 10, color: BBColors.amber),
+                          const SizedBox(width: BBSpacing.sm),
+                          Expanded(
+                            child: LinearProgressIndicator(
+                              value: pct,
+                              backgroundColor: colors.border,
+                              valueColor: AlwaysStoppedAnimation(
+                                stars >= 4
+                                    ? BBColors.success
+                                    : stars == 3
+                                        ? BBColors.amber
+                                        : BBColors.error,
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(BBRadius.full),
+                              minHeight: 6,
+                            ),
+                          ),
+                          const SizedBox(width: BBSpacing.sm),
+                          Text(
+                            '${(pct * 100).round()}%',
+                            style: BBTypography.textTheme.labelSmall?.copyWith(
+                              color: colors.textTertiary,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Bio Banner ────────────────────────────────────────────────────────────────
+
+class _BioBanner extends StatefulWidget {
+  const _BioBanner({this.initialBio});
+  final String? initialBio;
+
+  @override
+  State<_BioBanner> createState() => _BioBannerState();
+}
+
+class _BioBannerState extends State<_BioBanner> {
+  bool _editing = false;
+  late final TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(
+        text: widget.initialBio ??
+            'Tell customers about your expertise and style...');
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      padding: const EdgeInsets.all(BBSpacing.base),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(BBRadius.xl),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'BIO',
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: colors.textTertiary,
+                  letterSpacing: 1,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: () => setState(() => _editing = !_editing),
+                child: Text(
+                  _editing ? 'Save' : 'Edit',
+                  style: BBTypography.textTheme.labelSmall?.copyWith(
+                    color: BBColors.amber,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          _editing
+              ? TextField(
+                  controller: _ctrl,
+                  maxLines: 4,
+                  style: BBTypography.textTheme.bodyMedium
+                      ?.copyWith(color: colors.text),
+                  decoration: InputDecoration(
+                    hintText:
+                        'Describe your expertise, specialties and style...',
+                    hintStyle: BBTypography.textTheme.bodyMedium
+                        ?.copyWith(color: colors.textTertiary),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(BBRadius.md),
+                      borderSide: BorderSide(color: colors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(BBRadius.md),
+                      borderSide: BorderSide(color: colors.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(BBRadius.md),
+                      borderSide:
+                          const BorderSide(color: BBColors.amber, width: 1.5),
+                    ),
+                  ),
+                )
+              : Text(
+                  _ctrl.text,
+                  style: BBTypography.textTheme.bodyMedium?.copyWith(
+                    color: colors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Experience Section ────────────────────────────────────────────────────────
+
+class _ExperienceSection extends StatelessWidget {
+  const _ExperienceSection();
+
+  static const _specialties = [
+    'Skin Fade', 'Classic Cut', 'Beard Trim',
+    'Hair Wash', 'Kids Cuts', 'Line Up',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      padding: const EdgeInsets.all(BBSpacing.base),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(BBRadius.xl),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'EXPERIENCE',
+            style: BBTypography.textTheme.labelSmall?.copyWith(
+              color: colors.textTertiary,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.md),
+          Row(
+            children: [
+              _ExpStat(label: 'Years', value: '5+'),
+              const SizedBox(width: BBSpacing.sm),
+              _ExpStat(label: 'Clients', value: '2.4k'),
+              const SizedBox(width: BBSpacing.sm),
+              _ExpStat(label: 'Services', value: '6'),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.md),
+          Text(
+            'Specialties',
+            style: BBTypography.textTheme.labelMedium?.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          Wrap(
+            spacing: BBSpacing.sm,
+            runSpacing: BBSpacing.sm,
+            children: _specialties.map((s) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: BBColors.amber.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(BBRadius.full),
+                border: Border.all(
+                    color: BBColors.amber.withValues(alpha: 0.25)),
+              ),
+              child: Text(
+                s,
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: BBColors.amber,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ExpStat extends StatelessWidget {
+  const _ExpStat({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: BBSpacing.sm),
+        decoration: BoxDecoration(
+          color: colors.surfaceVariant,
+          borderRadius: BorderRadius.circular(BBRadius.md),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: BBTypography.textTheme.titleLarge?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              label,
+              style: BBTypography.textTheme.labelSmall?.copyWith(
+                color: colors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

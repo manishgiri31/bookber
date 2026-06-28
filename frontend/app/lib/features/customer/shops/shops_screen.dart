@@ -548,3 +548,286 @@ class _InfoChip extends StatelessWidget {
     );
   }
 }
+
+// ── Advanced Filters Sheet ────────────────────────────────────────────────────
+
+class _AdvancedFiltersSheet extends StatefulWidget {
+  const _AdvancedFiltersSheet({
+    required this.state,
+    required this.onApply,
+    required this.onClear,
+  });
+  final ShopsSearchState state;
+  final void Function({
+    required double minRating,
+    required double? maxDistanceKm,
+    required bool verifiedOnly,
+    required bool openOnly,
+  }) onApply;
+  final VoidCallback onClear;
+
+  @override
+  State<_AdvancedFiltersSheet> createState() => _AdvancedFiltersSheetState();
+}
+
+class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
+  late double _minRating;
+  late double? _maxDistanceKm;
+  late bool _verifiedOnly;
+  late bool _openOnly;
+
+  static const _ratingOptions = [0.0, 4.0, 4.5, 4.8];
+  static const _distanceOptions = <double?>[null, 1.0, 2.0, 5.0, 10.0];
+
+  @override
+  void initState() {
+    super.initState();
+    _minRating = widget.state.minRating;
+    _maxDistanceKm = widget.state.maxDistanceKm;
+    _verifiedOnly = widget.state.verifiedOnly;
+    _openOnly = widget.state.openOnly;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          BBSpacing.pageHorizontal, BBSpacing.lg, BBSpacing.pageHorizontal, BBSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Filters',
+                style: BBTypography.textTheme.headlineSmall?.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  widget.onClear();
+                  Navigator.of(context).pop();
+                },
+                child: Text(
+                  'Clear all',
+                  style: BBTypography.textTheme.labelMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.xl),
+
+          // ── Min rating ──────────────────────────────────────────
+          Text(
+            'MINIMUM RATING',
+            style: BBTypography.textTheme.labelSmall?.copyWith(
+              color: colors.textTertiary, letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          Row(
+            children: _ratingOptions.map((r) {
+              final selected = _minRating == r;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: BBSpacing.xs),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _minRating = r),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: selected ? BBColors.amber : colors.surface,
+                        borderRadius: BorderRadius.circular(BBRadius.md),
+                        border: Border.all(
+                          color: selected ? BBColors.amber : colors.border,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          if (r == 0.0)
+                            Text('Any',
+                                style: BBTypography.textTheme.labelSmall?.copyWith(
+                                  color: selected ? colors.background : colors.text,
+                                  fontWeight: FontWeight.w700,
+                                ))
+                          else
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.star_rounded,
+                                    size: 12,
+                                    color: selected ? colors.background : BBColors.amber),
+                                const SizedBox(width: 2),
+                                Text('$r+',
+                                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                                      color: selected ? colors.background : colors.text,
+                                      fontWeight: FontWeight.w700,
+                                    )),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: BBSpacing.xl),
+
+          // ── Distance ─────────────────────────────────────────────
+          Text(
+            'MAX DISTANCE',
+            style: BBTypography.textTheme.labelSmall?.copyWith(
+              color: colors.textTertiary, letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          Row(
+            children: _distanceOptions.map((d) {
+              final selected = _maxDistanceKm == d;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: BBSpacing.xs),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _maxDistanceKm = d),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 120),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: selected ? BBColors.amber : colors.surface,
+                        borderRadius: BorderRadius.circular(BBRadius.md),
+                        border: Border.all(
+                          color: selected ? BBColors.amber : colors.border,
+                        ),
+                      ),
+                      child: Text(
+                        d == null ? 'Any' : '${d.toInt()}km',
+                        textAlign: TextAlign.center,
+                        style: BBTypography.textTheme.labelSmall?.copyWith(
+                          color: selected ? colors.background : colors.text,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: BBSpacing.xl),
+
+          // ── Toggles ──────────────────────────────────────────────
+          _ToggleRow(
+            label: 'Open Now',
+            subtitle: 'Only show currently open shops',
+            value: _openOnly,
+            onChanged: (v) => setState(() => _openOnly = v),
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          _ToggleRow(
+            label: 'Verified Shops',
+            subtitle: 'Only show verified & trusted shops',
+            value: _verifiedOnly,
+            onChanged: (v) => setState(() => _verifiedOnly = v),
+          ),
+
+          const SizedBox(height: BBSpacing.xl),
+
+          // ── Apply ────────────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: BBColors.amber,
+                foregroundColor: colors.background,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(BBRadius.md),
+                ),
+              ),
+              onPressed: () {
+                widget.onApply(
+                  minRating: _minRating,
+                  maxDistanceKm: _maxDistanceKm,
+                  verifiedOnly: _verifiedOnly,
+                  openOnly: _openOnly,
+                );
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Apply Filters',
+                style: BBTypography.textTheme.labelLarge?.copyWith(
+                  color: colors.background,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+  });
+  final String label;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: BBSpacing.base, vertical: BBSpacing.sm),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(BBRadius.lg),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: BBTypography.textTheme.labelMedium?.copyWith(
+                      color: colors.text,
+                      fontWeight: FontWeight.w600,
+                    )),
+                Text(subtitle,
+                    style: BBTypography.textTheme.labelSmall?.copyWith(
+                      color: colors.textSecondary,
+                    )),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeTrackColor: BBColors.amber,
+          ),
+        ],
+      ),
+    );
+  }
+}

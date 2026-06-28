@@ -115,7 +115,9 @@ class ShopsSearchState {
       if (minRating > 0 && s.rating < minRating) return false;
       if (maxDistanceKm != null &&
           s.distanceKm != null &&
-          s.distanceKm! > maxDistanceKm!) return false;
+          s.distanceKm! > maxDistanceKm!) {
+        return false;
+      }
       return true;
     }).toList();
 

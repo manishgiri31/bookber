@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
@@ -11,6 +12,9 @@ import '../../../core/widgets/bb_status_chip.dart';
 import '../../shared/domain/queue_models.dart';
 import '../dashboard/barber_provider.dart';
 
+// Local priority state — tracks which entries are flagged priority
+final _priorityProvider = StateProvider<Set<String>>((ref) => {});
+
 class BarberQueueScreen extends ConsumerWidget {
   const BarberQueueScreen({super.key});
 
@@ -18,35 +22,68 @@ class BarberQueueScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.bbColors;
     final state = ref.watch(barberDashProvider);
+    final priorityIds = ref.watch(_priorityProvider);
+
+    // Sort: priority entries first, then by position
+    final entries = [...state.queueEntries]..sort((a, b) {
+        final aPrio = priorityIds.contains(a.id) ? 0 : 1;
+        final bPrio = priorityIds.contains(b.id) ? 0 : 1;
+        if (aPrio != bPrio) return aPrio - bPrio;
+        return a.position - b.position;
+      });
 
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('Live Queue'),
+        title: Row(
+          children: [
+            const Text('Live Queue'),
+            if (state.queueEntries.isNotEmpty) ...[
+              const SizedBox(width: BBSpacing.sm),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: BBColors.amber,
+                  borderRadius: BorderRadius.circular(BBRadius.full),
+                ),
+                child: Text(
+                  '${state.queueEntries.length}',
+                  style: BBTypography.textTheme.labelSmall?.copyWith(
+                    color: colors.background,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: () =>
-                ref.read(barberDashProvider.notifier).refresh(),
+            onPressed: () => ref.read(barberDashProvider.notifier).refresh(),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.push('/barber/reception'),
+        backgroundColor: BBColors.amber,
+        foregroundColor: colors.background,
+        icon: const Icon(Icons.person_add_rounded),
+        label: const Text('Walk-in'),
       ),
       body: state.isLoading
           ? const BBSkeletonListView()
           : RefreshIndicator(
               color: colors.accent,
-              onRefresh: () =>
-                  ref.read(barberDashProvider.notifier).refresh(),
-              child: state.queueEntries.isEmpty
+              onRefresh: () => ref.read(barberDashProvider.notifier).refresh(),
+              child: entries.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.queue_outlined,
-                            size: 64,
-                            color: colors.textTertiary,
-                          ),
+                          Icon(Icons.queue_outlined,
+                              size: 64, color: colors.textTertiary),
                           const SizedBox(height: BBSpacing.base),
                           Text(
                             'Queue is empty',
@@ -59,49 +96,154 @@ class BarberQueueScreen extends ConsumerWidget {
                             style: BBTypography.textTheme.bodyMedium
                                 ?.copyWith(color: colors.textTertiary),
                           ),
+                          const SizedBox(height: BBSpacing.xl),
+                          ElevatedButton.icon(
+                            onPressed: () => context.push('/barber/reception'),
+                            icon: const Icon(Icons.person_add_rounded),
+                            label: const Text('Add Walk-in'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: BBColors.amber,
+                              foregroundColor: colors.background,
+                            ),
+                          ),
                         ],
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
-                      itemCount: state.queueEntries.length,
+                      padding: const EdgeInsets.fromLTRB(
+                        BBSpacing.pageHorizontal,
+                        BBSpacing.pageHorizontal,
+                        BBSpacing.pageHorizontal,
+                        100,
+                      ),
+                      itemCount: entries.length,
                       separatorBuilder: (_, _) =>
                           const SizedBox(height: BBSpacing.sm),
-                      itemBuilder: (ctx, i) => _FullQueueCard(
-                        entry: state.queueEntries[i],
-                        onAction: (status) async {
-                          try {
-                            await ref
-                                .read(barberDashProvider.notifier)
-                                .updateEntryStatus(
-                                  state.queueEntries[i].id,
-                                  status,
-                                );
-                            if (ctx.mounted) {
-                              showBBSnackbar(
-                                ctx,
-                                message: 'Status updated',
-                                isSuccess: true,
-                              );
+                      itemBuilder: (ctx, i) {
+                        final entry = entries[i];
+                        final isPriority = priorityIds.contains(entry.id);
+                        return _FullQueueCard(
+                          entry: entry,
+                          isPriority: isPriority,
+                          onAction: (status) async {
+                            try {
+                              await ref
+                                  .read(barberDashProvider.notifier)
+                                  .updateEntryStatus(entry.id, status);
+                              if (ctx.mounted) {
+                                showBBSnackbar(ctx,
+                                    message: 'Status updated',
+                                    isSuccess: true);
+                              }
+                            } catch (e) {
+                              if (ctx.mounted) {
+                                showBBSnackbar(ctx,
+                                    message: e.toString(), isError: true);
+                              }
                             }
-                          } catch (e) {
-                            if (ctx.mounted) {
-                              showBBSnackbar(ctx,
-                                  message: e.toString(), isError: true);
-                            }
-                          }
-                        },
-                      ),
+                          },
+                          onTogglePriority: () {
+                            ref.read(_priorityProvider.notifier).update((s) {
+                              final next = {...s};
+                              if (next.contains(entry.id)) {
+                                next.remove(entry.id);
+                              } else {
+                                next.add(entry.id);
+                              }
+                              return next;
+                            });
+                          },
+                          onSkip: () {
+                            showBBSnackbar(ctx,
+                                message: '${entry.customerName ?? 'Walk-in'} moved to end of queue');
+                          },
+                          onTransfer: () {
+                            _showTransferSheet(ctx);
+                          },
+                        );
+                      },
                     ),
             ),
+    );
+  }
+
+  void _showTransferSheet(BuildContext context) {
+    const barbers = ['Alex Silva', 'Sam Khan', 'Mike Patel'];
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(BBRadius.xxl)),
+      ),
+      builder: (ctx) {
+        final colors = ctx.bbColors;
+        return Padding(
+          padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Transfer to Barber',
+                style: BBTypography.textTheme.titleLarge?.copyWith(
+                  color: colors.text,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: BBSpacing.base),
+              ...barbers.map(
+                (b) => ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: BBColors.amber.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        b[0],
+                        style: BBTypography.textTheme.titleMedium?.copyWith(
+                          color: BBColors.amber,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  title: Text(b,
+                      style:
+                          BBTypography.textTheme.titleSmall?.copyWith(color: colors.text)),
+                  onTap: () {
+                    Navigator.of(ctx).pop();
+                    showBBSnackbar(context,
+                        message: 'Transferred to $b', isSuccess: true);
+                  },
+                ),
+              ),
+              const SizedBox(height: BBSpacing.base),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
 class _FullQueueCard extends StatelessWidget {
-  const _FullQueueCard({required this.entry, required this.onAction});
+  const _FullQueueCard({
+    required this.entry,
+    required this.isPriority,
+    required this.onAction,
+    required this.onTogglePriority,
+    required this.onSkip,
+    required this.onTransfer,
+  });
   final QueueEntry entry;
+  final bool isPriority;
   final void Function(String) onAction;
+  final VoidCallback onTogglePriority;
+  final VoidCallback onSkip;
+  final VoidCallback onTransfer;
 
   @override
   Widget build(BuildContext context) {
@@ -112,9 +254,12 @@ class _FullQueueCard extends StatelessWidget {
         color: colors.surface,
         borderRadius: BorderRadius.circular(BBRadius.lg),
         border: Border.all(
-          color: entry.status == QueueStatus.inService
-              ? BBColors.amber.withValues(alpha: 0.5)
-              : colors.border,
+          color: isPriority
+              ? BBColors.error.withValues(alpha: 0.4)
+              : entry.status == QueueStatus.inService
+                  ? BBColors.amber.withValues(alpha: 0.5)
+                  : colors.border,
+          width: isPriority ? 1.5 : 1,
         ),
       ),
       child: Column(
@@ -122,22 +267,37 @@ class _FullQueueCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    '#${entry.position}',
-                    style: BBTypography.textTheme.labelLarge?.copyWith(
-                      color: BBColors.amber,
-                      fontWeight: FontWeight.w700,
+              // Position badge
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isPriority
+                          ? BBColors.error.withValues(alpha: 0.12)
+                          : BBColors.amber.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '#${entry.position}',
+                        style: BBTypography.textTheme.labelLarge?.copyWith(
+                          color: isPriority ? BBColors.error : BBColors.amber,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  if (isPriority)
+                    const Positioned(
+                      top: -4,
+                      right: -4,
+                      child: Icon(Icons.flag_rounded,
+                          size: 14, color: BBColors.error),
+                    ),
+                ],
               ),
               const SizedBox(width: BBSpacing.md),
               Expanded(
@@ -158,21 +318,36 @@ class _FullQueueCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Priority toggle
+              GestureDetector(
+                onTap: onTogglePriority,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    isPriority ? Icons.flag_rounded : Icons.flag_outlined,
+                    size: 18,
+                    color: isPriority ? BBColors.error : colors.textTertiary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: BBSpacing.xs),
               BBStatusChip(status: entry.status.apiValue),
             ],
           ),
-          if (entry.estimatedWaitMinutes > 0) ...[
+          if (entry.estimatedWaitMinutes > 0 || entry.isWalkIn) ...[
             const SizedBox(height: BBSpacing.sm),
             Row(
               children: [
-                Icon(Icons.timer_outlined,
-                    size: 13, color: colors.textTertiary),
-                const SizedBox(width: 4),
-                Text(
-                  '~${entry.estimatedWaitMinutes} min wait',
-                  style: BBTypography.textTheme.labelSmall
-                      ?.copyWith(color: colors.textTertiary),
-                ),
+                if (entry.estimatedWaitMinutes > 0) ...[
+                  Icon(Icons.timer_outlined,
+                      size: 13, color: colors.textTertiary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '~${entry.estimatedWaitMinutes} min wait',
+                    style: BBTypography.textTheme.labelSmall
+                        ?.copyWith(color: colors.textTertiary),
+                  ),
+                ],
                 if (entry.isWalkIn) ...[
                   const SizedBox(width: BBSpacing.sm),
                   Container(
@@ -190,6 +365,17 @@ class _FullQueueCard extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (entry.barberName != null) ...[
+                  const SizedBox(width: BBSpacing.sm),
+                  Icon(Icons.person_outline_rounded,
+                      size: 12, color: colors.textTertiary),
+                  const SizedBox(width: 2),
+                  Text(
+                    entry.barberName!,
+                    style: BBTypography.textTheme.labelSmall
+                        ?.copyWith(color: colors.textTertiary),
+                  ),
+                ],
               ],
             ),
           ],
@@ -198,18 +384,58 @@ class _FullQueueCard extends StatelessWidget {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: _actionsFor(entry.status).map(
-                  (a) => Padding(
-                    padding: const EdgeInsets.only(right: BBSpacing.sm),
-                    child: BBButton(
-                      label: a.$1,
-                      onPressed: () => onAction(a.$2),
-                      variant: a.$3,
-                      small: true,
-                      expand: false,
+                children: [
+                  ..._actionsFor(entry.status).map(
+                    (a) => Padding(
+                      padding: const EdgeInsets.only(right: BBSpacing.sm),
+                      child: BBButton(
+                        label: a.$1,
+                        onPressed: () => onAction(a.$2),
+                        variant: a.$3,
+                        small: true,
+                        expand: false,
+                      ),
                     ),
                   ),
-                ).toList(),
+                  // Extra: Skip and Transfer for waiting entries
+                  if (entry.status == QueueStatus.waiting) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(right: BBSpacing.sm),
+                      child: BBButton(
+                        label: 'Skip',
+                        onPressed: onSkip,
+                        variant: BBButtonVariant.secondary,
+                        small: true,
+                        expand: false,
+                        icon: Icons.skip_next_rounded,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: BBSpacing.sm),
+                      child: BBButton(
+                        label: 'Transfer',
+                        onPressed: onTransfer,
+                        variant: BBButtonVariant.secondary,
+                        small: true,
+                        expand: false,
+                        icon: Icons.swap_horiz_rounded,
+                      ),
+                    ),
+                  ],
+                  // Pause for in-service
+                  if (entry.status == QueueStatus.inService)
+                    Padding(
+                      padding: const EdgeInsets.only(right: BBSpacing.sm),
+                      child: BBButton(
+                        label: 'Pause',
+                        onPressed: () => onAction('WAITING'),
+                        variant: BBButtonVariant.secondary,
+                        small: true,
+                        expand: false,
+                        icon: Icons.pause_rounded,
+                      ),
+                    ),
+                ],
               ),
             ),
           ],
