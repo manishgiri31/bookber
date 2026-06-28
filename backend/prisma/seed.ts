@@ -86,7 +86,7 @@ async function main() {
 
   const owner1 = await prisma.user.upsert({
     where: { email: "owner.marcus@bookber.dev" },
-    update: {},
+    update: { role: UserRole.BARBER },
     create: {
       fullName: "Marcus Thompson",
       email: "owner.marcus@bookber.dev",
@@ -98,7 +98,7 @@ async function main() {
 
   const owner2 = await prisma.user.upsert({
     where: { email: "owner.james@bookber.dev" },
-    update: {},
+    update: { role: UserRole.BARBER },
     create: {
       fullName: "James Rivera",
       email: "owner.james@bookber.dev",
@@ -110,7 +110,7 @@ async function main() {
 
   const barberUser1 = await prisma.user.upsert({
     where: { email: "barber.alex@bookber.dev" },
-    update: {},
+    update: { role: UserRole.BARBER },
     create: {
       fullName: "Alex Carter",
       email: "barber.alex@bookber.dev",
@@ -122,7 +122,7 @@ async function main() {
 
   const barberUser2 = await prisma.user.upsert({
     where: { email: "barber.sam@bookber.dev" },
-    update: {},
+    update: { role: UserRole.BARBER },
     create: {
       fullName: "Sam Okonkwo",
       email: "barber.sam@bookber.dev",
@@ -134,7 +134,7 @@ async function main() {
 
   const barberUser3 = await prisma.user.upsert({
     where: { email: "barber.mike@bookber.dev" },
-    update: {},
+    update: { role: UserRole.BARBER },
     create: {
       fullName: "Mike Delacroix",
       email: "barber.mike@bookber.dev",

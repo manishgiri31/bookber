@@ -35,11 +35,13 @@ export class PrismaShopRepository {
   }
 
   async findShopByBarber(userId: string) {
+    // Check Barber employee record first, then fall back to shop ownership
     const barber = await prisma.barber.findUnique({
       where: { userId },
       include: { shop: true }
     });
-    return barber?.shop || null;
+    if (barber?.shop) return barber.shop;
+    return prisma.shop.findFirst({ where: { ownerId: userId } }) || null;
   }
 
   async upsertBarberProfile(userId: string, shopId: string) {

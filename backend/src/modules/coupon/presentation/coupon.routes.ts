@@ -1,17 +1,18 @@
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from "fastify";
+import { getAuthUser } from "../../auth/presentation/auth-user.js";
 
 export const couponRoutes: FastifyPluginAsync = async (app) => {
   const svc = app.couponDeps.service;
   const auth = { preHandler: [app.authenticate] };
 
   app.post("/coupons/validate", auth, async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = (req as any).user as { id: string };
+    const { id } = getAuthUser(req);
     const { code, orderAmount } = req.body as { code: string; orderAmount: number };
     if (!code || !orderAmount) {
       return reply.status(400).send({ error: "code and orderAmount are required" });
     }
     try {
-      const result = await svc.validate(code, user.id, orderAmount);
+      const result = await svc.validate(code, id, orderAmount);
       return reply.send(result);
     } catch (err: any) {
       return reply.status(400).send({ error: err.message });
@@ -19,13 +20,13 @@ export const couponRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post("/coupons/redeem", auth, async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = (req as any).user as { id: string };
+    const { id } = getAuthUser(req);
     const { couponId, bookingId, discount } = req.body as { couponId: string; bookingId: string; discount: number };
     if (!couponId || !bookingId || discount === undefined) {
       return reply.status(400).send({ error: "couponId, bookingId and discount are required" });
     }
     try {
-      const redemption = await svc.redeem(couponId, user.id, bookingId, discount);
+      const redemption = await svc.redeem(couponId, id, bookingId, discount);
       return reply.send({ redemption });
     } catch (err: any) {
       return reply.status(400).send({ error: err.message });
@@ -33,8 +34,8 @@ export const couponRoutes: FastifyPluginAsync = async (app) => {
   });
 
   app.post("/coupons", auth, async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = (req as any).user as { id: string; role: string };
-    if (user.role !== "ADMIN") return reply.status(403).send({ error: "Admin only" });
+    const { role } = getAuthUser(req);
+    if (role !== "ADMIN") return reply.status(403).send({ error: "Admin only" });
     const body = req.body as {
       code: string;
       type: "PERCENT" | "FLAT";

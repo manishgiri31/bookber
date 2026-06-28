@@ -68,7 +68,8 @@ export class PrismaAdminRepository {
         DATE("createdAt") as date,
         COUNT(*) as count
       FROM "Booking"
-      WHERE ${fromDate ? Prisma.sql`"createdAt" >= ${fromDate}` : Prisma.empty}
+      WHERE TRUE
+        ${fromDate ? Prisma.sql`AND "createdAt" >= ${fromDate}` : Prisma.empty}
         ${toDate ? Prisma.sql`AND "createdAt" <= ${toDate}` : Prisma.empty}
         ${shopId ? Prisma.sql`AND "shopId" = ${shopId}` : Prisma.empty}
       GROUP BY DATE("createdAt")
@@ -81,7 +82,8 @@ export class PrismaAdminRepository {
         EXTRACT(HOUR FROM "createdAt") as hour,
         COUNT(*) as count
       FROM "Booking"
-      WHERE ${fromDate ? Prisma.sql`"createdAt" >= ${fromDate}` : Prisma.empty}
+      WHERE TRUE
+        ${fromDate ? Prisma.sql`AND "createdAt" >= ${fromDate}` : Prisma.empty}
         ${toDate ? Prisma.sql`AND "createdAt" <= ${toDate}` : Prisma.empty}
         ${shopId ? Prisma.sql`AND "shopId" = ${shopId}` : Prisma.empty}
       GROUP BY EXTRACT(HOUR FROM "createdAt")
@@ -103,7 +105,8 @@ export class PrismaAdminRepository {
       FROM "Booking" b
       LEFT JOIN "Service" s ON s.id = b."serviceId"
       LEFT JOIN "Payment" p ON p."bookingId" = b.id
-      WHERE ${fromDate ? Prisma.sql`b."createdAt" >= ${fromDate}` : Prisma.empty}
+      WHERE TRUE
+        ${fromDate ? Prisma.sql`AND b."createdAt" >= ${fromDate}` : Prisma.empty}
         ${toDate ? Prisma.sql`AND b."createdAt" <= ${toDate}` : Prisma.empty}
         ${shopId ? Prisma.sql`AND b."shopId" = ${shopId}` : Prisma.empty}
       GROUP BY s.id, s.name
@@ -120,7 +123,8 @@ export class PrismaAdminRepository {
       FROM "Booking" b
       INNER JOIN "Shop" s ON s.id = b."shopId"
       LEFT JOIN "Payment" p ON p."bookingId" = b.id
-      WHERE ${fromDate ? Prisma.sql`b."createdAt" >= ${fromDate}` : Prisma.empty}
+      WHERE TRUE
+        ${fromDate ? Prisma.sql`AND b."createdAt" >= ${fromDate}` : Prisma.empty}
         ${toDate ? Prisma.sql`AND b."createdAt" <= ${toDate}` : Prisma.empty}
       GROUP BY s.id, s.name
       ORDER BY count DESC
@@ -273,17 +277,17 @@ export class PrismaAdminRepository {
         s.id as "shopId",
         s.name as "shopName",
         COUNT(qe.id) as "totalQueued",
-        COALESCE(AVG(qe."estimatedWait"), 0) as "averageWaitTime",
-        COALESCE(MAX(qe."estimatedWait"), 0) as "longestWaitTime",
+        COALESCE(AVG(qe."estimatedWaitMinutes"), 0) as "averageWaitTime",
+        COALESCE(MAX(qe."estimatedWaitMinutes"), 0) as "longestWaitTime",
         COUNT(DISTINCT b.id) as "activeBarbers",
         COUNT(DISTINCT CASE WHEN c.status = 'AVAILABLE' THEN c.id END) as "availableChairs",
         NOW() as "lastUpdated"
       FROM "Shop" s
-      LEFT JOIN "ActiveQueue" qe ON qe."shopId" = s.id
-        AND qe.status IN ('WAITING', 'READY')
+      LEFT JOIN "QueueEntry" qe ON qe."shopId" = s.id
+        AND qe."queueStatus" IN ('WAITING', 'READY')
       LEFT JOIN "Barber" b ON b."shopId" = s.id
       LEFT JOIN "Chair" c ON c."shopId" = s.id
-      WHERE s.isActive = true
+      WHERE s."isActive" = true
       GROUP BY s.id, s.name
       HAVING COUNT(qe.id) > 0
       ORDER BY "totalQueued" DESC
