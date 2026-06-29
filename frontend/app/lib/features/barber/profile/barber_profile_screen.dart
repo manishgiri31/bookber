@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -34,7 +35,7 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
         title: const Text('My Profile'),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),
+            icon: Icon(AppIcons.refresh, color: colors.textSecondary),
             onPressed: dash.isLoading
                 ? null
                 : () => ref.read(barberDashProvider.notifier).refresh(),
@@ -172,13 +173,13 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                     children: [
                       if (email.isNotEmpty)
                         _InfoRow(
-                          icon: Icons.mail_outline_rounded,
+                          icon: AppIcons.mail,
                           label: 'Email',
                           value: email,
                         ),
                       if (currentUser?.phone.isNotEmpty == true)
                         _InfoRow(
-                          icon: Icons.phone_outlined,
+                          icon: AppIcons.phone,
                           label: 'Phone',
                           value: currentUser!.phone,
                         ),
@@ -196,13 +197,13 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                     children: [
                       if (profile.shopName.isNotEmpty)
                         _InfoRow(
-                          icon: Icons.store_outlined,
+                          icon: AppIcons.store,
                           label: 'Shop',
                           value: profile.shopName,
                         ),
                       if (profile.shopAddress.isNotEmpty)
                         _InfoRow(
-                          icon: Icons.location_on_outlined,
+                          icon: AppIcons.locationOn,
                           label: 'Address',
                           value: profile.shopAddress,
                         ),
@@ -218,19 +219,19 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                   title: 'Shop',
                   children: [
                     _ActionRow(
-                      icon: Icons.store_mall_directory_outlined,
+                      icon: AppIcons.storeAlt,
                       label: 'Manage Shop',
                       subtitle: 'Hours, chairs & gallery',
                       onTap: () => context.push('/barber/shop'),
                     ),
                     _ActionRow(
-                      icon: Icons.content_cut_rounded,
+                      icon: AppIcons.scissors,
                       label: 'Services',
                       subtitle: 'Pricing, duration & categories',
                       onTap: () => context.push('/barber/services'),
                     ),
                     _ActionRow(
-                      icon: Icons.groups_outlined,
+                      icon: AppIcons.groups,
                       label: 'Employees',
                       subtitle: 'Team management',
                       onTap: () => context.push('/barber/employees'),
@@ -244,12 +245,12 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                   title: 'Settings',
                   children: [
                     _ActionRow(
-                      icon: Icons.lock_outline_rounded,
+                      icon: AppIcons.lock,
                       label: 'Change Password',
                       onTap: () => context.push('/change-password'),
                     ),
                     _ActionRow(
-                      icon: Icons.dark_mode_outlined,
+                      icon: AppIcons.darkMode,
                       label: 'Appearance',
                       onTap: () => context.push('/settings'),
                     ),
@@ -263,7 +264,7 @@ class _BarberProfileScreenState extends ConsumerState<BarberProfileScreen> {
                   onPressed:
                       _signingOut ? null : () => _confirmSignOut(context),
                   loading: _signingOut,
-                  icon: Icons.logout_rounded,
+                  icon: AppIcons.logout,
                 ),
                 const SizedBox(height: BBSpacing.base),
               ],
@@ -352,8 +353,8 @@ class _RatingBreakdownCard extends StatelessWidget {
                     children: List.generate(5, (i) {
                       return Icon(
                         i < averageRating.round()
-                            ? Icons.star_rounded
-                            : Icons.star_outline_rounded,
+                            ? AppIcons.starFill
+                            : AppIcons.star,
                         size: 14,
                         color: BBColors.amber,
                       );
@@ -387,7 +388,7 @@ class _RatingBreakdownCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(Icons.star_rounded,
+                          const Icon(AppIcons.starFill,
                               size: 10, color: BBColors.amber),
                           const SizedBox(width: BBSpacing.sm),
                           Expanded(
@@ -711,21 +712,21 @@ class _StatsRow extends StatelessWidget {
         _StatCard(
           label: 'Today',
           value: stats.todayBookings.toString(),
-          icon: Icons.calendar_today_rounded,
+          icon: AppIcons.calendar,
           color: colors.accent,
         ),
         const SizedBox(width: BBSpacing.sm),
         _StatCard(
           label: 'Done',
           value: stats.completedToday.toString(),
-          icon: Icons.check_circle_outline_rounded,
+          icon: AppIcons.checkCircle,
           color: BBColors.success,
         ),
         const SizedBox(width: BBSpacing.sm),
         _StatCard(
           label: 'In Queue',
           value: stats.activeQueue.toString(),
-          icon: Icons.people_outline_rounded,
+          icon: AppIcons.people,
           color: colors.textSecondary,
         ),
       ],
@@ -925,7 +926,7 @@ class _ActionRow extends StatelessWidget {
                           ?.copyWith(color: colors.text),
                     ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
+            Icon(AppIcons.arrowForwardSmall,
                 size: 14, color: colors.textTertiary),
           ],
         ),

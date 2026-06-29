@@ -33,6 +33,8 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   shared_preferences: ^2.3.5
 
+  phosphor_flutter: ^2.1.0
+
   # UI
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0

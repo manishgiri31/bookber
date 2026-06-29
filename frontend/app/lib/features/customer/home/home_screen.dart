@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -106,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
                   child: BBEmptyState(
                     title: 'No shops yet',
                     subtitle: 'Check back soon — shops are being added.',
-                    icon: Icons.store_outlined,
+                    icon: AppIcons.store,
                   ),
                 ),
               ),
@@ -138,18 +139,20 @@ class _HeroHeader extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: isDark
               ? [
-                  const Color(0xFF1A0000),
+                  const Color(0xFF1C0A00),
+                  const Color(0xFF0A0000),
                   const Color(0xFF000000),
                 ]
               : [
-                  BBColors.amber.withValues(alpha: 0.08),
+                  const Color(0xFFFFF0CC),
+                  const Color(0xFFFFF8E8),
                   colors.background,
                 ],
-          stops: const [0.0, 1.0],
+          stops: const [0.0, 0.5, 1.0],
         ),
       ),
       child: SafeArea(
@@ -172,7 +175,7 @@ class _HeroHeader extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.location_on_rounded,
+                        Icon(AppIcons.locationOnFill,
                             size: 16, color: BBColors.amber),
                         const SizedBox(width: 4),
                         locationAsync.isLoading
@@ -193,7 +196,7 @@ class _HeroHeader extends ConsumerWidget {
                               ),
                         if (cityName != null) ...[
                           const SizedBox(width: 2),
-                          Icon(Icons.keyboard_arrow_down_rounded,
+                          Icon(AppIcons.arrowDown,
                               size: 16, color: colors.textSecondary),
                         ],
                       ],
@@ -209,7 +212,7 @@ class _HeroHeader extends ConsumerWidget {
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
-                        Icon(Icons.notifications_outlined,
+                        Icon(AppIcons.bell,
                             size: 22, color: colors.textSecondary),
                         if (unread > 0)
                           Positioned(
@@ -339,7 +342,7 @@ class _SearchBar extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.search_rounded, size: 20, color: colors.textTertiary),
+            Icon(AppIcons.search, size: 20, color: colors.textTertiary),
             const SizedBox(width: BBSpacing.sm),
             Expanded(
               child: Text(
@@ -358,7 +361,7 @@ class _SearchBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.tune_rounded, size: 14, color: BBColors.amber),
+                  Icon(AppIcons.filter, size: 14, color: BBColors.amber),
                   const SizedBox(width: 4),
                   Text(
                     'Filter',
@@ -390,28 +393,28 @@ class _QuickActions extends StatelessWidget {
       child: Row(
         children: [
           _QuickActionChip(
-            icon: Icons.bolt_rounded,
+            icon: AppIcons.bolt,
             label: 'Book Now',
             color: BBColors.amber,
             onTap: () => context.go('/shops'),
           ),
           const SizedBox(width: BBSpacing.sm),
           _QuickActionChip(
-            icon: Icons.near_me_rounded,
+            icon: AppIcons.nearMe,
             label: 'Nearby',
             color: BBColors.info,
             onTap: () => context.go('/shops'),
           ),
           const SizedBox(width: BBSpacing.sm),
           _QuickActionChip(
-            icon: Icons.star_rounded,
+            icon: AppIcons.starFill,
             label: 'Top Rated',
             color: BBColors.warning,
             onTap: () => context.go('/shops'),
           ),
           const SizedBox(width: BBSpacing.sm),
           _QuickActionChip(
-            icon: Icons.history_rounded,
+            icon: AppIcons.history,
             label: 'History',
             color: BBColors.success,
             onTap: () => context.go('/bookings'),
@@ -508,7 +511,7 @@ class _LocationNudge extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.location_off_rounded, size: 16, color: BBColors.info),
+                const Icon(AppIcons.locationOff, size: 16, color: BBColors.info),
                 const SizedBox(width: BBSpacing.sm),
                 Expanded(
                   child: Text(
@@ -574,7 +577,7 @@ class _ActiveBookingBanner extends ConsumerWidget {
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
-                    Icons.queue_rounded,
+                    AppIcons.queue,
                     size: 20,
                     color: BBColors.amber,
                   ),
@@ -786,7 +789,7 @@ class _ShopCard extends StatelessWidget {
                   color: colors.surfaceVariant,
                   child: Center(
                     child: Icon(
-                      Icons.content_cut_rounded,
+                      AppIcons.scissors,
                       size: 42,
                       color: colors.textTertiary.withValues(alpha: 0.5),
                     ),
@@ -867,7 +870,7 @@ class _ShopCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, size: 13, color: BBColors.amber),
+                      const Icon(AppIcons.starFill, size: 13, color: BBColors.amber),
                       const SizedBox(width: 3),
                       Text(
                         shop.rating.toStringAsFixed(1),
@@ -882,7 +885,7 @@ class _ShopCard extends StatelessWidget {
                           color: colors.textTertiary,
                         ),
                       ),
-                      Icon(Icons.timer_outlined, size: 12, color: colors.textTertiary),
+                      Icon(AppIcons.timer, size: 12, color: colors.textTertiary),
                       const SizedBox(width: 3),
                       Text(
                         shop.waitLabel,
@@ -929,19 +932,20 @@ class _ServiceCategoriesSection extends StatelessWidget {
   const _ServiceCategoriesSection();
 
   static const _cats = [
-    (icon: Icons.content_cut_rounded, label: 'Haircut'),
-    (icon: Icons.auto_fix_high_rounded, label: 'Fade'),
-    (icon: Icons.face_6_rounded, label: 'Beard'),
-    (icon: Icons.spa_rounded, label: 'Facial'),
-    (icon: Icons.water_drop_outlined, label: 'Hair Wash'),
-    (icon: Icons.self_improvement_rounded, label: 'Massage'),
-    (icon: Icons.child_care_rounded, label: 'Kids'),
-    (icon: Icons.palette_outlined, label: 'Color'),
+    (icon: AppIcons.scissors, label: 'Haircut', color: Color(0xFFFF6B6B)),
+    (icon: AppIcons.autoFix, label: 'Fade', color: Color(0xFF20BF6B)),
+    (icon: AppIcons.face, label: 'Beard', color: BBColors.amber),
+    (icon: AppIcons.spa, label: 'Facial', color: Color(0xFFFF8E53)),
+    (icon: AppIcons.waterDrop, label: 'Hair Wash', color: BBColors.info),
+    (icon: AppIcons.selfImprovement, label: 'Massage', color: Color(0xFF8B78E6)),
+    (icon: AppIcons.childCare, label: 'Kids', color: BBColors.success),
+    (icon: AppIcons.palette, label: 'Color', color: Color(0xFFE056FD)),
   ];
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final isDark = context.isDark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -951,7 +955,7 @@ class _ServiceCategoriesSection extends StatelessWidget {
           child: _SectionHeader(title: 'Services'),
         ),
         SizedBox(
-          height: 86,
+          height: 92,
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(
                 horizontal: BBSpacing.pageHorizontal),
@@ -966,23 +970,23 @@ class _ServiceCategoriesSection extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 54,
-                      height: 54,
+                      width: 56,
+                      height: 56,
                       decoration: BoxDecoration(
-                        color: colors.surface,
+                        color: cat.color.withValues(alpha: isDark ? 0.18 : 0.12),
                         borderRadius: BorderRadius.circular(BBRadius.xl),
-                        border: Border.all(color: colors.border),
                       ),
                       child: Center(
-                        child: Icon(cat.icon, size: 22, color: colors.accent),
+                        child: Icon(cat.icon, size: 24, color: cat.color),
                       ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 6),
                     Text(
                       cat.label,
                       style: BBTypography.textTheme.labelSmall?.copyWith(
                         color: colors.textSecondary,
                         fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1033,7 +1037,7 @@ class _QuickRebookCard extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(BBRadius.md),
                   ),
                   child:
-                      Icon(Icons.replay_rounded, size: 18, color: colors.accent),
+                      Icon(AppIcons.replay, size: 18, color: colors.accent),
                 ),
                 const SizedBox(width: BBSpacing.md),
                 Expanded(
@@ -1170,7 +1174,7 @@ class _TrendingBarbersSection extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.star_rounded, size: 10, color: BBColors.amber),
+                          const Icon(AppIcons.starFill, size: 10, color: BBColors.amber),
                           const SizedBox(width: 2),
                           Text(
                             b.$3.toString(),
@@ -1252,7 +1256,7 @@ class _RecentlyVisitedSection extends ConsumerWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.storefront_outlined,
+                        Icon(AppIcons.shops,
                             size: 14, color: colors.textSecondary),
                         const SizedBox(width: 6),
                         Text(
@@ -1312,7 +1316,7 @@ class _ShopListTile extends StatelessWidget {
               ),
               child: Center(
                 child: Icon(
-                  Icons.content_cut_rounded,
+                  AppIcons.scissors,
                   size: 24,
                   color: colors.textTertiary,
                 ),
@@ -1342,7 +1346,7 @@ class _ShopListTile extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, size: 13, color: BBColors.amber),
+                      const Icon(AppIcons.starFill, size: 13, color: BBColors.amber),
                       const SizedBox(width: 3),
                       Text(
                         shop.rating.toStringAsFixed(1),
@@ -1352,7 +1356,7 @@ class _ShopListTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: BBSpacing.sm),
-                      Icon(Icons.timer_outlined, size: 12, color: colors.textTertiary),
+                      Icon(AppIcons.timer, size: 12, color: colors.textTertiary),
                       const SizedBox(width: 3),
                       Text(
                         shop.waitLabel,

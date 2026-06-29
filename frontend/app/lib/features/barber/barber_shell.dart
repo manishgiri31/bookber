@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/design/app_icons.dart';
 import '../../core/design/bb_colors.dart';
 import '../../core/design/bb_tokens.dart';
 import '../../core/design/bb_typography.dart';
@@ -27,29 +28,29 @@ class BarberShell extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavItem(
-                icon: Icons.dashboard_outlined,
-                activeIcon: Icons.dashboard_rounded,
+                icon: AppIcons.dashboard,
+                activeIcon: AppIcons.dashboardFill,
                 label: 'Dashboard',
                 selected: idx == 0,
                 onTap: () => context.go('/barber'),
               ),
               _NavItem(
-                icon: Icons.queue_outlined,
-                activeIcon: Icons.queue_rounded,
+                icon: AppIcons.queue,
+                activeIcon: AppIcons.queueFill,
                 label: 'Queue',
                 selected: idx == 1,
                 onTap: () => context.go('/barber/queue'),
               ),
               _NavItem(
-                icon: Icons.calendar_month_outlined,
-                activeIcon: Icons.calendar_month_rounded,
+                icon: AppIcons.calendarMonth,
+                activeIcon: AppIcons.calendarFill,
                 label: 'Bookings',
                 selected: idx == 2,
                 onTap: () => context.go('/barber/bookings'),
               ),
               _NavItem(
-                icon: Icons.person_outline_rounded,
-                activeIcon: Icons.person_rounded,
+                icon: AppIcons.profile,
+                activeIcon: AppIcons.profileActive,
                 label: 'Profile',
                 selected: idx == 3,
                 onTap: () => context.go('/barber/profile'),

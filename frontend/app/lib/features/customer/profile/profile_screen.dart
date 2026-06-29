@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -91,12 +92,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'Account',
             children: [
               _InfoRow(
-                icon: Icons.mail_outline_rounded,
+                icon: AppIcons.mail,
                 label: 'Email',
                 value: user.email,
               ),
               _InfoRow(
-                icon: Icons.phone_outlined,
+                icon: AppIcons.phone,
                 label: 'Phone',
                 value: user.phone.isNotEmpty ? user.phone : 'Tap to add',
                 onEdit: () => _editPhone(context, user.phone),
@@ -109,17 +110,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'Activity',
             children: [
               _ActionRow(
-                icon: Icons.history_rounded,
+                icon: AppIcons.history,
                 label: 'Booking History',
                 onTap: () => context.push('/bookings'),
               ),
               _ActionRow(
-                icon: Icons.star_outline_rounded,
+                icon: AppIcons.star,
                 label: 'My Reviews',
                 onTap: () => context.push('/reviews'),
               ),
               _ActionRow(
-                icon: Icons.receipt_long_rounded,
+                icon: AppIcons.receiptFill,
                 label: 'Payment History',
                 onTap: () => context.push('/payments/history'),
               ),
@@ -131,27 +132,27 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'Rewards',
             children: [
               _ActionRow(
-                icon: Icons.account_balance_wallet_outlined,
+                icon: AppIcons.wallet,
                 label: 'Wallet',
                 onTap: () => context.push('/wallet'),
               ),
               _ActionRow(
-                icon: Icons.military_tech_rounded,
+                icon: AppIcons.loyalty,
                 label: 'Loyalty Points',
                 onTap: () => context.push('/loyalty'),
               ),
               _ActionRow(
-                icon: Icons.card_giftcard_rounded,
+                icon: AppIcons.gift,
                 label: 'Referrals',
                 onTap: () => context.push('/referral'),
               ),
               _ActionRow(
-                icon: Icons.favorite_border_rounded,
+                icon: AppIcons.favorite,
                 label: 'Favourites',
                 onTap: () => context.push('/favourites'),
               ),
               _ActionRow(
-                icon: Icons.emoji_events_outlined,
+                icon: AppIcons.trophy,
                 label: 'Achievements',
                 onTap: () => context.push('/gamification'),
               ),
@@ -163,22 +164,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'Settings',
             children: [
               _ActionRow(
-                icon: Icons.notifications_outlined,
+                icon: AppIcons.bell,
                 label: 'Notification Preferences',
                 onTap: () => context.push('/settings/notifications'),
               ),
               _ActionRow(
-                icon: Icons.lock_outline_rounded,
+                icon: AppIcons.lock,
                 label: 'Change Password',
                 onTap: () => context.push('/change-password'),
               ),
               _ActionRow(
-                icon: Icons.dark_mode_outlined,
+                icon: AppIcons.darkMode,
                 label: 'Appearance',
                 onTap: () => context.push('/settings'),
               ),
               _ActionRow(
-                icon: Icons.privacy_tip_outlined,
+                icon: AppIcons.privacy,
                 label: 'Privacy & Security',
                 onTap: () => context.push('/settings/privacy'),
               ),
@@ -190,22 +191,22 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             title: 'Support',
             children: [
               _ActionRow(
-                icon: Icons.help_outline_rounded,
+                icon: AppIcons.helpOutline,
                 label: 'Help Centre',
                 onTap: () => context.push('/help'),
               ),
               _ActionRow(
-                icon: Icons.chat_bubble_outline_rounded,
+                icon: AppIcons.chat,
                 label: 'Contact Support',
                 onTap: () => context.push('/support'),
               ),
               _ActionRow(
-                icon: Icons.info_outline_rounded,
+                icon: AppIcons.info,
                 label: 'About BookBer',
                 onTap: () => context.push('/about'),
               ),
               _ActionRow(
-                icon: Icons.description_outlined,
+                icon: AppIcons.description,
                 label: 'Terms & Privacy',
                 onTap: () => context.push('/terms'),
               ),
@@ -218,7 +219,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             variant: BBButtonVariant.destructive,
             onPressed: _signingOut ? null : () => _confirmSignOut(context),
             loading: _signingOut,
-            icon: Icons.logout_rounded,
+            icon: AppIcons.logout,
           ),
           const SizedBox(height: BBSpacing.sm),
           Center(
@@ -245,13 +246,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (ctx) => _EditPhoneSheet(
         currentPhone: currentPhone,
         onSave: (phone) async {
-          final ok = await ref.read(authProvider.notifier).updateProfile(phone: phone);
+          await ref.read(authProvider.notifier).updateProfile(phone: phone);
           if (ctx.mounted) Navigator.of(ctx).pop();
-          if (!ok && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to update phone number')),
-            );
-          }
         },
       ),
     );
@@ -338,7 +334,7 @@ class _EditPhoneSheetState extends State<_EditPhoneSheet> {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.close, color: colors.textTertiary),
+                icon: Icon(AppIcons.close, color: colors.textTertiary),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -356,7 +352,7 @@ class _EditPhoneSheetState extends State<_EditPhoneSheet> {
             hint: '+91 98765 43210',
             controller: _ctrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: AppIcons.phone,
             errorText: _error,
             autofocus: true,
             textInputAction: TextInputAction.done,
@@ -490,7 +486,7 @@ class _InfoRow extends StatelessWidget {
             ),
             if (onEdit != null)
               Icon(
-                Icons.edit_outlined,
+                AppIcons.edit,
                 size: 16,
                 color: colors.textTertiary,
               ),
@@ -534,7 +530,7 @@ class _ActionRow extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.arrow_forward_ios_rounded,
+              AppIcons.arrowForwardSmall,
               size: 14,
               color: colors.textTertiary,
             ),

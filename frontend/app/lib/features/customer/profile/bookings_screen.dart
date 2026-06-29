@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -100,11 +101,16 @@ class _BookingList extends StatelessWidget {
       return BBEmptyState(
         title: emptyTitle ?? 'No bookings yet',
         subtitle: 'Book a barber shop to get started.',
-        icon: Icons.calendar_today_rounded,
+        icon: AppIcons.calendar,
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+      padding: const EdgeInsets.fromLTRB(
+        BBSpacing.pageHorizontal,
+        BBSpacing.pageHorizontal,
+        BBSpacing.pageHorizontal,
+        100,
+      ),
       itemCount: bookings.length,
       separatorBuilder: (_, _) => const SizedBox(height: BBSpacing.sm),
       itemBuilder: (ctx, i) => _BookingCard(booking: bookings[i]),
@@ -152,10 +158,10 @@ class _BookingCard extends ConsumerWidget {
                 ),
                 child: Icon(
                   isCancelled
-                      ? Icons.cancel_outlined
+                      ? AppIcons.cancel
                       : isCompleted
-                          ? Icons.check_circle_outline_rounded
-                          : Icons.content_cut_rounded,
+                          ? AppIcons.checkCircle
+                          : AppIcons.scissors,
                   size: 20,
                   color: isCancelled
                       ? colors.textTertiary
@@ -193,7 +199,7 @@ class _BookingCard extends ConsumerWidget {
             const SizedBox(height: BBSpacing.sm),
             Row(
               children: [
-                Icon(Icons.schedule_rounded,
+                Icon(AppIcons.schedule,
                     size: 13, color: colors.textTertiary),
                 const SizedBox(width: 4),
                 Text(
@@ -214,7 +220,7 @@ class _BookingCard extends ConsumerWidget {
                 Expanded(
                   child: _ActionChip(
                     label: 'Track Queue',
-                    icon: Icons.queue_rounded,
+                    icon: AppIcons.queue,
                     color: BBColors.amber,
                     onTap: () => context.push('/queue/${booking.id}'),
                   ),
@@ -223,29 +229,31 @@ class _BookingCard extends ConsumerWidget {
                 Expanded(
                   child: _ActionChip(
                     label: 'Review',
-                    icon: Icons.star_outline_rounded,
+                    icon: AppIcons.star,
                     color: BBColors.amber,
                     onTap: () => context.push('/review/${booking.id}'),
                   ),
                 ),
-                const SizedBox(width: BBSpacing.sm),
+                const SizedBox(width: 6),
               ],
               if (isCompleted || isCancelled)
                 Expanded(
                   child: _ActionChip(
                     label: 'Book Again',
-                    icon: Icons.refresh_rounded,
+                    icon: AppIcons.refresh,
                     color: BBColors.info,
-                    onTap: () =>
-                        context.push('/shops/${booking.shopId}/book'),
+                    onTap: () => context.push(
+                      '/shops/${booking.shopId}/book',
+                      extra: {'shopName': booking.shopName},
+                    ),
                   ),
                 ),
               if (isCompleted) ...[
-                const SizedBox(width: BBSpacing.sm),
+                const SizedBox(width: 6),
                 Expanded(
                   child: _ActionChip(
                     label: 'Invoice',
-                    icon: Icons.receipt_outlined,
+                    icon: AppIcons.receipt,
                     color: colors.textSecondary,
                     onTap: () => showBBSnackbar(context,
                         message: 'Invoice download coming soon!'),
@@ -277,25 +285,28 @@ class _ActionChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(BBRadius.md),
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: BBTypography.textTheme.labelSmall?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w600,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 13, color: color),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: BBTypography.textTheme.labelSmall?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

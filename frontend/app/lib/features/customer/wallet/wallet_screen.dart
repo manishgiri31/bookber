@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -27,7 +28,7 @@ class WalletScreen extends ConsumerWidget {
         title: const Text('Wallet'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(AppIcons.refresh),
             onPressed: () => ref.read(walletProvider.notifier).loadWallet(),
           ),
         ],
@@ -44,7 +45,7 @@ class WalletScreen extends ConsumerWidget {
             const SizedBox(height: BBSpacing.lg),
             BBButton(
               label: 'Top Up Wallet',
-              icon: Icons.add_rounded,
+              icon: AppIcons.add,
               onPressed: () => _showTopUpDialog(context, ref),
             ),
             const SizedBox(height: BBSpacing.xl),
@@ -198,7 +199,7 @@ class _TransactionCard extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+              isCredit ? AppIcons.arrowDownLarge : AppIcons.arrowUpLarge,
               size: 18,
               color: isCredit ? BBColors.success : BBColors.error,
             ),

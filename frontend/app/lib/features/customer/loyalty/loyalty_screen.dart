@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_endpoints.dart';
@@ -163,7 +164,7 @@ class _TierCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.military_tech_rounded, color: tierColor, size: 40),
+              Icon(AppIcons.loyalty, color: tierColor, size: 40),
               const SizedBox(width: BBSpacing.md),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,7 +241,7 @@ class _LoyaltyTxCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isEarn ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded,
+            isEarn ? AppIcons.addCircle : AppIcons.removeCircle,
             color: isEarn ? BBColors.success : BBColors.error,
             size: 22,
           ),
@@ -304,7 +305,7 @@ class _RedeemCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
             child: Icon(
-              Icons.redeem_rounded,
+              AppIcons.redeem,
               color: canRedeem ? BBColors.amber : colors.textTertiary,
               size: 22,
             ),
@@ -415,7 +416,7 @@ class _TierBenefitsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.workspace_premium_rounded,
+              Icon(AppIcons.premium,
                   color: tierColor, size: 18),
               const SizedBox(width: BBSpacing.sm),
               Text(
@@ -433,7 +434,7 @@ class _TierBenefitsCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: BBSpacing.sm),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_rounded,
+                    Icon(AppIcons.checkCircleFill,
                         color: tierColor, size: 16),
                     const SizedBox(width: BBSpacing.sm),
                     Expanded(

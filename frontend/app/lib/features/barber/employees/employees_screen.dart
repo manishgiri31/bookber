@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
@@ -23,7 +24,7 @@ class EmployeesScreen extends StatelessWidget {
         title: const Text('Employees'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.person_add_outlined),
+            icon: const Icon(AppIcons.personAdd),
             onPressed: () => _showAddEmployee(context),
           ),
         ],
@@ -169,19 +170,19 @@ class _EmployeeCard extends StatelessWidget {
           Row(
             children: [
               _StatPill(
-                  icon: Icons.star_rounded,
+                  icon: AppIcons.starFill,
                   label: rating.toStringAsFixed(1),
                   color: BBColors.amber),
               const SizedBox(width: BBSpacing.sm),
               _StatPill(
-                  icon: Icons.check_circle_outline_rounded,
+                  icon: AppIcons.checkCircle,
                   label: '$completedJobs jobs',
                   color: BBColors.success),
               const Spacer(),
               TextButton.icon(
                 onPressed: () {},
                 icon:
-                    const Icon(Icons.edit_outlined, size: 14),
+                    const Icon(AppIcons.edit, size: 14),
                 label: const Text('Edit'),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
@@ -277,7 +278,7 @@ class _AddEmployeeSheetState extends State<_AddEmployeeSheet> {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.close, color: colors.textTertiary),
+                icon: Icon(AppIcons.close, color: colors.textTertiary),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -288,7 +289,7 @@ class _AddEmployeeSheetState extends State<_AddEmployeeSheet> {
             decoration: InputDecoration(
               labelText: 'Employee Email',
               hintText: 'barber@example.com',
-              prefixIcon: const Icon(Icons.mail_outlined),
+              prefixIcon: const Icon(AppIcons.mail),
             ),
           ),
           const SizedBox(height: BBSpacing.md),
@@ -315,7 +316,7 @@ class _AddEmployeeSheetState extends State<_AddEmployeeSheet> {
           const SizedBox(height: BBSpacing.xl),
           BBButton(
             label: 'Send Invite',
-            icon: Icons.send_rounded,
+            icon: AppIcons.send,
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],

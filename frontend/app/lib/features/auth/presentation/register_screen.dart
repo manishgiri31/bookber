@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/design/app_icons.dart';
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
@@ -126,7 +127,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       appBar: AppBar(
         title: const Text('Create Account'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrowBack),
           onPressed: () => context.canPop() ? context.pop() : context.go('/login'),
         ),
       ),
@@ -188,14 +189,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 children: [
                   _RoleTile(
                     label: 'Customer',
-                    icon: Icons.person_outline_rounded,
+                    icon: AppIcons.personOutline,
                     selected: _selectedRole == 'customer',
                     onTap: () => setState(() => _selectedRole = 'customer'),
                   ),
                   const SizedBox(width: BBSpacing.sm),
                   _RoleTile(
                     label: 'Barber',
-                    icon: Icons.content_cut_rounded,
+                    icon: AppIcons.scissors,
                     selected: _selectedRole == 'barber',
                     onTap: () => setState(() => _selectedRole = 'barber'),
                   ),
@@ -207,7 +208,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 label: 'Full Name',
                 hint: 'John Doe',
                 controller: _nameCtrl,
-                prefixIcon: Icons.person_outline_rounded,
+                prefixIcon: AppIcons.personOutline,
                 textInputAction: TextInputAction.next,
                 errorText: _nameError,
               ),
@@ -217,7 +218,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 hint: 'you@example.com',
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
-                prefixIcon: Icons.mail_outline_rounded,
+                prefixIcon: AppIcons.mail,
                 textInputAction: TextInputAction.next,
                 errorText: _emailError,
               ),
@@ -227,7 +228,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 hint: '+91 98765 43210',
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
-                prefixIcon: Icons.phone_outlined,
+                prefixIcon: AppIcons.phone,
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: BBSpacing.base),
@@ -236,7 +237,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 hint: '••••••••',
                 controller: _passCtrl,
                 obscureText: true,
-                prefixIcon: Icons.lock_outline_rounded,
+                prefixIcon: AppIcons.lock,
                 textInputAction: TextInputAction.next,
                 errorText: _passError,
               ),
@@ -250,7 +251,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 hint: '••••••••',
                 controller: _confirmCtrl,
                 obscureText: true,
-                prefixIcon: Icons.lock_outline_rounded,
+                prefixIcon: AppIcons.lock,
                 textInputAction: TextInputAction.done,
                 errorText: _confirmError,
                 onSubmitted: (_) => _submit(),
@@ -270,7 +271,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: BBColors.error, size: 18),
+                      const Icon(AppIcons.error, color: BBColors.error, size: 18),
                       const SizedBox(width: BBSpacing.sm),
                       Expanded(
                         child: Text(
@@ -380,7 +381,7 @@ class _CheckItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          met ? Icons.check_circle_rounded : Icons.circle_outlined,
+          met ? AppIcons.checkCircleFill : AppIcons.circle,
           size: 13,
           color: met ? BBColors.success : colors.textTertiary,
         ),

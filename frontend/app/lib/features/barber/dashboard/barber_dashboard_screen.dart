@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -147,7 +148,7 @@ class BarberDashboardScreen extends ConsumerWidget {
                                   ),
                                   child: Column(
                                     children: [
-                                      Icon(Icons.queue_outlined,
+                                      Icon(AppIcons.queue,
                                           size: 40,
                                           color: colors.textTertiary),
                                       const SizedBox(height: BBSpacing.md),
@@ -253,7 +254,7 @@ class _Header extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.store_outlined,
+                        Icon(AppIcons.store,
                             size: 13, color: colors.textTertiary),
                         const SizedBox(width: 4),
                         Text(
@@ -378,7 +379,7 @@ class _RevenueCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded,
+                    const Icon(AppIcons.starFill,
                         size: 16, color: BBColors.amber),
                     const SizedBox(width: 4),
                     Text(
@@ -414,7 +415,7 @@ class _StatsRow extends StatelessWidget {
       children: [
         Expanded(
           child: _StatCard(
-            icon: Icons.calendar_today_rounded,
+            icon: AppIcons.calendar,
             label: 'Today',
             value: '${stats.todayBookings}',
             suffix: 'bookings',
@@ -423,7 +424,7 @@ class _StatsRow extends StatelessWidget {
         const SizedBox(width: BBSpacing.sm),
         Expanded(
           child: _StatCard(
-            icon: Icons.queue_rounded,
+            icon: AppIcons.queue,
             label: 'In Queue',
             value: '${stats.activeQueue}',
             suffix: 'waiting',
@@ -433,7 +434,7 @@ class _StatsRow extends StatelessWidget {
         const SizedBox(width: BBSpacing.sm),
         Expanded(
           child: _StatCard(
-            icon: Icons.check_circle_outline_rounded,
+            icon: AppIcons.checkCircle,
             label: 'Done',
             value: '${stats.completedToday}',
             suffix: 'today',
@@ -519,7 +520,7 @@ class _QuickActions extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
-                icon: Icons.queue_rounded,
+                icon: AppIcons.queue,
                 label: 'Queue',
                 color: BBColors.amber,
                 onTap: () => context.go('/barber/queue'),
@@ -528,7 +529,7 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             Expanded(
               child: _ActionCard(
-                icon: Icons.calendar_month_rounded,
+                icon: AppIcons.calendarMonth,
                 label: 'Bookings',
                 color: BBColors.info,
                 onTap: () => context.go('/barber/bookings'),
@@ -537,7 +538,7 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             Expanded(
               child: _ActionCard(
-                icon: Icons.bar_chart_rounded,
+                icon: AppIcons.barChart,
                 label: 'Analytics',
                 color: BBColors.success,
                 onTap: () => context.go('/barber/analytics'),
@@ -550,7 +551,7 @@ class _QuickActions extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
-                icon: Icons.store_outlined,
+                icon: AppIcons.store,
                 label: 'Shop',
                 color: const Color(0xFF8B5CF6),
                 onTap: () => context.push('/barber/shop'),
@@ -559,7 +560,7 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             Expanded(
               child: _ActionCard(
-                icon: Icons.person_add_outlined,
+                icon: AppIcons.personAdd,
                 label: 'Reception',
                 color: const Color(0xFFF97316),
                 onTap: () => context.push('/barber/reception'),
@@ -568,7 +569,7 @@ class _QuickActions extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             Expanded(
               child: _ActionCard(
-                icon: Icons.groups_outlined,
+                icon: AppIcons.groups,
                 label: 'Employees',
                 color: const Color(0xFF0EA5E9),
                 onTap: () => context.push('/barber/employees'),
@@ -581,7 +582,7 @@ class _QuickActions extends StatelessWidget {
           children: [
             Expanded(
               child: _ActionCard(
-                icon: Icons.content_cut_rounded,
+                icon: AppIcons.scissors,
                 label: 'Services',
                 color: const Color(0xFF10B981),
                 onTap: () => context.push('/barber/services'),
@@ -633,7 +634,7 @@ class _ActionCard extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
+            Icon(AppIcons.arrowForwardSmall,
                 size: 12, color: colors.textTertiary),
           ],
         ),

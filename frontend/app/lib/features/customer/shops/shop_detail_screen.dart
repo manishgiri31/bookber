@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -70,7 +71,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.arrow_back_rounded,
+                      AppIcons.arrowBack,
                       size: 20,
                       color: colors.text,
                     ),
@@ -101,8 +102,8 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                       ),
                       child: Icon(
                         _isFavourite
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
+                            ? AppIcons.favoriteFill
+                            : AppIcons.favorite,
                         size: 18,
                         color: _isFavourite ? BBColors.error : colors.text,
                       ),
@@ -123,7 +124,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.share_rounded,
+                        AppIcons.share,
                         size: 18,
                         color: colors.text,
                       ),
@@ -145,7 +146,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          Icons.directions_rounded,
+                          AppIcons.directions,
                           size: 18,
                           color: BBColors.info,
                         ),
@@ -161,7 +162,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
                       color: colors.surfaceVariant,
                       child: Center(
                         child: Icon(
-                          Icons.content_cut_rounded,
+                          AppIcons.scissors,
                           size: 72,
                           color: colors.textTertiary.withValues(alpha: 0.4),
                         ),
@@ -319,7 +320,7 @@ class _ShopHeader extends StatelessWidget {
           child: Row(
             children: [
               Icon(
-                Icons.location_on_outlined,
+                AppIcons.locationOn,
                 size: 14,
                 color: (shop.latitude != null && shop.longitude != null)
                     ? BBColors.info
@@ -348,26 +349,26 @@ class _ShopHeader extends StatelessWidget {
           child: Row(
             children: [
               _StatChip(
-                icon: Icons.star_rounded,
+                icon: AppIcons.starFill,
                 label: '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount})',
                 iconColor: BBColors.amber,
               ),
               const SizedBox(width: BBSpacing.sm),
               _StatChip(
-                icon: Icons.timer_outlined,
+                icon: AppIcons.timer,
                 label: shop.waitLabel,
               ),
               if (shop.availableChairs > 0) ...[
                 const SizedBox(width: BBSpacing.sm),
                 _StatChip(
-                  icon: Icons.chair_outlined,
+                  icon: AppIcons.chair,
                   label: '${shop.availableChairs} free',
                 ),
               ],
               if (shop.distanceKm != null) ...[
                 const SizedBox(width: BBSpacing.sm),
                 _StatChip(
-                  icon: Icons.near_me_outlined,
+                  icon: AppIcons.nearMe,
                   label: shop.distanceLabel,
                   iconColor: BBColors.info,
                 ),
@@ -384,7 +385,7 @@ class _ShopHeader extends StatelessWidget {
             },
             child: Row(
               children: [
-                Icon(Icons.phone_outlined, size: 14, color: BBColors.success),
+                Icon(AppIcons.phone, size: 14, color: BBColors.success),
                 const SizedBox(width: 4),
                 Text(
                   shop.phone!,
@@ -478,7 +479,7 @@ class _ServiceRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
             child: const Center(
-              child: Icon(Icons.content_cut_rounded, size: 18, color: BBColors.amber),
+              child: Icon(AppIcons.scissors, size: 18, color: BBColors.amber),
             ),
           ),
           const SizedBox(width: BBSpacing.md),
@@ -630,7 +631,7 @@ class _BarberCard extends StatelessWidget {
                 if (barber.rating != null)
                   Row(
                     children: [
-                      const Icon(Icons.star_rounded, size: 12, color: BBColors.amber),
+                      const Icon(AppIcons.starFill, size: 12, color: BBColors.amber),
                       const SizedBox(width: 3),
                       Text(
                         barber.rating!.toStringAsFixed(1),
@@ -751,8 +752,8 @@ class _ReviewCard extends StatelessWidget {
                           5,
                           (i) => Icon(
                             i < review.rating
-                                ? Icons.star_rounded
-                                : Icons.star_outline_rounded,
+                                ? AppIcons.starFill
+                                : AppIcons.star,
                             size: 12,
                             color: BBColors.amber,
                           ),
@@ -822,7 +823,7 @@ class _BottomActions extends StatelessWidget {
                         )
                     : null,
                 disabled: !shop.isOpen,
-                icon: Icons.queue_rounded,
+                icon: AppIcons.queue,
               ),
             ),
             const SizedBox(width: BBSpacing.sm),
@@ -837,7 +838,7 @@ class _BottomActions extends StatelessWidget {
                     : null,
                 disabled: !shop.isOpen,
                 variant: BBButtonVariant.secondary,
-                icon: Icons.calendar_today_rounded,
+                icon: AppIcons.calendar,
               ),
             ),
           ],
@@ -852,12 +853,12 @@ class _InfoTab extends StatelessWidget {
   final Shop shop;
 
   static const _amenities = [
-    (Icons.wifi_rounded, 'WiFi'),
-    (Icons.ac_unit_rounded, 'AC'),
-    (Icons.local_parking_rounded, 'Parking'),
-    (Icons.wc_rounded, 'Washroom'),
-    (Icons.credit_card_rounded, 'Card'),
-    (Icons.currency_rupee_rounded, 'UPI'),
+    (AppIcons.wifi, 'WiFi'),
+    (AppIcons.acUnit, 'AC'),
+    (AppIcons.parking, 'Parking'),
+    (AppIcons.wc, 'Washroom'),
+    (AppIcons.payment, 'Card'),
+    (AppIcons.currencyRupee, 'UPI'),
   ];
 
   static const _hours = [
@@ -982,7 +983,7 @@ class _InfoTab extends StatelessWidget {
           child: Column(
             children: [
               _ContactRow(
-                icon: Icons.location_on_outlined,
+                icon: AppIcons.locationOn,
                 label: shop.address,
                 onTap: (shop.latitude != null && shop.longitude != null)
                     ? () async {
@@ -999,7 +1000,7 @@ class _InfoTab extends StatelessWidget {
               if (shop.phone != null && shop.phone!.isNotEmpty) ...[
                 Divider(height: 1, color: colors.border, indent: 52),
                 _ContactRow(
-                  icon: Icons.phone_outlined,
+                  icon: AppIcons.phone,
                   label: shop.phone!,
                   onTap: () async {
                     final uri = Uri.parse('tel:${shop.phone}');
@@ -1085,7 +1086,7 @@ class _ContactRow extends StatelessWidget {
               ),
             ),
             if (onTap != null)
-              Icon(Icons.arrow_forward_ios_rounded,
+              Icon(AppIcons.arrowForwardSmall,
                   size: 14, color: colors.textTertiary),
           ],
         ),

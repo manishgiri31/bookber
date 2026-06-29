@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -152,7 +153,7 @@ class _BarberServicesScreenState extends ConsumerState<BarberServicesScreen>
         title: const Text('Services'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_rounded),
+            icon: const Icon(AppIcons.add),
             onPressed: () => _showAddService(context),
           ),
         ],
@@ -205,7 +206,7 @@ class _ServicesList extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.content_cut_outlined,
+            Icon(AppIcons.scissors,
                 size: 48, color: context.bbColors.textTertiary),
             const SizedBox(height: BBSpacing.md),
             Text(
@@ -262,7 +263,7 @@ class _ServiceCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(BBRadius.md),
                 ),
                 child: Icon(
-                  Icons.content_cut_rounded,
+                  AppIcons.scissors,
                   size: 20,
                   color:
                       service.isActive ? BBColors.amber : colors.textTertiary,
@@ -303,18 +304,18 @@ class _ServiceCard extends ConsumerWidget {
           Row(
             children: [
               _PriceDurationPill(
-                icon: Icons.currency_rupee_rounded,
+                icon: AppIcons.currencyRupee,
                 label: '₹${service.price.toStringAsFixed(0)}',
               ),
               const SizedBox(width: BBSpacing.sm),
               _PriceDurationPill(
-                icon: Icons.timer_outlined,
+                icon: AppIcons.timer,
                 label: '${service.durationMin} min',
               ),
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _showEditSheet(context, service),
-                icon: const Icon(Icons.edit_outlined, size: 14),
+                icon: const Icon(AppIcons.edit, size: 14),
                 label: const Text('Edit'),
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
@@ -423,7 +424,7 @@ class _AddServiceSheetState extends ConsumerState<_AddServiceSheet> {
               ),
               const Spacer(),
               IconButton(
-                icon: Icon(Icons.close, color: colors.textTertiary),
+                icon: Icon(AppIcons.close, color: colors.textTertiary),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -480,7 +481,7 @@ class _AddServiceSheetState extends ConsumerState<_AddServiceSheet> {
           const SizedBox(height: BBSpacing.xl),
           BBButton(
             label: 'Add Service',
-            icon: Icons.add_rounded,
+            icon: AppIcons.add,
             loading: _saving,
             onPressed: _save,
           ),
@@ -574,7 +575,7 @@ class _EditServiceSheetState extends ConsumerState<_EditServiceSheet> {
                 ),
               ),
               IconButton(
-                icon: Icon(Icons.close, color: colors.textTertiary),
+                icon: Icon(AppIcons.close, color: colors.textTertiary),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -602,7 +603,7 @@ class _EditServiceSheetState extends ConsumerState<_EditServiceSheet> {
           const SizedBox(height: BBSpacing.xl),
           BBButton(
             label: 'Save Changes',
-            icon: Icons.check_rounded,
+            icon: AppIcons.check,
             loading: _saving,
             onPressed: _save,
           ),

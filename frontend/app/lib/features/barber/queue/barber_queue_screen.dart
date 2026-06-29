@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -60,7 +61,7 @@ class BarberQueueScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(AppIcons.refresh),
             onPressed: () => ref.read(barberDashProvider.notifier).refresh(),
           ),
         ],
@@ -69,7 +70,7 @@ class BarberQueueScreen extends ConsumerWidget {
         onPressed: () => context.push('/barber/reception'),
         backgroundColor: BBColors.amber,
         foregroundColor: colors.background,
-        icon: const Icon(Icons.person_add_rounded),
+        icon: const Icon(AppIcons.personAdd),
         label: const Text('Walk-in'),
       ),
       body: state.isLoading
@@ -82,7 +83,7 @@ class BarberQueueScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.queue_outlined,
+                          Icon(AppIcons.queue,
                               size: 64, color: colors.textTertiary),
                           const SizedBox(height: BBSpacing.base),
                           Text(
@@ -99,7 +100,7 @@ class BarberQueueScreen extends ConsumerWidget {
                           const SizedBox(height: BBSpacing.xl),
                           ElevatedButton.icon(
                             onPressed: () => context.push('/barber/reception'),
-                            icon: const Icon(Icons.person_add_rounded),
+                            icon: const Icon(AppIcons.personAdd),
                             label: const Text('Add Walk-in'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: BBColors.amber,
@@ -294,7 +295,7 @@ class _FullQueueCard extends StatelessWidget {
                     const Positioned(
                       top: -4,
                       right: -4,
-                      child: Icon(Icons.flag_rounded,
+                      child: Icon(AppIcons.flagFill,
                           size: 14, color: BBColors.error),
                     ),
                 ],
@@ -324,7 +325,7 @@ class _FullQueueCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: Icon(
-                    isPriority ? Icons.flag_rounded : Icons.flag_outlined,
+                    isPriority ? AppIcons.flagFill : AppIcons.flag,
                     size: 18,
                     color: isPriority ? BBColors.error : colors.textTertiary,
                   ),
@@ -339,7 +340,7 @@ class _FullQueueCard extends StatelessWidget {
             Row(
               children: [
                 if (entry.estimatedWaitMinutes > 0) ...[
-                  Icon(Icons.timer_outlined,
+                  Icon(AppIcons.timer,
                       size: 13, color: colors.textTertiary),
                   const SizedBox(width: 4),
                   Text(
@@ -367,7 +368,7 @@ class _FullQueueCard extends StatelessWidget {
                 ],
                 if (entry.barberName != null) ...[
                   const SizedBox(width: BBSpacing.sm),
-                  Icon(Icons.person_outline_rounded,
+                  Icon(AppIcons.personOutline,
                       size: 12, color: colors.textTertiary),
                   const SizedBox(width: 2),
                   Text(
@@ -407,7 +408,7 @@ class _FullQueueCard extends StatelessWidget {
                         variant: BBButtonVariant.secondary,
                         small: true,
                         expand: false,
-                        icon: Icons.skip_next_rounded,
+                        icon: AppIcons.skipNext,
                       ),
                     ),
                     Padding(
@@ -418,7 +419,7 @@ class _FullQueueCard extends StatelessWidget {
                         variant: BBButtonVariant.secondary,
                         small: true,
                         expand: false,
-                        icon: Icons.swap_horiz_rounded,
+                        icon: AppIcons.swap,
                       ),
                     ),
                   ],
@@ -432,7 +433,7 @@ class _FullQueueCard extends StatelessWidget {
                         variant: BBButtonVariant.secondary,
                         small: true,
                         expand: false,
-                        icon: Icons.pause_rounded,
+                        icon: AppIcons.pause,
                       ),
                     ),
                 ],

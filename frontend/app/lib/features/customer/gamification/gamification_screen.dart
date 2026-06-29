@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
@@ -61,14 +62,14 @@ class _GamificationScreenState extends State<GamificationScreen>
 // ── Badges ────────────────────────────────────────────────────────────────────
 
 const _badges = [
-  (Icons.star_rounded, 'First Booking', 'Made your first booking', true, BBColors.amber),
-  (Icons.repeat_rounded, 'Regular', 'Booked 5+ times', true, BBColors.success),
-  (Icons.timer_rounded, 'On Time', 'No no-shows in 10 bookings', true, BBColors.info),
-  (Icons.people_rounded, 'Social', 'Referred 3 friends', false, BBColors.amber),
-  (Icons.military_tech_rounded, 'Gold Member', 'Reached Gold tier', false, Color(0xFFFFD700)),
-  (Icons.local_fire_department_rounded, '7-Day Streak', '7 consecutive booking weeks', false, BBColors.error),
-  (Icons.workspace_premium_rounded, 'VIP', 'Reached Platinum tier', false, Color(0xFFE5E4E2)),
-  (Icons.diamond_rounded, 'Diamond', 'Reached Diamond tier', false, Color(0xFF67E8F9)),
+  (AppIcons.starFill, 'First Booking', 'Made your first booking', true, BBColors.amber),
+  (AppIcons.repeat, 'Regular', 'Booked 5+ times', true, BBColors.success),
+  (AppIcons.timer, 'On Time', 'No no-shows in 10 bookings', true, BBColors.info),
+  (AppIcons.people, 'Social', 'Referred 3 friends', false, BBColors.amber),
+  (AppIcons.loyalty, 'Gold Member', 'Reached Gold tier', false, Color(0xFFFFD700)),
+  (AppIcons.fire, '7-Day Streak', '7 consecutive booking weeks', false, BBColors.error),
+  (AppIcons.premium, 'VIP', 'Reached Platinum tier', false, Color(0xFFE5E4E2)),
+  (AppIcons.diamond, 'Diamond', 'Reached Diamond tier', false, Color(0xFF67E8F9)),
 ];
 
 class _BadgesTab extends StatelessWidget {
@@ -156,7 +157,7 @@ class _BadgesTab extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.local_fire_department_rounded,
+              const Icon(AppIcons.fire,
                   color: BBColors.error, size: 28),
               const SizedBox(width: BBSpacing.md),
               Expanded(
@@ -352,7 +353,7 @@ class _ChallengeCard extends StatelessWidget {
           const SizedBox(height: BBSpacing.sm),
           Row(
             children: [
-              const Icon(Icons.military_tech_rounded,
+              const Icon(AppIcons.loyalty,
                   size: 14, color: BBColors.amber),
               const SizedBox(width: 4),
               Text(
@@ -458,7 +459,7 @@ class _LeaderboardTab extends StatelessWidget {
               ),
               Row(
                 children: [
-                  const Icon(Icons.military_tech_rounded,
+                  const Icon(AppIcons.loyalty,
                       size: 14, color: BBColors.amber),
                   const SizedBox(width: 4),
                   Text(

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -115,7 +116,7 @@ class CheckoutScreen extends ConsumerWidget {
 
             // Razorpay (UPI/Card)
             _PaymentOption(
-              icon: Icons.payment_rounded,
+              icon: AppIcons.payment,
               title: 'UPI / Card',
               subtitle: 'Pay securely with Razorpay',
               color: BBColors.info,
@@ -125,7 +126,7 @@ class CheckoutScreen extends ConsumerWidget {
 
             // Cash at shop
             _PaymentOption(
-              icon: Icons.money_rounded,
+              icon: AppIcons.moneyRounded,
               title: 'Pay at Shop',
               subtitle: 'Cash payment after service',
               color: BBColors.success,
@@ -335,7 +336,7 @@ class _PaymentOption extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded,
+            Icon(AppIcons.arrowForwardSmall,
                 size: 14, color: colors.textTertiary),
           ],
         ),
@@ -367,7 +368,7 @@ class _SuccessView extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.check_rounded,
+                AppIcons.check,
                 size: 40,
                 color: Colors.white,
               ),
@@ -430,7 +431,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.receipt_long_outlined,
+                    Icon(AppIcons.receipt,
                         size: 48, color: colors.textTertiary),
                     const SizedBox(height: BBSpacing.md),
                     Text(
@@ -492,10 +493,10 @@ class _PaymentCard extends StatelessWidget {
             ),
             child: Icon(
               payment.isPaid
-                  ? Icons.check_circle_rounded
+                  ? AppIcons.checkCircleFill
                   : payment.isRefunded
-                      ? Icons.replay_rounded
-                      : Icons.pending_rounded,
+                      ? AppIcons.replay
+                      : AppIcons.pending,
               size: 20,
               color: statusColor,
             ),

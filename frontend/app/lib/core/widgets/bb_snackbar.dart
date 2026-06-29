@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../design/app_icons.dart';
 import '../design/bb_colors.dart';
 import '../design/bb_tokens.dart';
 import '../design/bb_typography.dart';
@@ -18,10 +19,10 @@ void showBBSnackbar(
         children: [
           Icon(
             isError
-                ? Icons.error_outline_rounded
+                ? AppIcons.error
                 : isSuccess
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.info_outline_rounded,
+                    ? AppIcons.checkCircle
+                    : AppIcons.info,
             size: 18,
             color: isError
                 ? BBColors.error

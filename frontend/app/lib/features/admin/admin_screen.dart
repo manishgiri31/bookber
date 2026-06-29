@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/api_endpoints.dart';
+import '../../core/design/app_icons.dart';
 import '../../core/design/bb_colors.dart';
 import '../../core/design/bb_tokens.dart';
 import '../../core/design/bb_typography.dart';
@@ -246,7 +247,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout_rounded, color: colors.textSecondary),
+            icon: Icon(AppIcons.logout, color: colors.textSecondary),
             onPressed: () => ref.read(authProvider.notifier).logout(),
             tooltip: 'Sign out',
           ),
@@ -323,18 +324,18 @@ class _KpiGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _KpiItem('Users', '${analytics.totalUsers}', Icons.people_rounded,
+      _KpiItem('Users', '${analytics.totalUsers}', AppIcons.people,
           BBColors.info),
       _KpiItem('Barbers', '${analytics.totalBarbers}',
-          Icons.content_cut_rounded, BBColors.amber),
-      _KpiItem('Shops', '${analytics.totalShops}', Icons.store_rounded,
+          AppIcons.scissors, BBColors.amber),
+      _KpiItem('Shops', '${analytics.totalShops}', AppIcons.store,
           BBColors.success),
       _KpiItem('Bookings', '${analytics.totalBookings}',
-          Icons.calendar_today_rounded, BBColors.warning),
+          AppIcons.calendar, BBColors.warning),
       _KpiItem('Active', '${analytics.activeBookings}',
-          Icons.radio_button_checked_rounded, BBColors.error),
+          AppIcons.circleFill, BBColors.error),
       _KpiItem('Avg Rating', analytics.averageRating.toStringAsFixed(1),
-          Icons.star_rounded, BBColors.amber),
+          AppIcons.starFill, BBColors.amber),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -582,7 +583,7 @@ class _BarberModerationCard extends StatelessWidget {
                         ),
                         if (barber.flaggedForReview) ...[
                           const SizedBox(width: BBSpacing.xs),
-                          Icon(Icons.flag_rounded,
+                          Icon(AppIcons.flagFill,
                               size: 14, color: BBColors.warning),
                         ],
                       ],
@@ -616,7 +617,7 @@ class _BarberModerationCard extends StatelessWidget {
           const SizedBox(height: BBSpacing.sm),
           Row(
             children: [
-              Icon(Icons.star_rounded, size: 13, color: BBColors.amber),
+              Icon(AppIcons.starFill, size: 13, color: BBColors.amber),
               const SizedBox(width: 3),
               Text(
                 barber.averageRating.toStringAsFixed(1),
@@ -624,7 +625,7 @@ class _BarberModerationCard extends StatelessWidget {
                     ?.copyWith(color: colors.textSecondary),
               ),
               const SizedBox(width: BBSpacing.md),
-              Icon(Icons.calendar_today_rounded,
+              Icon(AppIcons.calendar,
                   size: 13, color: colors.textTertiary),
               const SizedBox(width: 3),
               Text(
@@ -702,7 +703,7 @@ class _QueuesTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.queue_outlined,
+                  Icon(AppIcons.queue,
                       size: 48, color: context.bbColors.textTertiary),
                   const SizedBox(height: BBSpacing.md),
                   Text(

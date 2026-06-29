@@ -105,15 +105,10 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
-  Future<bool> updateProfile({String? phone}) async {
-    try {
-      final updated = await _repo.updateProfile(phone: phone);
-      if (state is AuthAuthenticated) {
-        state = AuthAuthenticated(updated);
-      }
-      return true;
-    } catch (_) {
-      return false;
+  Future<void> updateProfile({String? phone}) async {
+    final updated = await _repo.updateProfile(phone: phone);
+    if (state is AuthAuthenticated) {
+      state = AuthAuthenticated(updated);
     }
   }
 

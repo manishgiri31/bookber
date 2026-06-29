@@ -105,8 +105,8 @@ class BookingFailed extends BookingSubmitState {
   final String message;
 }
 
-final bookingSubmitProvider = StateNotifierProvider.autoDispose<
-    BookingSubmitNotifier, BookingSubmitState>(
+final bookingSubmitProvider =
+    StateNotifierProvider<BookingSubmitNotifier, BookingSubmitState>(
   (ref) => BookingSubmitNotifier(ref),
 );
 

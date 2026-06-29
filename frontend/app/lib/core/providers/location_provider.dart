@@ -15,7 +15,25 @@ class UserLocation {
 
 class LocationNotifier extends AsyncNotifier<UserLocation?> {
   @override
-  Future<UserLocation?> build() => _fetch();
+  // On startup: only use already-granted permission, never show dialog.
+  Future<UserLocation?> build() => _getIfGranted();
+
+  Future<UserLocation?> _getIfGranted() async {
+    try {
+      final svcEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!svcEnabled) return null;
+
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return null;
+      }
+
+      return await _resolvePosition();
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<UserLocation?> _fetch() async {
     try {
@@ -31,37 +49,42 @@ class LocationNotifier extends AsyncNotifier<UserLocation?> {
         return null;
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 10),
-      );
-
-      String? cityName;
-      try {
-        final placemarks = await placemarkFromCoordinates(
-          pos.latitude,
-          pos.longitude,
-        );
-        if (placemarks.isNotEmpty) {
-          final p = placemarks.first;
-          cityName = p.locality?.isNotEmpty == true
-              ? p.locality
-              : p.subAdministrativeArea?.isNotEmpty == true
-                  ? p.subAdministrativeArea
-                  : p.administrativeArea;
-        }
-      } catch (_) {}
-
-      return UserLocation(
-        latitude: pos.latitude,
-        longitude: pos.longitude,
-        cityName: cityName,
-      );
+      return await _resolvePosition();
     } catch (_) {
       return null;
     }
   }
 
+  Future<UserLocation?> _resolvePosition() async {
+    final pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.medium,
+      timeLimit: const Duration(seconds: 10),
+    );
+
+    String? cityName;
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        pos.latitude,
+        pos.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        final p = placemarks.first;
+        cityName = p.locality?.isNotEmpty == true
+            ? p.locality
+            : p.subAdministrativeArea?.isNotEmpty == true
+                ? p.subAdministrativeArea
+                : p.administrativeArea;
+      }
+    } catch (_) {}
+
+    return UserLocation(
+      latitude: pos.latitude,
+      longitude: pos.longitude,
+      cityName: cityName,
+    );
+  }
+
+  // Called when user explicitly taps "Enable location" — shows permission dialog.
   Future<void> refresh() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(_fetch);

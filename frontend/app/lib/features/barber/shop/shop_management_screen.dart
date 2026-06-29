@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -102,7 +103,7 @@ class _ServicesTab extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.content_cut_rounded,
+                    Icon(AppIcons.scissors,
                         size: 48, color: colors.textTertiary),
                     const SizedBox(height: BBSpacing.base),
                     Text(
@@ -120,7 +121,7 @@ class _ServicesTab extends ConsumerWidget {
                     const SizedBox(height: BBSpacing.xl),
                     BBButton(
                       label: 'Add Service',
-                      icon: Icons.add_rounded,
+                      icon: AppIcons.add,
                       onPressed: () => _showServiceForm(context, ref, null),
                     ),
                   ],
@@ -150,7 +151,7 @@ class _ServicesTab extends ConsumerWidget {
                   ? null
                   : () => _showServiceForm(context, ref, null),
               backgroundColor: BBColors.amber,
-              icon: const Icon(Icons.add_rounded, color: Colors.black),
+              icon: const Icon(AppIcons.add, color: Colors.black),
               label: Text(
                 'Add Service',
                 style: BBTypography.textTheme.labelMedium
@@ -301,7 +302,7 @@ class _ServiceCard extends StatelessWidget {
               ),
             ),
             PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert_rounded,
+              icon: Icon(AppIcons.more,
                   color: colors.textSecondary, size: 20),
               color: colors.surface,
               onSelected: (v) {
@@ -312,7 +313,7 @@ class _ServiceCard extends StatelessWidget {
                 PopupMenuItem(
                   value: 'edit',
                   child: Row(children: [
-                    Icon(Icons.edit_outlined,
+                    Icon(AppIcons.edit,
                         size: 16, color: colors.textSecondary),
                     const SizedBox(width: 8),
                     Text('Edit', style: TextStyle(color: colors.text)),
@@ -321,7 +322,7 @@ class _ServiceCard extends StatelessWidget {
                 PopupMenuItem(
                   value: 'delete',
                   child: const Row(children: [
-                    Icon(Icons.delete_outline_rounded,
+                    Icon(AppIcons.deleteIcon,
                         size: 16, color: BBColors.error),
                     SizedBox(width: 8),
                     Text('Delete',
@@ -338,12 +339,12 @@ class _ServiceCard extends StatelessWidget {
 
   IconData _iconForCategory(String cat) {
     return switch (cat.toUpperCase()) {
-      'HAIRCUT' => Icons.content_cut_rounded,
-      'BEARD' => Icons.face_rounded,
-      'COMBO' => Icons.spa_rounded,
-      'SHAVE' => Icons.wash_rounded,
-      'COLOR' => Icons.color_lens_rounded,
-      _ => Icons.cut_rounded,
+      'HAIRCUT' => AppIcons.scissors,
+      'BEARD' => AppIcons.face,
+      'COMBO' => AppIcons.spa,
+      'SHAVE' => AppIcons.wash,
+      'COLOR' => AppIcons.colorLens,
+      _ => AppIcons.scissors,
     };
   }
 
@@ -508,7 +509,7 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
               label: 'Service Name *',
               hint: 'e.g. Classic Haircut',
               controller: _nameCtrl,
-              prefixIcon: Icons.label_outline_rounded,
+              prefixIcon: AppIcons.labelOutline,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: BBSpacing.md),
@@ -517,7 +518,7 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
               label: 'Description',
               hint: 'Brief description',
               controller: _descCtrl,
-              prefixIcon: Icons.description_outlined,
+              prefixIcon: AppIcons.description,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: BBSpacing.md),
@@ -529,7 +530,7 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
                     label: 'Price (₹) *',
                     hint: '250',
                     controller: _priceCtrl,
-                    prefixIcon: Icons.currency_rupee_rounded,
+                    prefixIcon: AppIcons.currencyRupee,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                   ),
@@ -540,7 +541,7 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
                     label: 'Duration (min) *',
                     hint: '30',
                     controller: _durationCtrl,
-                    prefixIcon: Icons.timer_outlined,
+                    prefixIcon: AppIcons.timer,
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.done,
                   ),
@@ -608,7 +609,7 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
               label: isEdit ? 'Save Changes' : 'Add Service',
               onPressed: _loading ? null : _submit,
               loading: _loading,
-              icon: isEdit ? Icons.check_rounded : Icons.add_rounded,
+              icon: isEdit ? AppIcons.check : AppIcons.add,
             ),
           ],
         ),
@@ -726,7 +727,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
       padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
       children: [
         _SectionHeader(
-            icon: Icons.access_time_rounded, title: 'Opening Hours'),
+            icon: AppIcons.accessTime, title: 'Opening Hours'),
         const SizedBox(height: BBSpacing.md),
         Row(
           children: [
@@ -750,7 +751,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
         const SizedBox(height: BBSpacing.xl),
 
         _SectionHeader(
-            icon: Icons.toggle_on_outlined, title: 'Availability'),
+            icon: AppIcons.toggleOn, title: 'Availability'),
         const SizedBox(height: BBSpacing.sm),
         Container(
           decoration: BoxDecoration(
@@ -761,7 +762,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
           child: Column(
             children: [
               _ToggleRow(
-                icon: Icons.calendar_today_outlined,
+                icon: AppIcons.calendar,
                 title: 'Accept Bookings',
                 subtitle: 'Allow customers to book in advance',
                 value: _acceptBookings,
@@ -769,7 +770,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _ToggleRow(
-                icon: Icons.directions_walk_rounded,
+                icon: AppIcons.walk,
                 title: 'Accept Walk-ins',
                 subtitle: 'Allow walk-in customers to join queue',
                 value: _acceptWalkIns,
@@ -781,7 +782,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
 
         const SizedBox(height: BBSpacing.xl),
         _SectionHeader(
-            icon: Icons.event_busy_rounded, title: 'Holidays & Closed Days'),
+            icon: AppIcons.eventBusy, title: 'Holidays & Closed Days'),
         const SizedBox(height: BBSpacing.md),
         if (_blockedDates.isEmpty)
           Container(
@@ -826,7 +827,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
-            icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+            icon: const Icon(AppIcons.addCircle, size: 18),
             label: const Text('Add Holiday'),
             style: TextButton.styleFrom(foregroundColor: BBColors.amber),
             onPressed: _addHoliday,
@@ -837,7 +838,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
           label: 'Save Schedule',
           onPressed: _loading ? null : _save,
           loading: _loading,
-          icon: Icons.save_rounded,
+          icon: AppIcons.save,
         ),
       ],
     );
@@ -873,7 +874,7 @@ class _TimeField extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
-                Icon(Icons.access_time_rounded,
+                Icon(AppIcons.accessTime,
                     size: 16, color: BBColors.amber),
                 const SizedBox(width: 6),
                 Text(
@@ -952,7 +953,7 @@ class _HolidayRow extends StatelessWidget {
           horizontal: BBSpacing.base, vertical: BBSpacing.sm),
       child: Row(
         children: [
-          Icon(Icons.event_busy_rounded, size: 18, color: BBColors.error),
+          Icon(AppIcons.eventBusy, size: 18, color: BBColors.error),
           const SizedBox(width: BBSpacing.md),
           Expanded(
             child: Text(label,
@@ -960,7 +961,7 @@ class _HolidayRow extends StatelessWidget {
                     ?.copyWith(color: colors.text)),
           ),
           IconButton(
-            icon: Icon(Icons.close_rounded, size: 16, color: colors.textTertiary),
+            icon: Icon(AppIcons.close, size: 16, color: colors.textTertiary),
             onPressed: onRemove,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -1007,7 +1008,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
       padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
       children: [
         _SectionHeader(
-            icon: Icons.local_convenience_store_outlined, title: 'Facilities'),
+            icon: AppIcons.localConvenienceStore, title: 'Facilities'),
         const SizedBox(height: BBSpacing.sm),
         Container(
           decoration: BoxDecoration(
@@ -1018,7 +1019,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
           child: Column(
             children: [
               _ToggleRow(
-                icon: Icons.wifi_rounded,
+                icon: AppIcons.wifi,
                 title: 'Free WiFi',
                 subtitle: 'Complimentary internet access',
                 value: _wifi,
@@ -1026,7 +1027,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _ToggleRow(
-                icon: Icons.local_parking_rounded,
+                icon: AppIcons.parking,
                 title: 'Parking',
                 subtitle: 'Free or paid parking available',
                 value: _parking,
@@ -1034,7 +1035,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _ToggleRow(
-                icon: Icons.ac_unit_rounded,
+                icon: AppIcons.acUnit,
                 title: 'Air Conditioning',
                 subtitle: 'Temperature-controlled environment',
                 value: _ac,
@@ -1042,7 +1043,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _ToggleRow(
-                icon: Icons.water_drop_outlined,
+                icon: AppIcons.waterDrop,
                 title: 'Drinking Water',
                 subtitle: 'Complimentary water for customers',
                 value: _water,
@@ -1053,7 +1054,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
         ),
         const SizedBox(height: BBSpacing.xl),
         _SectionHeader(
-            icon: Icons.payment_rounded, title: 'Payment Methods'),
+            icon: AppIcons.payment, title: 'Payment Methods'),
         const SizedBox(height: BBSpacing.sm),
         Container(
           decoration: BoxDecoration(
@@ -1064,7 +1065,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
           child: Column(
             children: [
               _ToggleRow(
-                icon: Icons.credit_card_rounded,
+                icon: AppIcons.payment,
                 title: 'Card Payment',
                 subtitle: 'Accept debit & credit cards',
                 value: _cardPayment,
@@ -1072,7 +1073,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _ToggleRow(
-                icon: Icons.qr_code_rounded,
+                icon: AppIcons.qrCode,
                 title: 'UPI Payment',
                 subtitle: 'GPay, PhonePe, Paytm & more',
                 value: _upi,
@@ -1083,7 +1084,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
         ),
         const SizedBox(height: BBSpacing.xl),
         _SectionHeader(
-            icon: Icons.accessibility_new_rounded, title: 'Accessibility'),
+            icon: AppIcons.accessible, title: 'Accessibility'),
         const SizedBox(height: BBSpacing.sm),
         Container(
           decoration: BoxDecoration(
@@ -1094,7 +1095,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
           child: Column(
             children: [
               _ToggleRow(
-                icon: Icons.child_friendly_rounded,
+                icon: AppIcons.childFriendly,
                 title: 'Kids Chairs',
                 subtitle: 'Special chairs for young children',
                 value: _kidsChairs,
@@ -1102,7 +1103,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _ToggleRow(
-                icon: Icons.accessible_rounded,
+                icon: AppIcons.accessible,
                 title: 'Wheelchair Access',
                 subtitle: 'Accessible entrance and facilities',
                 value: _wheelchair,
@@ -1114,7 +1115,7 @@ class _AmenitiesTabState extends State<_AmenitiesTab> {
         const SizedBox(height: BBSpacing.xl),
         BBButton(
           label: 'Save Amenities',
-          icon: Icons.save_rounded,
+          icon: AppIcons.save,
           loading: _saving,
           onPressed: _saving ? null : _saveAmenities,
         ),
@@ -1154,7 +1155,7 @@ class _GalleryTabState extends State<_GalleryTab> {
             ),
             TextButton.icon(
               icon:
-                  const Icon(Icons.add_photo_alternate_rounded, size: 18),
+                  const Icon(AppIcons.addPhoto, size: 18),
               label: const Text('Add Photo'),
               style: TextButton.styleFrom(foregroundColor: BBColors.amber),
               onPressed: () {
@@ -1177,7 +1178,7 @@ class _GalleryTabState extends State<_GalleryTab> {
             padding: const EdgeInsets.symmetric(vertical: BBSpacing.xl),
             child: Column(
               children: [
-                Icon(Icons.photo_camera_outlined,
+                Icon(AppIcons.camera,
                     size: 56, color: colors.textTertiary),
                 const SizedBox(height: BBSpacing.sm),
                 Text(
@@ -1214,7 +1215,7 @@ class _GalleryTabState extends State<_GalleryTab> {
               child: Stack(
                 children: [
                   Center(
-                    child: Icon(Icons.image_rounded,
+                    child: Icon(AppIcons.image,
                         size: 32, color: colors.textTertiary),
                   ),
                   Positioned(
@@ -1231,7 +1232,7 @@ class _GalleryTabState extends State<_GalleryTab> {
                           color: BBColors.error.withValues(alpha: 0.85),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close_rounded,
+                        child: const Icon(AppIcons.close,
                             size: 12, color: Colors.white),
                       ),
                     ),
@@ -1250,7 +1251,7 @@ class _GalleryTabState extends State<_GalleryTab> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.info_outline_rounded,
+              const Icon(AppIcons.info,
                   size: 16, color: BBColors.info),
               const SizedBox(width: BBSpacing.sm),
               Expanded(
@@ -1352,14 +1353,14 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
     return ListView(
       padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
       children: [
-        _SectionHeader(icon: Icons.store_outlined, title: 'Shop Details'),
+        _SectionHeader(icon: AppIcons.store, title: 'Shop Details'),
         const SizedBox(height: BBSpacing.md),
 
         BBTextField(
           label: 'Shop Name *',
           hint: 'Your shop name',
           controller: _nameCtrl,
-          prefixIcon: Icons.store_rounded,
+          prefixIcon: AppIcons.store,
           textInputAction: TextInputAction.next,
         ),
         const SizedBox(height: BBSpacing.md),
@@ -1367,7 +1368,7 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
           label: 'Description',
           hint: 'Tell customers about your shop',
           controller: _descCtrl,
-          prefixIcon: Icons.description_outlined,
+          prefixIcon: AppIcons.description,
           textInputAction: TextInputAction.next,
         ),
         const SizedBox(height: BBSpacing.md),
@@ -1375,7 +1376,7 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
           label: 'Phone',
           hint: '+91 98765 43210',
           controller: _phoneCtrl,
-          prefixIcon: Icons.phone_outlined,
+          prefixIcon: AppIcons.phone,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
         ),
@@ -1384,12 +1385,12 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
           label: 'Address',
           hint: 'Street address',
           controller: _addressCtrl,
-          prefixIcon: Icons.location_on_outlined,
+          prefixIcon: AppIcons.locationOn,
           textInputAction: TextInputAction.done,
         ),
 
         const SizedBox(height: BBSpacing.xl),
-        _SectionHeader(icon: Icons.info_outline_rounded, title: 'Shop Stats'),
+        _SectionHeader(icon: AppIcons.info, title: 'Shop Stats'),
         const SizedBox(height: BBSpacing.md),
         Container(
           decoration: BoxDecoration(
@@ -1402,7 +1403,7 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
               _InfoRow(
                 label: 'Total Chairs',
                 value: widget.shop!.chairs.length.toString(),
-                icon: Icons.chair_rounded,
+                icon: AppIcons.chair,
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _InfoRow(
@@ -1411,19 +1412,19 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
                     .where((c) => c.reservedForBookBer)
                     .length
                     .toString(),
-                icon: Icons.bookmark_outline_rounded,
+                icon: AppIcons.bookmark,
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _InfoRow(
                 label: 'City',
                 value: widget.shop!.city,
-                icon: Icons.location_city_outlined,
+                icon: AppIcons.locationCity,
               ),
               Divider(color: colors.border, height: 1, indent: 52),
               _InfoRow(
                 label: 'State',
                 value: widget.shop!.state,
-                icon: Icons.map_outlined,
+                icon: AppIcons.map,
               ),
             ],
           ),
@@ -1434,7 +1435,7 @@ class _InfoTabState extends ConsumerState<_InfoTab> {
           label: 'Save Changes',
           onPressed: _loading ? null : _save,
           loading: _loading,
-          icon: Icons.save_rounded,
+          icon: AppIcons.save,
         ),
         const SizedBox(height: BBSpacing.xxl),
       ],
@@ -1514,7 +1515,7 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded,
+            Icon(AppIcons.error,
                 size: 48, color: BBColors.error),
             const SizedBox(height: BBSpacing.base),
             Text('Could not load shop',

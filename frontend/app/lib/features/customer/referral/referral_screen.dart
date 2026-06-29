@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -107,7 +108,7 @@ class _ReferralCodeCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.card_giftcard_rounded,
+          const Icon(AppIcons.gift,
               color: BBColors.amber, size: 36),
           const SizedBox(height: BBSpacing.sm),
           Text(
@@ -141,7 +142,7 @@ class _ReferralCodeCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: BBSpacing.sm),
-                  const Icon(Icons.copy_rounded,
+                  const Icon(AppIcons.copy,
                       color: BBColors.amber, size: 18),
                 ],
               ),
@@ -319,7 +320,7 @@ class _ReferralItem extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            isCompleted ? Icons.check_circle_rounded : Icons.pending_rounded,
+            isCompleted ? AppIcons.checkCircleFill : AppIcons.pending,
             color: isCompleted ? BBColors.success : colors.textSecondary,
             size: 22,
           ),

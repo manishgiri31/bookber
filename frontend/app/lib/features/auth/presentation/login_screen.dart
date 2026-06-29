@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/design/app_icons.dart';
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
@@ -125,7 +126,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 errorText: _emailError,
-                prefixIcon: Icons.mail_outline_rounded,
+                prefixIcon: AppIcons.mail,
               ),
               const SizedBox(height: BBSpacing.base),
               BBTextField(
@@ -135,7 +136,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 obscureText: true,
                 textInputAction: TextInputAction.done,
                 errorText: _passError,
-                prefixIcon: Icons.lock_outline_rounded,
+                prefixIcon: AppIcons.lock,
                 onSubmitted: (_) => _submit(),
               ),
               const SizedBox(height: BBSpacing.sm),
@@ -174,7 +175,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.error_outline_rounded, color: BBColors.error, size: 18),
+                      const Icon(AppIcons.error, color: BBColors.error, size: 18),
                       const SizedBox(width: BBSpacing.sm),
                       Expanded(
                         child: Text(

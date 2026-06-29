@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../design/app_icons.dart';
 import '../design/bb_colors.dart';
 import '../design/bb_tokens.dart';
 import '../design/bb_typography.dart';
@@ -62,7 +63,7 @@ class BBErrorWidget extends StatelessWidget {
             BBButton(
               label: 'Try Again',
               onPressed: onRetry,
-              icon: Icons.refresh_rounded,
+              icon: AppIcons.refresh,
               expand: false,
             ),
           ],
@@ -84,32 +85,32 @@ class BBErrorWidget extends StatelessWidget {
       NoInternetException() => const _ErrorInfo(
           title: 'No Connection',
           message: 'Check your internet connection and try again.',
-          icon: Icons.wifi_off_rounded,
+          icon: AppIcons.wifiOff,
         ),
       TimeoutException() => const _ErrorInfo(
           title: 'Request Timed Out',
           message: 'The server took too long to respond. Try again.',
-          icon: Icons.timer_off_outlined,
+          icon: AppIcons.timerOff,
         ),
       UnauthorizedException() => const _ErrorInfo(
           title: 'Session Expired',
           message: 'Please sign in again to continue.',
-          icon: Icons.lock_outline_rounded,
+          icon: AppIcons.lock,
         ),
       ServerException() => const _ErrorInfo(
           title: 'Server Error',
           message: 'Something went wrong on our end. We\'re working on it.',
-          icon: Icons.cloud_off_rounded,
+          icon: AppIcons.cloudOff,
         ),
       AppException(:final message) => _ErrorInfo(
           title: 'Something Went Wrong',
           message: message,
-          icon: Icons.error_outline_rounded,
+          icon: AppIcons.error,
         ),
       _ => _ErrorInfo(
           title: 'Something Went Wrong',
           message: error.toString(),
-          icon: Icons.error_outline_rounded,
+          icon: AppIcons.error,
         ),
     };
   }

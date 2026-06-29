@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/design/app_icons.dart';
 import '../../core/design/bb_colors.dart';
 import '../../core/design/bb_tokens.dart';
 import '../../core/design/bb_typography.dart';
@@ -39,29 +40,29 @@ class CustomerShell extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home_rounded,
+                  icon: AppIcons.home,
+                  activeIcon: AppIcons.homeActive,
                   label: 'Home',
                   selected: currentIndex == 0,
                   onTap: () => context.go('/home'),
                 ),
                 _NavItem(
-                  icon: Icons.storefront_outlined,
-                  activeIcon: Icons.storefront_rounded,
+                  icon: AppIcons.shops,
+                  activeIcon: AppIcons.shopsActive,
                   label: 'Shops',
                   selected: currentIndex == 1,
                   onTap: () => context.go('/shops'),
                 ),
                 _NavItem(
-                  icon: Icons.receipt_long_outlined,
-                  activeIcon: Icons.receipt_long_rounded,
+                  icon: AppIcons.receipt,
+                  activeIcon: AppIcons.receiptFill,
                   label: 'Bookings',
                   selected: currentIndex == 2,
                   onTap: () => context.go('/bookings'),
                 ),
                 _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
+                  icon: AppIcons.profile,
+                  activeIcon: AppIcons.profileActive,
                   label: 'Profile',
                   selected: currentIndex == 3,
                   onTap: () => context.go('/profile'),

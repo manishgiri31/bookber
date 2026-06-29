@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,8 +31,8 @@ class QueueTrackerScreen extends ConsumerWidget {
           IconButton(
             icon: Icon(
               state.isConnected
-                  ? Icons.wifi_rounded
-                  : Icons.wifi_off_rounded,
+                  ? AppIcons.wifi
+                  : AppIcons.wifiOff,
               size: 20,
               color: state.isConnected ? BBColors.success : colors.textTertiary,
             ),
@@ -107,7 +108,7 @@ class _QueueView extends ConsumerWidget {
                   ),
                 ] else if (status == 'READY') ...[
                   const Icon(
-                    Icons.notifications_active_rounded,
+                    AppIcons.bellActive,
                     size: 60,
                     color: BBColors.amber,
                   ),
@@ -126,7 +127,7 @@ class _QueueView extends ConsumerWidget {
                   ),
                 ] else if (status == 'CALLED') ...[
                   const Icon(
-                    Icons.chair_rounded,
+                    AppIcons.chairFill,
                     size: 60,
                     color: BBColors.amber,
                   ),
@@ -147,7 +148,7 @@ class _QueueView extends ConsumerWidget {
                     ),
                 ] else if (status == 'IN_SERVICE') ...[
                   const Icon(
-                    Icons.content_cut_rounded,
+                    AppIcons.scissors,
                     size: 60,
                     color: BBColors.amber,
                   ),
@@ -166,7 +167,7 @@ class _QueueView extends ConsumerWidget {
                   ),
                 ] else if (status == 'COMPLETED') ...[
                   const Icon(
-                    Icons.check_circle_rounded,
+                    AppIcons.checkCircleFill,
                     size: 60,
                     color: BBColors.success,
                   ),
@@ -188,7 +189,7 @@ class _QueueView extends ConsumerWidget {
             children: [
               Expanded(
                 child: _InfoTile(
-                  icon: Icons.timer_outlined,
+                  icon: AppIcons.timer,
                   label: 'Wait',
                   value: position.estimatedWaitMinutes > 0
                       ? '~${position.estimatedWaitMinutes}m'
@@ -198,7 +199,7 @@ class _QueueView extends ConsumerWidget {
               const SizedBox(width: BBSpacing.sm),
               Expanded(
                 child: _InfoTile(
-                  icon: Icons.content_cut_rounded,
+                  icon: AppIcons.scissors,
                   label: 'Service',
                   value: position.serviceNames.isNotEmpty
                       ? position.serviceNames
@@ -212,7 +213,7 @@ class _QueueView extends ConsumerWidget {
             children: [
               Expanded(
                 child: _InfoTile(
-                  icon: Icons.person_outline_rounded,
+                  icon: AppIcons.personOutline,
                   label: 'Barber',
                   value: position.barberName ?? 'Assigning...',
                 ),
@@ -220,7 +221,7 @@ class _QueueView extends ConsumerWidget {
               const SizedBox(width: BBSpacing.sm),
               Expanded(
                 child: _InfoTile(
-                  icon: Icons.store_outlined,
+                  icon: AppIcons.store,
                   label: 'Shop',
                   value: position.shopName,
                 ),
@@ -245,7 +246,7 @@ class _QueueView extends ConsumerWidget {
                   }
                 }
               },
-              icon: Icons.check_circle_outline_rounded,
+              icon: AppIcons.checkCircle,
             ),
             const SizedBox(height: BBSpacing.sm),
           ],
@@ -254,7 +255,7 @@ class _QueueView extends ConsumerWidget {
               label: 'Leave a Review',
               onPressed: () =>
                   context.push('/review/$bookingId'),
-              icon: Icons.star_outline_rounded,
+              icon: AppIcons.star,
             ),
             const SizedBox(height: BBSpacing.sm),
           ],
@@ -263,14 +264,14 @@ class _QueueView extends ConsumerWidget {
               label: 'Smart Arrival',
               onPressed: () => context.push('/arrival/$bookingId'),
               variant: BBButtonVariant.secondary,
-              icon: Icons.navigation_rounded,
+              icon: AppIcons.nearMe,
             ),
             const SizedBox(height: BBSpacing.sm),
             BBButton(
               label: 'Cancel',
               onPressed: () => _confirmCancel(context, ref),
               variant: BBButtonVariant.destructive,
-              icon: Icons.cancel_outlined,
+              icon: AppIcons.cancel,
             ),
           ],
           if (status == 'COMPLETED' || status == 'CANCELLED' ||
@@ -279,7 +280,7 @@ class _QueueView extends ConsumerWidget {
               label: 'Back to Home',
               onPressed: () => context.go('/home'),
               variant: BBButtonVariant.secondary,
-              icon: Icons.home_outlined,
+              icon: AppIcons.home,
             ),
           ],
         ],
@@ -385,7 +386,7 @@ class _NotInQueue extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
-              Icons.queue_outlined,
+              AppIcons.queue,
               size: 64,
               color: BBColors.amber,
             ),

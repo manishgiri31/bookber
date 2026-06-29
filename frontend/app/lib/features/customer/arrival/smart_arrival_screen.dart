@@ -1,9 +1,10 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/design/app_icons.dart';
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
@@ -57,7 +58,7 @@ class _SmartArrivalScreenState extends ConsumerState<SmartArrivalScreen>
         title: const Text('Smart Arrival'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(AppIcons.refresh),
             onPressed: () =>
                 ref.read(myQueueProvider(widget.bookingId).notifier).refresh(),
           ),
@@ -185,7 +186,7 @@ class _ArrivalView extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.speed_rounded, size: 14, color: confColor),
+                      Icon(AppIcons.speed, size: 14, color: confColor),
                       const SizedBox(width: 5),
                       Text(
                         '${(conf * 100).round()}% confidence',
@@ -207,7 +208,7 @@ class _ArrivalView extends StatelessWidget {
             children: [
               Expanded(
                 child: _TimelineCard(
-                  icon: Icons.directions_walk_rounded,
+                  icon: AppIcons.walk,
                   label: 'Travel',
                   value: '${travelMinutes}m',
                   color: BBColors.info,
@@ -216,7 +217,7 @@ class _ArrivalView extends StatelessWidget {
               const SizedBox(width: BBSpacing.sm),
               Expanded(
                 child: _TimelineCard(
-                  icon: Icons.queue_rounded,
+                  icon: AppIcons.queue,
                   label: 'Queue Wait',
                   value: _queueWait > 0 ? '~${_queueWait}m' : 'Ready',
                   color: BBColors.amber,
@@ -225,7 +226,7 @@ class _ArrivalView extends StatelessWidget {
               const SizedBox(width: BBSpacing.sm),
               Expanded(
                 child: _TimelineCard(
-                  icon: Icons.content_cut_rounded,
+                  icon: AppIcons.scissors,
                   label: 'Service',
                   value: '~${_serviceDuration}m',
                   color: BBColors.success,
@@ -259,7 +260,7 @@ class _ArrivalView extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _ExpectedRow(
-                        icon: Icons.chair_rounded,
+                        icon: AppIcons.chair,
                         label: 'Chair Time',
                         time: _fmt(_expectedChairTime),
                       ),
@@ -268,7 +269,7 @@ class _ArrivalView extends StatelessWidget {
                         width: 1, height: 40, color: colors.border),
                     Expanded(
                       child: _ExpectedRow(
-                        icon: Icons.check_circle_outline_rounded,
+                        icon: AppIcons.checkCircle,
                         label: 'Finish Time',
                         time: _fmt(_expectedFinishTime),
                       ),
@@ -350,7 +351,7 @@ class _ArrivalView extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: const Center(
-                      child: Icon(Icons.person_rounded,
+                      child: Icon(AppIcons.person,
                           color: BBColors.amber, size: 22),
                     ),
                   ),
@@ -486,7 +487,7 @@ class _NoPosView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.near_me_disabled_rounded,
+            Icon(AppIcons.nearMeDisabled,
                 size: 64, color: colors.textTertiary),
             const SizedBox(height: BBSpacing.base),
             Text(

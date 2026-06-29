@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_tokens.dart';
@@ -97,7 +98,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
       appBar: AppBar(
         title: const Text('Set Up Your Shop'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const Icon(AppIcons.arrowBack),
           onPressed: () => setState(() => _step = 0),
         ),
       ),
@@ -128,7 +129,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               label: 'Shop Name *',
               hint: 'e.g. Classic Cuts',
               controller: _nameCtrl,
-              prefixIcon: Icons.store_rounded,
+              prefixIcon: AppIcons.store,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: BBSpacing.base),
@@ -136,7 +137,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               label: 'Description',
               hint: 'Brief description of your shop',
               controller: _descCtrl,
-              prefixIcon: Icons.description_outlined,
+              prefixIcon: AppIcons.description,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: BBSpacing.base),
@@ -144,7 +145,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               label: 'Street Address *',
               hint: 'e.g. 123 Main Street',
               controller: _addressCtrl,
-              prefixIcon: Icons.location_on_outlined,
+              prefixIcon: AppIcons.locationOn,
               textInputAction: TextInputAction.next,
             ),
             const SizedBox(height: BBSpacing.base),
@@ -155,7 +156,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
                     label: 'City *',
                     hint: 'e.g. Mumbai',
                     controller: _cityCtrl,
-                    prefixIcon: Icons.location_city_outlined,
+                    prefixIcon: AppIcons.locationCity,
                     textInputAction: TextInputAction.next,
                   ),
                 ),
@@ -165,7 +166,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
                     label: 'State *',
                     hint: 'e.g. Maharashtra',
                     controller: _stateCtrl,
-                    prefixIcon: Icons.map_outlined,
+                    prefixIcon: AppIcons.map,
                     textInputAction: TextInputAction.next,
                   ),
                 ),
@@ -176,7 +177,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               label: 'Country',
               hint: 'India',
               controller: _countryCtrl,
-              prefixIcon: Icons.public_rounded,
+              prefixIcon: AppIcons.public,
               textInputAction: TextInputAction.done,
             ),
             const SizedBox(height: BBSpacing.base),
@@ -193,7 +194,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.chair_outlined,
+                  Icon(AppIcons.chair,
                       size: 18, color: colors.textSecondary),
                   const SizedBox(width: BBSpacing.md),
                   Expanded(
@@ -218,7 +219,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
                   Row(
                     children: [
                       _StepperButton(
-                        icon: Icons.remove_rounded,
+                        icon: AppIcons.remove,
                         onTap: _chairs > 1
                             ? () => setState(() => _chairs--)
                             : null,
@@ -237,7 +238,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
                       ),
                       const SizedBox(width: BBSpacing.sm),
                       _StepperButton(
-                        icon: Icons.add_rounded,
+                        icon: AppIcons.add,
                         onTap: _chairs < 20
                             ? () => setState(() => _chairs++)
                             : null,
@@ -258,7 +259,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
                       padding: const EdgeInsets.only(top: BBSpacing.sm),
                       child: Row(
                         children: [
-                          Icon(Icons.my_location_rounded,
+                          Icon(AppIcons.myLocation,
                               size: 14, color: BBColors.success),
                           const SizedBox(width: 4),
                           Text(
@@ -293,7 +294,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline_rounded,
+                    const Icon(AppIcons.error,
                         color: BBColors.error, size: 18),
                     const SizedBox(width: BBSpacing.sm),
                     Expanded(
@@ -312,7 +313,7 @@ class _BarberSetupScreenState extends ConsumerState<BarberSetupScreen> {
               label: 'Create Shop',
               onPressed: _submit,
               loading: _loading,
-              icon: Icons.store_rounded,
+              icon: AppIcons.store,
             ),
             const SizedBox(height: BBSpacing.xxl),
           ],
@@ -378,7 +379,7 @@ class _WelcomeStep extends StatelessWidget {
                   borderRadius: BorderRadius.circular(BBRadius.lg),
                 ),
                 child: Icon(
-                  Icons.content_cut_rounded,
+                  AppIcons.scissors,
                   size: 32,
                   color: colors.accent,
                 ),
@@ -401,19 +402,19 @@ class _WelcomeStep extends StatelessWidget {
               ),
               const SizedBox(height: BBSpacing.xl),
               _FeatureRow(
-                icon: Icons.queue_rounded,
+                icon: AppIcons.queue,
                 title: 'Live Queue Management',
                 subtitle: 'Manage walk-ins and bookings in real time',
               ),
               const SizedBox(height: BBSpacing.md),
               _FeatureRow(
-                icon: Icons.bar_chart_rounded,
+                icon: AppIcons.barChart,
                 title: 'Analytics & Earnings',
                 subtitle: 'Track your daily performance',
               ),
               const SizedBox(height: BBSpacing.md),
               _FeatureRow(
-                icon: Icons.notifications_outlined,
+                icon: AppIcons.notifications,
                 title: 'Instant Notifications',
                 subtitle: 'Get alerts when customers book',
               ),
@@ -421,7 +422,7 @@ class _WelcomeStep extends StatelessWidget {
               BBButton(
                 label: 'Set Up My Shop',
                 onPressed: onContinue,
-                icon: Icons.arrow_forward_rounded,
+                icon: AppIcons.arrowForward,
               ),
               const SizedBox(height: BBSpacing.lg),
             ],

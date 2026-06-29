@@ -1,6 +1,7 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -96,13 +97,13 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                   color: colors.textTertiary,
                 ),
                 prefixIcon: Icon(
-                  Icons.search_rounded,
+                  AppIcons.search,
                   size: 20,
                   color: colors.textTertiary,
                 ),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear_rounded,
+                        icon: Icon(AppIcons.clear,
                             size: 18, color: colors.textTertiary),
                         onPressed: () {
                           _searchCtrl.clear();
@@ -163,7 +164,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
                                 : state.openOnly && state.shops.isNotEmpty
                                     ? 'All nearby shops are currently closed.'
                                     : 'No barber shops available yet.',
-                            icon: Icons.store_outlined,
+                            icon: AppIcons.store,
                           )
                         : RefreshIndicator(
                             color: colors.accent,
@@ -296,7 +297,7 @@ class _FilterBar extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
-                      Icons.tune_rounded,
+                      AppIcons.filter,
                       size: 13,
                       color: hasActiveFilters
                           ? colors.background
@@ -323,21 +324,21 @@ class _FilterBar extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             _SortChip(
               label: 'Nearest',
-              icon: Icons.near_me_outlined,
+              icon: AppIcons.nearMe,
               selected: sortBy == ShopSortBy.nearest,
               onTap: () => onSortChanged(ShopSortBy.nearest),
             ),
             const SizedBox(width: BBSpacing.xs),
             _SortChip(
               label: 'Top Rated',
-              icon: Icons.star_outline_rounded,
+              icon: AppIcons.star,
               selected: sortBy == ShopSortBy.topRated,
               onTap: () => onSortChanged(ShopSortBy.topRated),
             ),
             const SizedBox(width: BBSpacing.xs),
             _SortChip(
               label: 'Fastest',
-              icon: Icons.timer_outlined,
+              icon: AppIcons.timer,
               selected: sortBy == ShopSortBy.fastest,
               onTap: () => onSortChanged(ShopSortBy.fastest),
             ),
@@ -350,7 +351,7 @@ class _FilterBar extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             _SortChip(
               label: 'Open Now',
-              icon: Icons.circle_rounded,
+              icon: AppIcons.circleFill,
               selected: openOnly,
               selectedIconColor: BBColors.success,
               onTap: () => onOpenOnlyChanged(!openOnly),
@@ -445,7 +446,7 @@ class _ShopCard extends StatelessWidget {
               ),
               child: Center(
                 child: Icon(
-                  Icons.content_cut_rounded,
+                  AppIcons.scissors,
                   size: 28,
                   color: colors.textTertiary,
                 ),
@@ -501,16 +502,16 @@ class _ShopCard extends StatelessWidget {
                     spacing: BBSpacing.sm,
                     children: [
                       _InfoChip(
-                        icon: Icons.star_rounded,
+                        icon: AppIcons.starFill,
                         label: shop.rating.toStringAsFixed(1),
                       ),
                       _InfoChip(
-                        icon: Icons.timer_outlined,
+                        icon: AppIcons.timer,
                         label: shop.waitLabel,
                       ),
                       if (shop.distanceKm != null)
                         _InfoChip(
-                          icon: Icons.near_me_outlined,
+                          icon: AppIcons.nearMe,
                           label: shop.distanceLabel,
                         ),
                     ],
@@ -662,7 +663,7 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.star_rounded,
+                                Icon(AppIcons.starFill,
                                     size: 12,
                                     color: selected ? colors.background : BBColors.amber),
                                 const SizedBox(width: 2),

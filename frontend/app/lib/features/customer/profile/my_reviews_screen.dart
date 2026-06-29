@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -75,14 +76,14 @@ class MyReviewsScreen extends ConsumerWidget {
         error: (_, _) => const BBEmptyState(
           title: 'Couldn\'t load reviews',
           subtitle: 'Pull down to retry.',
-          icon: Icons.star_outline_rounded,
+          icon: AppIcons.star,
         ),
         data: (reviews) => reviews.isEmpty
             ? const BBEmptyState(
                 title: 'No reviews yet',
                 subtitle:
                     'After your next haircut, leave a review to help others.',
-                icon: Icons.star_outline_rounded,
+                icon: AppIcons.star,
               )
             : RefreshIndicator(
                 color: BBColors.amber,
@@ -140,8 +141,8 @@ class _ReviewCard extends StatelessWidget {
               5,
               (i) => Icon(
                 i < review.rating
-                    ? Icons.star_rounded
-                    : Icons.star_outline_rounded,
+                    ? AppIcons.starFill
+                    : AppIcons.star,
                 size: 16,
                 color: BBColors.amber,
               ),

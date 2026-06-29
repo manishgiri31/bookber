@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -403,7 +404,7 @@ class _PwFieldState extends State<_PwField> {
         labelText: widget.label,
         suffixIcon: IconButton(
           icon: Icon(
-            _hide ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+            _hide ? AppIcons.visibility : AppIcons.visibilityOff,
           ),
           onPressed: () => setState(() => _hide = !_hide),
         ),
@@ -452,7 +453,7 @@ class AppSettingsScreen extends ConsumerWidget {
             child: Column(
               children: [
                 _ThemeOption(
-                  icon: Icons.brightness_auto_rounded,
+                  icon: AppIcons.brightnessAuto,
                   label: 'System Default',
                   subtitle: 'Matches your device setting',
                   selected: themeMode == ThemeMode.system,
@@ -462,7 +463,7 @@ class AppSettingsScreen extends ConsumerWidget {
                 ),
                 Divider(color: colors.border, height: 1, indent: 52),
                 _ThemeOption(
-                  icon: Icons.light_mode_rounded,
+                  icon: AppIcons.lightMode,
                   label: 'Light',
                   subtitle: 'Always use light theme',
                   selected: themeMode == ThemeMode.light,
@@ -472,7 +473,7 @@ class AppSettingsScreen extends ConsumerWidget {
                 ),
                 Divider(color: colors.border, height: 1, indent: 52),
                 _ThemeOption(
-                  icon: Icons.dark_mode_rounded,
+                  icon: AppIcons.darkMode,
                   label: 'Dark',
                   subtitle: 'Always use dark theme',
                   selected: themeMode == ThemeMode.dark,
@@ -552,7 +553,7 @@ class _ThemeOption extends StatelessWidget {
               ),
             ),
             if (selected)
-              Icon(Icons.check_circle_rounded,
+              Icon(AppIcons.checkCircleFill,
                   size: 20, color: BBColors.amber),
           ],
         ),
@@ -633,8 +634,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                               const EdgeInsets.symmetric(horizontal: 4),
                           child: Icon(
                             i < _overallRating
-                                ? Icons.star_rounded
-                                : Icons.star_outline_rounded,
+                                ? AppIcons.starFill
+                                : AppIcons.star,
                             size: 44,
                             color: BBColors.amber,
                           ),
@@ -700,8 +701,8 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                         horizontal: 2),
                                     child: Icon(
                                       i < (_criteria[key] ?? 0)
-                                          ? Icons.star_rounded
-                                          : Icons.star_outline_rounded,
+                                          ? AppIcons.starFill
+                                          : AppIcons.star,
                                       size: 24,
                                       color: BBColors.amber,
                                     ),
@@ -836,7 +837,7 @@ class PaymentHistoryScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.receipt_long_rounded, size: 64, color: colors.textTertiary),
+            Icon(AppIcons.receiptFill, size: 64, color: colors.textTertiary),
             const SizedBox(height: BBSpacing.base),
             Text(
               'No payments yet',
@@ -883,28 +884,28 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
             title: 'Push Notifications',
             children: [
               _SwitchRow(
-                icon: Icons.calendar_today_rounded,
+                icon: AppIcons.calendar,
                 label: 'Booking Updates',
                 subtitle: 'Confirmations, cancellations, reminders',
                 value: _bookingUpdates,
                 onChanged: (v) => setState(() => _bookingUpdates = v),
               ),
               _SwitchRow(
-                icon: Icons.queue_rounded,
+                icon: AppIcons.queue,
                 label: 'Queue Alerts',
                 subtitle: "You're next, chair ready",
                 value: _queueAlerts,
                 onChanged: (v) => setState(() => _queueAlerts = v),
               ),
               _SwitchRow(
-                icon: Icons.local_offer_outlined,
+                icon: AppIcons.localOffer,
                 label: 'Offers & Promotions',
                 subtitle: 'Coupons, flash deals, seasonal offers',
                 value: _offers,
                 onChanged: (v) => setState(() => _offers = v),
               ),
               _SwitchRow(
-                icon: Icons.military_tech_rounded,
+                icon: AppIcons.loyalty,
                 label: 'Loyalty Updates',
                 subtitle: 'Points earned, tier upgrades',
                 value: _loyaltyUpdates,
@@ -917,7 +918,7 @@ class _NotificationPrefsScreenState extends State<NotificationPrefsScreen> {
             title: 'SMS',
             children: [
               _SwitchRow(
-                icon: Icons.sms_outlined,
+                icon: AppIcons.sms,
                 label: 'SMS Alerts',
                 subtitle: 'Receive SMS for queue and booking updates',
                 value: _smsAlerts,
@@ -1060,7 +1061,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
             title: 'Security',
             children: [
               _SwitchRow(
-                icon: Icons.fingerprint_rounded,
+                icon: AppIcons.fingerprint,
                 label: 'Biometric Login',
                 subtitle: 'Use fingerprint or Face ID to sign in',
                 value: _biometric,
@@ -1073,14 +1074,14 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
             title: 'Privacy',
             children: [
               _SwitchRow(
-                icon: Icons.location_on_outlined,
+                icon: AppIcons.locationOn,
                 label: 'Share Location',
                 subtitle: 'Used for finding nearby shops',
                 value: _shareLocation,
                 onChanged: (v) => setState(() => _shareLocation = v),
               ),
               _SwitchRow(
-                icon: Icons.data_saver_on_rounded,
+                icon: AppIcons.dataUsage,
                 label: 'Data Saver',
                 subtitle: 'Reduce data usage on mobile networks',
                 value: _dataSaver,
@@ -1120,7 +1121,7 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
                     padding: EdgeInsets.zero,
                   ),
                   onPressed: () => _confirmDelete(context),
-                  icon: const Icon(Icons.delete_forever_rounded, size: 18),
+                  icon: const Icon(AppIcons.deleteIcon, size: 18),
                   label: const Text('Delete My Account'),
                 ),
               ],
@@ -1195,7 +1196,7 @@ class HelpCentreScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.support_agent_rounded,
+                const Icon(AppIcons.support,
                     color: BBColors.amber, size: 28),
                 const SizedBox(width: BBSpacing.md),
                 Expanded(
@@ -1218,7 +1219,7 @@ class HelpCentreScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded,
+                const Icon(AppIcons.arrowForwardSmall,
                     size: 14, color: BBColors.amber),
               ],
             ),
@@ -1282,8 +1283,8 @@ class _FaqItemState extends State<_FaqItem> {
                   ),
                   Icon(
                     _expanded
-                        ? Icons.keyboard_arrow_up_rounded
-                        : Icons.keyboard_arrow_down_rounded,
+                        ? AppIcons.arrowUp
+                        : AppIcons.arrowDown,
                     size: 20,
                     color: colors.textTertiary,
                   ),
@@ -1426,7 +1427,7 @@ class AboutScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(BBRadius.xl),
                   ),
                   child: const Center(
-                    child: Icon(Icons.content_cut_rounded,
+                    child: Icon(AppIcons.scissors,
                         size: 40, color: BBColors.amber),
                   ),
                 ),
@@ -1472,12 +1473,12 @@ class AboutScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: BBSpacing.xl),
-          _AboutRow(icon: Icons.email_outlined, label: 'support@bookber.app'),
-          _AboutRow(icon: Icons.language_rounded, label: 'www.bookber.app'),
+          _AboutRow(icon: AppIcons.mail, label: 'support@bookber.app'),
+          _AboutRow(icon: AppIcons.language, label: 'www.bookber.app'),
           _AboutRow(
-              icon: Icons.privacy_tip_outlined, label: 'Privacy Policy'),
+              icon: AppIcons.privacy, label: 'Privacy Policy'),
           _AboutRow(
-              icon: Icons.description_outlined, label: 'Terms of Service'),
+              icon: AppIcons.description, label: 'Terms of Service'),
         ],
       ),
     );

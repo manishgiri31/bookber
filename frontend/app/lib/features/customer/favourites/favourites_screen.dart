@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -134,7 +135,7 @@ class _FavShopCard extends StatelessWidget {
               color: colors.surfaceVariant,
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
-            child: Icon(Icons.store_outlined,
+            child: Icon(AppIcons.store,
                 size: 24, color: colors.textTertiary),
           ),
           const SizedBox(width: BBSpacing.md),
@@ -158,7 +159,7 @@ class _FavShopCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.star_rounded,
+                    const Icon(AppIcons.starFill,
                         size: 12, color: BBColors.amber),
                     const SizedBox(width: 3),
                     Text(
@@ -169,7 +170,7 @@ class _FavShopCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.timer_outlined,
+                    Icon(AppIcons.timer,
                         size: 12, color: colors.textTertiary),
                     const SizedBox(width: 3),
                     Text(
@@ -186,7 +187,7 @@ class _FavShopCard extends StatelessWidget {
           Column(
             children: [
               IconButton(
-                icon: const Icon(Icons.favorite_rounded,
+                icon: const Icon(AppIcons.favoriteFill,
                     color: BBColors.error, size: 20),
                 onPressed: () {},
               ),
@@ -313,7 +314,7 @@ class _FavBarberCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.star_rounded,
+                  const Icon(AppIcons.starFill,
                       size: 14, color: BBColors.amber),
                   const SizedBox(width: 3),
                   Text(
@@ -327,7 +328,7 @@ class _FavBarberCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               IconButton(
-                icon: const Icon(Icons.favorite_rounded,
+                icon: const Icon(AppIcons.favoriteFill,
                     color: BBColors.error, size: 20),
                 onPressed: () {},
               ),
@@ -395,7 +396,7 @@ class _FavServiceCard extends StatelessWidget {
               color: colors.surfaceVariant,
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
-            child: Icon(Icons.content_cut_rounded,
+            child: Icon(AppIcons.scissors,
                 size: 20, color: colors.textTertiary),
           ),
           const SizedBox(width: BBSpacing.md),
@@ -441,7 +442,7 @@ class _FavServiceCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               IconButton(
-                icon: const Icon(Icons.favorite_rounded,
+                icon: const Icon(AppIcons.favoriteFill,
                     color: BBColors.error, size: 18),
                 onPressed: () {},
                 padding: EdgeInsets.zero,
@@ -477,7 +478,7 @@ class _EmptyFavourites extends StatelessWidget {
                 color: colors.surfaceVariant,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.favorite_border_rounded,
+              child: Icon(AppIcons.favorite,
                   size: 36, color: colors.textTertiary),
             ),
             const SizedBox(height: BBSpacing.base),
@@ -498,7 +499,7 @@ class _EmptyFavourites extends StatelessWidget {
             const SizedBox(height: BBSpacing.xl),
             TextButton.icon(
               onPressed: () => context.go('/shops'),
-              icon: const Icon(Icons.explore_outlined),
+              icon: const Icon(AppIcons.explore),
               label: const Text('Explore Shops'),
             ),
           ],

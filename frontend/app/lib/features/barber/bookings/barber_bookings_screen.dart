@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -80,7 +81,7 @@ class _BarberBookingsScreenState extends ConsumerState<BarberBookingsScreen>
         title: const Text('Bookings'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(AppIcons.refresh),
             onPressed: () => ref.invalidate(_barberBookingsProvider),
           ),
         ],
@@ -102,7 +103,7 @@ class _BarberBookingsScreenState extends ConsumerState<BarberBookingsScreen>
         error: (_, _) => BBEmptyState(
           title: 'Couldn\'t load bookings',
           subtitle: 'Pull to retry.',
-          icon: Icons.calendar_today_rounded,
+          icon: AppIcons.calendar,
         ),
         data: (_) => TabBarView(
           controller: _tab,
@@ -150,7 +151,7 @@ class _BookingList extends StatelessWidget {
       return BBEmptyState(
         title: emptyTitle,
         subtitle: emptySubtitle,
-        icon: Icons.calendar_today_rounded,
+        icon: AppIcons.calendar,
       );
     }
     return ListView.separated(
@@ -215,7 +216,7 @@ class _BookingCard extends StatelessWidget {
             const SizedBox(height: BBSpacing.sm),
             Row(
               children: [
-                Icon(Icons.schedule_rounded,
+                Icon(AppIcons.schedule,
                     size: 13, color: colors.textTertiary),
                 const SizedBox(width: 4),
                 Text(
@@ -231,7 +232,7 @@ class _BookingCard extends StatelessWidget {
             const SizedBox(height: BBSpacing.sm),
             Row(
               children: [
-                Icon(Icons.currency_rupee_rounded,
+                Icon(AppIcons.currencyRupee,
                     size: 13, color: colors.textTertiary),
                 Text(
                   booking.totalAmount.toStringAsFixed(0),
@@ -247,7 +248,7 @@ class _BookingCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => _completeBooking(context),
-                icon: const Icon(Icons.check_rounded, size: 16),
+                icon: const Icon(AppIcons.check, size: 16),
                 label: const Text('Mark Complete'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: BBColors.success,

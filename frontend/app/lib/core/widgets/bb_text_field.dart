@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../design/app_icons.dart';
 import '../design/bb_colors.dart';
 import '../design/bb_tokens.dart';
 import '../design/bb_typography.dart';
@@ -172,7 +173,7 @@ class _BBTextFieldState extends State<BBTextField> {
     if (widget.obscureText) {
       return IconButton(
         icon: Icon(
-          _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _obscured ? AppIcons.visibility : AppIcons.visibilityOff,
           size: 20,
           color: colors.textSecondary,
         ),

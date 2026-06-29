@@ -1,7 +1,8 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -50,7 +51,7 @@ class BarberAnalyticsScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh_rounded, color: colors.textSecondary),
+            icon: Icon(AppIcons.refresh, color: colors.textSecondary),
             onPressed: () =>
                 ref.read(barberAnalyticsProvider(shopId).notifier).refresh(),
           ),
@@ -122,7 +123,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
                 label: 'Revenue',
                 value: '₹${insights.revenue.toStringAsFixed(0)}',
                 change: insights.revenueChange,
-                icon: Icons.currency_rupee_rounded,
+                icon: AppIcons.currencyRupee,
                 color: BBColors.success,
               ),
             ),
@@ -132,7 +133,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
                 label: 'Bookings',
                 value: '${insights.totalBookings}',
                 change: insights.bookingsChange,
-                icon: Icons.calendar_today_rounded,
+                icon: AppIcons.calendar,
                 color: BBColors.info,
               ),
             ),
@@ -146,7 +147,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
                 label: 'Avg Wait',
                 value: '${insights.avgWaitMinutes.toStringAsFixed(0)}m',
                 change: -insights.waitChange,
-                icon: Icons.timer_outlined,
+                icon: AppIcons.timer,
                 color: BBColors.amber,
                 invertChange: true,
               ),
@@ -157,7 +158,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
                 label: 'No-show Rate',
                 value: '${(insights.noShowRate * 100).toStringAsFixed(1)}%',
                 change: null,
-                icon: Icons.person_off_outlined,
+                icon: AppIcons.personOff,
                 color: BBColors.warning,
               ),
             ),
@@ -175,7 +176,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.star_rounded, size: 16, color: BBColors.amber),
+                Icon(AppIcons.starFill, size: 16, color: BBColors.amber),
                 const SizedBox(width: BBSpacing.sm),
                 Text(
                   'Busiest day: ${insights.peakDay}',
@@ -203,7 +204,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded,
+                    Icon(AppIcons.warning,
                         size: 16, color: BBColors.warning),
                     const SizedBox(width: BBSpacing.sm),
                     Expanded(
@@ -270,8 +271,8 @@ class _InsightCard extends StatelessWidget {
                   children: [
                     Icon(
                       effectivePositive
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded,
+                          ? AppIcons.arrowUpLarge
+                          : AppIcons.arrowDownLarge,
                       size: 12,
                       color: changeColor,
                     ),

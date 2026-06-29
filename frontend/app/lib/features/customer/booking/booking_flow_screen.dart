@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -44,7 +45,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
       appBar: AppBar(
         title: Text(_stepTitle),
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded),
+          icon: const Icon(AppIcons.close),
           onPressed: () => context.pop(),
         ),
         bottom: PreferredSize(
@@ -116,18 +117,27 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
       return;
     }
     setState(() { _submitting = true; _submitError = null; });
-    final form = ref.read(bookingFormFamily(_formArg));
-    final result = await ref
-        .read(bookingSubmitProvider.notifier)
-        .submit(form.copyWith(joinQueue: widget.joinQueue));
-    if (!mounted) return;
-    setState(() => _submitting = false);
-    if (result != null) {
-      context.go('/queue/${result.id}');
-    } else {
-      final st = ref.read(bookingSubmitProvider);
-      setState(() => _submitError =
-          st is BookingFailed ? st.message : 'Booking failed. Please try again.');
+    try {
+      final form = ref.read(bookingFormFamily(_formArg));
+      final result = await ref
+          .read(bookingSubmitProvider.notifier)
+          .submit(form.copyWith(joinQueue: widget.joinQueue));
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      if (result != null) {
+        ref.read(bookingSubmitProvider.notifier).reset();
+        context.go('/queue/${result.id}');
+      } else {
+        final st = ref.read(bookingSubmitProvider);
+        setState(() => _submitError =
+            st is BookingFailed ? st.message : 'Booking failed. Please try again.');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitError = e.toString().replaceFirst('Exception: ', '');
+      });
     }
   }
 }
@@ -151,7 +161,7 @@ class _ErrorBanner extends StatelessWidget {
       color: colors.surfaceVariant,
       child: Row(
         children: [
-          Icon(Icons.error_outline_rounded,
+          Icon(AppIcons.error,
               color: colors.textSecondary, size: 18),
           const SizedBox(width: BBSpacing.sm),
           Expanded(
@@ -162,7 +172,7 @@ class _ErrorBanner extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.close_rounded,
+            icon: Icon(AppIcons.close,
                 color: colors.textSecondary, size: 18),
             onPressed: onDismiss,
             padding: EdgeInsets.zero,
@@ -311,7 +321,7 @@ class _ServiceRadioRow extends StatelessWidget {
               ),
               child: selected
                   ? Icon(
-                      Icons.check_rounded,
+                      AppIcons.check,
                       size: 14,
                       color: colors.accentForeground,
                     )
@@ -396,7 +406,7 @@ class _BarberList extends StatelessWidget {
               color: colors.surfaceVariant,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.shuffle_rounded,
+            child: Icon(AppIcons.shuffle,
                 size: 18, color: colors.textSecondary),
           ),
           title: 'Any Available',
@@ -503,7 +513,7 @@ class _SelectableTile extends StatelessWidget {
             ),
             if (selected)
               Icon(
-                Icons.check_circle_rounded,
+                AppIcons.checkCircleFill,
                 color: colors.accent,
                 size: 22,
               ),
@@ -712,8 +722,8 @@ class _BottomBar extends StatelessWidget {
                 loading: submitting,
                 disabled: step == 0 && !canProceed,
                 icon: step == 2
-                    ? Icons.check_rounded
-                    : Icons.arrow_forward_rounded,
+                    ? AppIcons.check
+                    : AppIcons.arrowForward,
                 iconAfter: true,
               ),
             ),

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -106,7 +107,7 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.person_add_rounded,
+                const Icon(AppIcons.personAdd,
                     color: BBColors.amber, size: 24),
                 const SizedBox(width: BBSpacing.md),
                 Expanded(
@@ -125,7 +126,7 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
             label: 'Customer Name',
             hint: 'e.g. Rahul Kumar',
             controller: _nameCtrl,
-            prefixIcon: Icons.person_outline_rounded,
+            prefixIcon: AppIcons.personOutline,
           ),
           const SizedBox(height: BBSpacing.md),
           BBTextField(
@@ -133,7 +134,7 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
             hint: '+91 98765 43210',
             controller: _phoneCtrl,
             keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone_outlined,
+            prefixIcon: AppIcons.phone,
           ),
           const SizedBox(height: BBSpacing.md),
           Text(
@@ -227,7 +228,7 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
           const SizedBox(height: BBSpacing.xl),
           BBButton(
             label: 'Add to Queue',
-            icon: Icons.queue_rounded,
+            icon: AppIcons.queue,
             loading: _adding,
             onPressed: _selectedService == null || _nameCtrl.text.isEmpty
                 ? null
@@ -307,7 +308,7 @@ class _SearchCustomerTabState extends State<_SearchCustomerTab> {
             label: 'Search',
             hint: 'Name or phone number',
             controller: _searchCtrl,
-            prefixIcon: Icons.search_rounded,
+            prefixIcon: AppIcons.search,
             onChanged: (_) => setState(() {}),
           ),
         ),

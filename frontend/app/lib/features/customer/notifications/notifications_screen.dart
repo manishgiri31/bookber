@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/design/bb_colors.dart';
@@ -19,12 +20,12 @@ extension _CatExt on _Category {
       };
 
   IconData get icon => switch (this) {
-        _Category.all => Icons.notifications_rounded,
-        _Category.booking => Icons.calendar_today_rounded,
-        _Category.queue => Icons.queue_rounded,
-        _Category.offers => Icons.local_offer_rounded,
-        _Category.loyalty => Icons.military_tech_rounded,
-        _Category.system => Icons.info_outline_rounded,
+        _Category.all => AppIcons.bellFill,
+        _Category.booking => AppIcons.calendar,
+        _Category.queue => AppIcons.queue,
+        _Category.offers => AppIcons.localOfferFill,
+        _Category.loyalty => AppIcons.loyalty,
+        _Category.system => AppIcons.info,
       };
 
   Color get color => switch (this) {
