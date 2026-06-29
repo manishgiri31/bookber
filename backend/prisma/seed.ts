@@ -1198,22 +1198,22 @@ async function main() {
   const walletTxns: WTx[] = [
     // Ravi — topped up ₹1000, paid ₹250 for booking, paid ₹250 for combo
     { walletId: wallets[0].id, amount: 1000, type: "CREDIT", reason: "Wallet top-up" },
-    { walletId: wallets[0].id, amount: 250, type: "DEBIT",  reason: "Payment: Classic Haircut", refId: b_s1_1.id },
-    { walletId: wallets[0].id, amount: 250, type: "DEBIT",  reason: "Payment: Haircut + Beard Combo", refId: b_s1_3.id },
+    { walletId: wallets[0].id, amount: 250, type: "DEBIT", reason: "Payment: Classic Haircut", refId: b_s1_1.id },
+    { walletId: wallets[0].id, amount: 250, type: "DEBIT", reason: "Payment: Haircut + Beard Combo", refId: b_s1_3.id },
     // Arjun — topped up
     { walletId: wallets[2].id, amount: 1200, type: "CREDIT", reason: "Wallet top-up" },
     // Kiran — referral reward
     { walletId: wallets[3].id, amount: 250, type: "CREDIT", reason: "Referral reward — friend joined" },
     // Deepak — top-up then one purchase
     { walletId: wallets[4].id, amount: 1000, type: "CREDIT", reason: "Wallet top-up" },
-    { walletId: wallets[4].id, amount: 250,  type: "DEBIT",  reason: "Payment: Classic Haircut" },
+    { walletId: wallets[4].id, amount: 250, type: "DEBIT", reason: "Payment: Classic Haircut" },
     // Rahul — small top-up
     { walletId: wallets[6].id, amount: 100, type: "CREDIT", reason: "Wallet top-up" },
     // Anita — top-up
     { walletId: wallets[7].id, amount: 900, type: "CREDIT", reason: "Wallet top-up" },
     // Vijay — two top-ups, one spend
     { walletId: wallets[8].id, amount: 500, type: "CREDIT", reason: "Wallet top-up" },
-    { walletId: wallets[8].id, amount: 350, type: "DEBIT",  reason: "Payment: Haircut + Beard Combo", refId: b_s2_2.id },
+    { walletId: wallets[8].id, amount: 350, type: "DEBIT", reason: "Payment: Haircut + Beard Combo", refId: b_s2_2.id },
     { walletId: wallets[8].id, amount: 200, type: "CREDIT", reason: "Wallet top-up" },
     // Neha — top-up
     { walletId: wallets[9].id, amount: 600, type: "CREDIT", reason: "Wallet top-up" },
@@ -1232,15 +1232,15 @@ async function main() {
   console.log("\n🏆  Creating loyalty accounts …");
 
   const loyaltyDefs = [
-    { points: 1250, tier: "SILVER"   }, // Ravi
-    { points: 150,  tier: "BRONZE"   }, // Priya
-    { points: 3200, tier: "GOLD"     }, // Arjun
-    { points: 80,   tier: "BRONZE"   }, // Kiran
-    { points: 720,  tier: "BRONZE"   }, // Deepak
-    { points: 50,   tier: "BRONZE"   }, // Sneha
-    { points: 0,    tier: "BRONZE"   }, // Rahul (cancelled booking)
-    { points: 2100, tier: "SILVER"   }, // Anita
-    { points: 3500, tier: "GOLD"     }, // Vijay
+    { points: 1250, tier: "SILVER" }, // Ravi
+    { points: 150, tier: "BRONZE" }, // Priya
+    { points: 3200, tier: "GOLD" }, // Arjun
+    { points: 80, tier: "BRONZE" }, // Kiran
+    { points: 720, tier: "BRONZE" }, // Deepak
+    { points: 50, tier: "BRONZE" }, // Sneha
+    { points: 0, tier: "BRONZE" }, // Rahul (cancelled booking)
+    { points: 2100, tier: "SILVER" }, // Anita
+    { points: 3500, tier: "GOLD" }, // Vijay
     { points: 4800, tier: "PLATINUM" }, // Neha
   ];
 
@@ -1257,28 +1257,28 @@ async function main() {
   type LTx = { loyaltyAccountId: string; points: number; type: string; reason: string; refId?: string };
   const loyaltyTxns: LTx[] = [
     // Ravi — earned from bookings + legacy migration
-    { loyaltyAccountId: loyaltyAccounts[0].id, points: 25,   type: "EARN",       reason: "Classic Haircut — ₹250 spend",          refId: b_s1_1.id },
-    { loyaltyAccountId: loyaltyAccounts[0].id, points: 35,   type: "EARN",       reason: "Haircut + Beard Combo — ₹350 spend",    refId: b_s1_3.id },
+    { loyaltyAccountId: loyaltyAccounts[0].id, points: 25, type: "EARN", reason: "Classic Haircut — ₹250 spend", refId: b_s1_1.id },
+    { loyaltyAccountId: loyaltyAccounts[0].id, points: 35, type: "EARN", reason: "Haircut + Beard Combo — ₹350 spend", refId: b_s1_3.id },
     { loyaltyAccountId: loyaltyAccounts[0].id, points: 1190, type: "ADJUSTMENT", reason: "Migration from legacy system" },
     // Priya
-    { loyaltyAccountId: loyaltyAccounts[1].id, points: 150,  type: "EARN",       reason: "Beard Trim — ₹150 spend",               refId: b_s1_2.id },
+    { loyaltyAccountId: loyaltyAccounts[1].id, points: 150, type: "EARN", reason: "Beard Trim — ₹150 spend", refId: b_s1_2.id },
     // Arjun — large accumulated balance
     { loyaltyAccountId: loyaltyAccounts[2].id, points: 3200, type: "ADJUSTMENT", reason: "Migration from legacy system" },
     // Kiran — small earn from queued booking
-    { loyaltyAccountId: loyaltyAccounts[3].id, points: 80,   type: "EARN",       reason: "Classic Haircut — queued spend" },
+    { loyaltyAccountId: loyaltyAccounts[3].id, points: 80, type: "EARN", reason: "Classic Haircut — queued spend" },
     // Deepak — earn from queued booking
-    { loyaltyAccountId: loyaltyAccounts[4].id, points: 720,  type: "EARN",       reason: "Loyalty bonus from membership" },
+    { loyaltyAccountId: loyaltyAccounts[4].id, points: 720, type: "EARN", reason: "Loyalty bonus from membership" },
     // Sneha
-    { loyaltyAccountId: loyaltyAccounts[5].id, points: 50,   type: "EARN",       reason: "Beard Trim — ₹150 spend" },
+    { loyaltyAccountId: loyaltyAccounts[5].id, points: 50, type: "EARN", reason: "Beard Trim — ₹150 spend" },
     // Anita — earned + legacy
-    { loyaltyAccountId: loyaltyAccounts[7].id, points: 25,   type: "EARN",       reason: "Classic Haircut — ₹250 spend",          refId: b_s2_1.id },
+    { loyaltyAccountId: loyaltyAccounts[7].id, points: 25, type: "EARN", reason: "Classic Haircut — ₹250 spend", refId: b_s2_1.id },
     { loyaltyAccountId: loyaltyAccounts[7].id, points: 2075, type: "ADJUSTMENT", reason: "Migration from legacy system" },
     // Vijay — earned + legacy
-    { loyaltyAccountId: loyaltyAccounts[8].id, points: 35,   type: "EARN",       reason: "Haircut + Beard Combo — ₹350 spend",    refId: b_s2_2.id },
+    { loyaltyAccountId: loyaltyAccounts[8].id, points: 35, type: "EARN", reason: "Haircut + Beard Combo — ₹350 spend", refId: b_s2_2.id },
     { loyaltyAccountId: loyaltyAccounts[8].id, points: 3465, type: "ADJUSTMENT", reason: "Migration from legacy system" },
     // Neha — big earn, then a redemption
-    { loyaltyAccountId: loyaltyAccounts[9].id, points: 5000, type: "EARN",       reason: "Lifetime bookings accumulation" },
-    { loyaltyAccountId: loyaltyAccounts[9].id, points: -200, type: "REDEEM",     reason: "Redeemed 200 pts → ₹20 wallet credit" },
+    { loyaltyAccountId: loyaltyAccounts[9].id, points: 5000, type: "EARN", reason: "Lifetime bookings accumulation" },
+    { loyaltyAccountId: loyaltyAccounts[9].id, points: -200, type: "REDEEM", reason: "Redeemed 200 pts → ₹20 wallet credit" },
   ];
 
   for (const tx of loyaltyTxns) {
@@ -1377,7 +1377,7 @@ async function main() {
     const existing = await prisma.coupon.findUnique({ where: { code: def.code } });
     coupons.push(
       existing ??
-        (await prisma.coupon.create({ data: def }))
+      (await prisma.coupon.create({ data: def }))
     );
   }
 
@@ -1449,17 +1449,17 @@ async function main() {
 
   const eventLogEntries = [
     // Bookings created
-    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_1.id, userId: customers[0].id, payload: { service: "Classic Haircut",        walkIn: false } },
-    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_2.id, userId: customers[1].id, payload: { service: "Beard Trim",             walkIn: true  } },
-    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_3.id, userId: customers[2].id, payload: { service: "Haircut + Beard Combo",  walkIn: false } },
-    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_4.id, userId: customers[3].id, payload: { service: "Classic Haircut",        walkIn: false } },
-    { type: "BOOKING_CREATED",   shopId: shop1.id, bookingId: b_s1_5.id, userId: customers[4].id, payload: { service: "Classic Haircut",        walkIn: false } },
-    { type: "BOOKING_CREATED",   shopId: shop2.id, bookingId: b_s2_1.id, userId: customers[7].id, payload: { service: "Classic Haircut",        walkIn: false } },
-    { type: "BOOKING_CREATED",   shopId: shop2.id, bookingId: b_s2_2.id, userId: customers[8].id, payload: { service: "Haircut + Beard Combo",  walkIn: true  } },
+    { type: "BOOKING_CREATED", shopId: shop1.id, bookingId: b_s1_1.id, userId: customers[0].id, payload: { service: "Classic Haircut", walkIn: false } },
+    { type: "BOOKING_CREATED", shopId: shop1.id, bookingId: b_s1_2.id, userId: customers[1].id, payload: { service: "Beard Trim", walkIn: true } },
+    { type: "BOOKING_CREATED", shopId: shop1.id, bookingId: b_s1_3.id, userId: customers[2].id, payload: { service: "Haircut + Beard Combo", walkIn: false } },
+    { type: "BOOKING_CREATED", shopId: shop1.id, bookingId: b_s1_4.id, userId: customers[3].id, payload: { service: "Classic Haircut", walkIn: false } },
+    { type: "BOOKING_CREATED", shopId: shop1.id, bookingId: b_s1_5.id, userId: customers[4].id, payload: { service: "Classic Haircut", walkIn: false } },
+    { type: "BOOKING_CREATED", shopId: shop2.id, bookingId: b_s2_1.id, userId: customers[7].id, payload: { service: "Classic Haircut", walkIn: false } },
+    { type: "BOOKING_CREATED", shopId: shop2.id, bookingId: b_s2_2.id, userId: customers[8].id, payload: { service: "Haircut + Beard Combo", walkIn: true } },
     // Queue joins
     { type: "QUEUE_JOINED", shopId: shop1.id, bookingId: b_s1_5.id, userId: customers[4].id, payload: { lane: "BOOKBER", position: 10 } },
-    { type: "QUEUE_JOINED", shopId: shop1.id, bookingId: b_s1_6.id, userId: customers[5].id, payload: { lane: "WALKIN",  position: 10 } },
-    { type: "QUEUE_JOINED", shopId: shop2.id, userId: customers[9].id,  payload: { lane: "BOOKBER", position: 10 } },
+    { type: "QUEUE_JOINED", shopId: shop1.id, bookingId: b_s1_6.id, userId: customers[5].id, payload: { lane: "WALKIN", position: 10 } },
+    { type: "QUEUE_JOINED", shopId: shop2.id, userId: customers[9].id, payload: { lane: "BOOKBER", position: 10 } },
     // Chair assignments
     { type: "CHAIR_ASSIGNED", shopId: shop1.id, bookingId: b_s1_1.id, chairId: chairs1[0].id, userId: customers[0].id, payload: { chairNumber: 1 } },
     { type: "CHAIR_ASSIGNED", shopId: shop1.id, bookingId: b_s1_3.id, chairId: chairs1[1].id, userId: customers[2].id, payload: { chairNumber: 2 } },
@@ -1472,14 +1472,14 @@ async function main() {
     { type: "CHAIR_RELEASED", shopId: shop2.id, chairId: chairs2[0].id, payload: { chairNumber: 1, durationMinutes: 33 } },
     { type: "CHAIR_RELEASED", shopId: shop2.id, chairId: chairs2[1].id, payload: { chairNumber: 2, durationMinutes: 46 } },
     // Payments
-    { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_1.id, userId: customers[0].id, payload: { amount: 250, method: "UPI"  } },
+    { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_1.id, userId: customers[0].id, payload: { amount: 250, method: "UPI" } },
     { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_2.id, userId: customers[1].id, payload: { amount: 150, method: "CASH" } },
     { type: "PAYMENT_COMPLETED", shopId: shop1.id, bookingId: b_s1_3.id, userId: customers[2].id, payload: { amount: 350, method: "CARD" } },
-    { type: "PAYMENT_COMPLETED", shopId: shop2.id, bookingId: b_s2_1.id, userId: customers[7].id, payload: { amount: 250, method: "UPI"  } },
+    { type: "PAYMENT_COMPLETED", shopId: shop2.id, bookingId: b_s2_1.id, userId: customers[7].id, payload: { amount: 250, method: "UPI" } },
     { type: "PAYMENT_COMPLETED", shopId: shop2.id, bookingId: b_s2_2.id, userId: customers[8].id, payload: { amount: 350, method: "CARD" } },
     // Cancellation & no-show
     { type: "BOOKING_CANCELLED", shopId: shop1.id, userId: customers[6].id, payload: { reason: "Customer no longer available" } },
-    { type: "BOOKING_NO_SHOW",   shopId: shop2.id, userId: customers[0].id, payload: { service: "Classic Haircut" } },
+    { type: "BOOKING_NO_SHOW", shopId: shop2.id, userId: customers[0].id, payload: { service: "Classic Haircut" } },
     // Reviews
     { type: "REVIEW_CREATED", shopId: shop1.id, userId: customers[0].id, payload: { rating: 5 } },
     { type: "REVIEW_CREATED", shopId: shop1.id, userId: customers[1].id, payload: { rating: 4 } },

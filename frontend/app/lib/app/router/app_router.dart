@@ -55,7 +55,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       final path = state.uri.path;
 
       if (auth is AuthInitial || auth is AuthLoading) {
-        return path == '/' ? null : '/';
+        if (path == '/' || path == '/login' || path == '/register') return null;
+        return '/';
       }
       if (auth is AuthUnauthenticated || auth is AuthError) {
         if (path == '/login' || path == '/register') return null;
