@@ -2,6 +2,7 @@
 import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
@@ -9,6 +10,7 @@ import '../../../core/providers/providers.dart';
 import '../../../core/widgets/bb_button.dart';
 import '../../../core/widgets/bb_snackbar.dart';
 import '../../../core/widgets/bb_text_field.dart';
+import '../../shared/domain/shop_models.dart';
 import '../dashboard/barber_provider.dart';
 
 class ReceptionScreen extends ConsumerStatefulWidget {
@@ -75,12 +77,36 @@ class _WalkInTab extends ConsumerStatefulWidget {
 class _WalkInTabState extends ConsumerState<_WalkInTab> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  String? _selectedService;
+  ServiceItem? _selectedService;
   String? _selectedChair;
   bool _adding = false;
+  List<ServiceItem> _services = [];
 
-  static const _services = ['Haircut', 'Fade', 'Beard Trim', 'Hair + Beard', 'Kids Haircut', 'Classic Shave'];
   static const _chairs = ['Chair 1', 'Chair 2', 'Chair 3'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    try {
+      final dash = ref.read(barberDashProvider);
+      if (dash.profile == null) return;
+      final api = ref.read(apiClientProvider);
+      final data = await api.get<Map<String, dynamic>>(
+        ApiEndpoints.shopServices(dash.profile!.shopId),
+      );
+      final list = (data['services'] as List? ?? [])
+          .whereType<Map<String, dynamic>>()
+          .map(ServiceItem.fromJson)
+          .toList();
+      if (mounted) setState(() => _services = list);
+    } catch (_) {
+      // leave empty; user will see no chips
+    }
+  }
 
   @override
   void dispose() {
@@ -167,7 +193,7 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
                           ),
                         ),
                         child: Text(
-                          s,
+                          s.name,
                           style: BBTypography.textTheme.labelMedium?.copyWith(
                             color: _selectedService == s
                                 ? colors.background
@@ -247,12 +273,11 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
       if (dash.profile == null) throw Exception('Profile not loaded');
       final api = ref.read(apiClientProvider);
       await api.post<void>(
-        '/shops/${dash.profile!.shopId}/queue/walk-in',
+        ApiEndpoints.walkIn,
         body: {
+          'shopId': dash.profile!.shopId,
+          'serviceIds': [_selectedService!.id],
           'customerName': _nameCtrl.text.trim(),
-          'phone': _phoneCtrl.text.trim(),
-          'serviceNames': [_selectedService!],
-          if (_selectedChair != null) 'chairLabel': _selectedChair,
         },
       );
       if (mounted) {
