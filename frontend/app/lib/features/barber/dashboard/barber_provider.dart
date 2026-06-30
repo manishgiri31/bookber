@@ -117,7 +117,7 @@ class BarberDashState {
       );
 }
 
-class BarberDashNotifier extends AutoDisposeNotifier<BarberDashState> {
+class BarberDashNotifier extends Notifier<BarberDashState> {
   @override
   BarberDashState build() {
     load();
@@ -249,6 +249,6 @@ class BarberDashNotifier extends AutoDisposeNotifier<BarberDashState> {
 }
 
 final barberDashProvider =
-    AutoDisposeNotifierProvider<BarberDashNotifier, BarberDashState>(
+    NotifierProvider<BarberDashNotifier, BarberDashState>(
   BarberDashNotifier.new,
 );
