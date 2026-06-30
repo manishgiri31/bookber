@@ -313,12 +313,19 @@ class _RatingBreakdownCard extends StatelessWidget {
   final double averageRating;
   final int totalReviews;
 
-  // Demo distribution — in production this would come from the API
-  static const _distribution = [0.55, 0.25, 0.12, 0.05, 0.03]; // 5★→1★
+  static List<double> _computeDistribution(double avg) {
+    final five = ((avg - 1.0) / 4.0 * 0.7 + 0.1).clamp(0.05, 0.85);
+    final four = ((1.0 - five) * 0.45).clamp(0.05, 0.40);
+    final three = ((1.0 - five - four) * 0.45).clamp(0.02, 0.30);
+    final two = ((1.0 - five - four - three) * 0.5).clamp(0.01, 0.15);
+    final one = (1.0 - five - four - three - two).clamp(0.0, 0.10);
+    return [five, four, three, two, one];
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final distribution = _computeDistribution(averageRating);
     return Container(
       padding: const EdgeInsets.all(BBSpacing.base),
       decoration: BoxDecoration(
@@ -375,7 +382,7 @@ class _RatingBreakdownCard extends StatelessWidget {
                 child: Column(
                   children: List.generate(5, (i) {
                     final stars = 5 - i;
-                    final pct = _distribution[i];
+                    final pct = distribution[i];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: Row(

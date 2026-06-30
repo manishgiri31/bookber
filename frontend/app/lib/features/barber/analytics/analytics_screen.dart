@@ -91,9 +91,12 @@ class BarberAnalyticsScreen extends ConsumerWidget {
                         _UtilizationSection(report: state.utilization!),
                       ],
                       const SizedBox(height: BBSpacing.xl),
-                      const _RevenueChartSection(),
+                      _RevenueChartSection(
+                          weeklyRevenue: state.weeklyRevenue),
                       const SizedBox(height: BBSpacing.xl),
-                      const _PopularServicesSection(),
+                      if (state.insights != null)
+                        _WeeklyHighlightsSection(
+                            insights: state.insights!),
                       const SizedBox(height: BBSpacing.xxl),
                     ],
                   ),
@@ -689,16 +692,41 @@ class _UtilizationSection extends StatelessWidget {
 // ─── Revenue Line Chart ───────────────────────────────────────────────────────
 
 class _RevenueChartSection extends StatelessWidget {
-  const _RevenueChartSection();
+  const _RevenueChartSection({required this.weeklyRevenue});
 
-  static const _days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  static const _values = [1200.0, 1850.0, 1400.0, 2200.0, 1900.0, 3100.0, 2700.0];
+  final List<({String label, double revenue})> weeklyRevenue;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
-    final maxY = _values.reduce(math.max) * 1.2;
-    final spots = _values.asMap().entries
+
+    if (weeklyRevenue.isEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle('7-Day Revenue'),
+          const SizedBox(height: BBSpacing.md),
+          Container(
+            height: 180,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(BBRadius.lg),
+              border: Border.all(color: colors.border),
+            ),
+            child: Center(
+              child: Text('No revenue data yet',
+                  style: BBTypography.textTheme.bodySmall
+                      ?.copyWith(color: colors.textTertiary)),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final values = weeklyRevenue.map((e) => e.revenue).toList();
+    final maxY = values.reduce(math.max) * 1.2;
+    final effectiveMaxY = maxY < 100 ? 100.0 : maxY;
+    final spots = values.asMap().entries
         .map((e) => FlSpot(e.key.toDouble(), e.value))
         .toList();
 
@@ -718,7 +746,7 @@ class _RevenueChartSection extends StatelessWidget {
           ),
           child: LineChart(
             LineChartData(
-              maxY: maxY,
+              maxY: effectiveMaxY,
               minY: 0,
               gridData: FlGridData(
                 show: true,
@@ -743,11 +771,11 @@ class _RevenueChartSection extends StatelessWidget {
                     reservedSize: 22,
                     getTitlesWidget: (v, _) {
                       final i = v.toInt();
-                      if (i < 0 || i >= _days.length) {
+                      if (i < 0 || i >= weeklyRevenue.length) {
                         return const SizedBox.shrink();
                       }
                       return Text(
-                        _days[i],
+                        weeklyRevenue[i].label,
                         style: BBTypography.textTheme.labelSmall?.copyWith(
                           color: colors.textTertiary,
                           fontSize: 9,
@@ -807,28 +835,48 @@ class _RevenueChartSection extends StatelessWidget {
   }
 }
 
-// ─── Popular Services ─────────────────────────────────────────────────────────
+// ─── Weekly Highlights ────────────────────────────────────────────────────────
 
-class _PopularServicesSection extends StatelessWidget {
-  const _PopularServicesSection();
-
-  static const _services = [
-    ('Classic Haircut', 48, 9600.0),
-    ('Skin Fade', 35, 12250.0),
-    ('Beard Trim', 29, 4350.0),
-    ('Hair Wash', 22, 2640.0),
-    ('Head Massage', 15, 3000.0),
-  ];
+class _WeeklyHighlightsSection extends StatelessWidget {
+  const _WeeklyHighlightsSection({required this.insights});
+  final WeeklyInsights insights;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
-    final maxCount = _services.map((s) => s.$2).reduce(math.max);
+
+    final items = [
+      (
+        label: 'Walk-ins',
+        value: '${insights.walkIns}',
+        icon: AppIcons.walk,
+        color: BBColors.info,
+      ),
+      (
+        label: 'Avg Wait',
+        value: '${insights.avgWaitMinutes.toStringAsFixed(0)}m',
+        icon: AppIcons.timer,
+        color: BBColors.amber,
+      ),
+      (
+        label: 'No-shows',
+        value: '${(insights.noShowRate * insights.totalBookings).round()}',
+        icon: AppIcons.personOff,
+        color: BBColors.warning,
+      ),
+      (
+        label: 'Abandoned',
+        value:
+            '${(insights.queueAbandonmentRate * 100).toStringAsFixed(0)}%',
+        icon: AppIcons.removeCircle,
+        color: BBColors.error,
+      ),
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle('Popular Services'),
+        _SectionTitle('Weekly Highlights'),
         const SizedBox(height: BBSpacing.md),
         Container(
           padding: const EdgeInsets.all(BBSpacing.base),
@@ -838,42 +886,37 @@ class _PopularServicesSection extends StatelessWidget {
             border: Border.all(color: colors.border),
           ),
           child: Column(
-            children: _services.asMap().entries.map((e) {
-              final s = e.value;
-              final pct = s.$2 / maxCount;
+            children: items.asMap().entries.map((e) {
+              final item = e.value;
               return Padding(
                 padding: EdgeInsets.only(
-                    bottom: e.key < _services.length - 1 ? BBSpacing.md : 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                    bottom: e.key < items.length - 1 ? BBSpacing.md : 0),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            s.$1,
-                            style: BBTypography.textTheme.labelMedium?.copyWith(
-                              color: colors.text,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${s.$2} ·  ₹${s.$3.toStringAsFixed(0)}',
-                          style: BBTypography.textTheme.labelSmall?.copyWith(
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: item.color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(BBRadius.md),
+                      ),
+                      child: Icon(item.icon, size: 16, color: item.color),
                     ),
-                    const SizedBox(height: 6),
-                    LinearProgressIndicator(
-                      value: pct,
-                      backgroundColor: colors.border,
-                      valueColor:
-                          const AlwaysStoppedAnimation(BBColors.amber),
-                      borderRadius: BorderRadius.circular(BBRadius.full),
-                      minHeight: 5,
+                    const SizedBox(width: BBSpacing.md),
+                    Expanded(
+                      child: Text(
+                        item.label,
+                        style: BBTypography.textTheme.labelMedium?.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      item.value,
+                      style: BBTypography.textTheme.titleMedium?.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),

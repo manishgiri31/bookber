@@ -34,24 +34,28 @@ export const shopRoutes: FastifyPluginAsync = async (app) => {
     return { staff };
   });
 
-  // POST /shops/:shopId/staff — add a user as RECEPTION staff
+  // POST /shops/:shopId/staff — add a user as RECEPTION staff (accepts email or userId)
   app.post("/:shopId/staff", { preHandler: app.authorizeRoles(["OWNER", "ADMIN"]) }, async (request, reply) => {
     const { shopId } = request.params as { shopId: string };
     if (request.user.role === "OWNER") {
       const shop = await app.prisma.shop.findUnique({ where: { id: shopId }, select: { ownerId: true } });
       if (!shop || shop.ownerId !== request.user.sub) throw app.httpErrors.forbidden("Not the shop owner");
     }
-    const { userId } = z.object({ userId: z.string().cuid() }).parse(request.body);
+    const body = z.union([
+      z.object({ email: z.string().email() }),
+      z.object({ userId: z.string().cuid() }),
+    ]).parse(request.body);
 
-    const targetUser = await app.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-    if (!targetUser) throw app.httpErrors.notFound("User not found");
+    const where = "email" in body ? { email: body.email } : { id: body.userId };
+    const targetUser = await app.prisma.user.findUnique({ where, select: { id: true } });
+    if (!targetUser) throw app.httpErrors.notFound("No BookBer user found with that email");
 
     const staffRecord = await app.prisma.shopStaff.create({
-      data: { shopId, userId },
+      data: { shopId, userId: targetUser.id },
       include: { user: { select: { id: true, fullName: true, email: true } } }
     });
 
-    await app.prisma.user.update({ where: { id: userId }, data: { role: "RECEPTION" } });
+    await app.prisma.user.update({ where: { id: targetUser.id }, data: { role: "RECEPTION" } });
 
     return reply.status(201).send({ staff: staffRecord });
   });

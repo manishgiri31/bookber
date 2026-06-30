@@ -189,6 +189,7 @@ class AnalyticsState {
     this.peakHours,
     this.utilization,
     this.insights,
+    this.weeklyRevenue = const [],
     this.isLoading = false,
     this.error,
   });
@@ -197,6 +198,7 @@ class AnalyticsState {
   final PeakHourReport? peakHours;
   final UtilizationReport? utilization;
   final WeeklyInsights? insights;
+  final List<({String label, double revenue})> weeklyRevenue;
   final bool isLoading;
   final String? error;
 
@@ -205,6 +207,7 @@ class AnalyticsState {
     PeakHourReport? peakHours,
     UtilizationReport? utilization,
     WeeklyInsights? insights,
+    List<({String label, double revenue})>? weeklyRevenue,
     bool? isLoading,
     String? error,
   }) =>
@@ -213,6 +216,7 @@ class AnalyticsState {
         peakHours: peakHours ?? this.peakHours,
         utilization: utilization ?? this.utilization,
         insights: insights ?? this.insights,
+        weeklyRevenue: weeklyRevenue ?? this.weeklyRevenue,
         isLoading: isLoading ?? this.isLoading,
         error: error,
       );
@@ -237,7 +241,17 @@ class BarberAnalyticsNotifier
       final rangeQ =
           '?from=${weekAgo.toIso8601String()}&to=${now.toIso8601String()}';
 
-      final results = await Future.wait([
+      // Fetch main analytics + 7 individual daily records in parallel
+      const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final dailyDateFutures = List.generate(7, (i) {
+        final date = now.subtract(Duration(days: 6 - i));
+        final iso = Uri.encodeComponent(date.toIso8601String());
+        return api.get<Map<String, dynamic>>(
+          '${ApiEndpoints.shopAnalytics(shopId, 'daily')}?date=$iso',
+        );
+      });
+
+      final allResults = await Future.wait([
         api.get<Map<String, dynamic>>(
             ApiEndpoints.shopAnalytics(shopId, 'daily')),
         api.get<Map<String, dynamic>>(
@@ -246,13 +260,23 @@ class BarberAnalyticsNotifier
             '${ApiEndpoints.shopAnalytics(shopId, 'utilization')}$rangeQ'),
         api.get<Map<String, dynamic>>(
             ApiEndpoints.shopAnalytics(shopId, 'insights')),
+        ...dailyDateFutures,
       ]);
 
+      final weeklyRevenue = List.generate(7, (i) {
+        final date = now.subtract(Duration(days: 6 - i));
+        final label = dayLabels[date.weekday - 1];
+        final rev =
+            (allResults[4 + i]['totalRevenue'] as num?)?.toDouble() ?? 0.0;
+        return (label: label, revenue: rev);
+      });
+
       state = AnalyticsState(
-        daily: DailyAnalytics.fromJson(results[0]),
-        peakHours: PeakHourReport.fromJson(results[1]),
-        utilization: UtilizationReport.fromJson(results[2]),
-        insights: WeeklyInsights.fromJson(results[3]),
+        daily: DailyAnalytics.fromJson(allResults[0]),
+        peakHours: PeakHourReport.fromJson(allResults[1]),
+        utilization: UtilizationReport.fromJson(allResults[2]),
+        insights: WeeklyInsights.fromJson(allResults[3]),
+        weeklyRevenue: weeklyRevenue,
         isLoading: false,
       );
     } catch (e) {

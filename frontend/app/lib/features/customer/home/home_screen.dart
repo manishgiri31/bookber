@@ -1096,104 +1096,131 @@ class _QuickRebookCard extends ConsumerWidget {
   }
 }
 
-// ─── Trending Barbers ─────────────────────────────────────────────────────────
+// ─── Trending Shops (formerly hardcoded Trending Barbers) ─────────────────────
 
-class _TrendingBarbersSection extends StatelessWidget {
+class _TrendingBarbersSection extends ConsumerWidget {
   const _TrendingBarbersSection();
 
-  static const _barbers = [
-    ('Alex Silva', 'The Fade King', 4.9, 312),
-    ('Sam Khan', 'Beard Specialist', 4.8, 289),
-    ('Mike Patel', 'Classic Cuts', 4.7, 201),
-    ('Raj Verma', 'Creative Styles', 4.9, 178),
-    ('Arjun D.', 'Kids Expert', 4.6, 134),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.bbColors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.md),
-          child: _SectionHeader(
-            title: 'Trending Barbers',
-            onSeeAll: () => context.go('/shops'),
+    final topRated = ref.watch(topRatedShopsProvider);
+
+    return topRated.when(
+      loading: () => SizedBox(
+        height: 140,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(
+              horizontal: BBSpacing.pageHorizontal),
+          scrollDirection: Axis.horizontal,
+          itemCount: 5,
+          separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
+          itemBuilder: (_, _) => Container(
+            width: 90,
+            height: 120,
+            decoration: BoxDecoration(
+              color: colors.surfaceVariant,
+              borderRadius: BorderRadius.circular(BBRadius.xl),
+            ),
           ),
         ),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: BBSpacing.pageHorizontal),
-            scrollDirection: Axis.horizontal,
-            itemCount: _barbers.length,
-            separatorBuilder: (_, _) => const SizedBox(width: BBSpacing.md),
-            itemBuilder: (ctx, i) {
-              final b = _barbers[i];
-              return GestureDetector(
-                onTap: () => ctx.go('/shops'),
-                child: Container(
-                  width: 90,
-                  padding: const EdgeInsets.all(BBSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: colors.surface,
-                    borderRadius: BorderRadius.circular(BBRadius.xl),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: BBColors.amber.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            b.$1[0],
-                            style: BBTypography.textTheme.titleLarge?.copyWith(
-                              color: BBColors.amber,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (shops) {
+        if (shops.isEmpty) return const SizedBox.shrink();
+        final topFive = shops.take(5).toList();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(BBSpacing.pageHorizontal, 0,
+                  BBSpacing.pageHorizontal, BBSpacing.md),
+              child: _SectionHeader(
+                title: 'Top Rated',
+                onSeeAll: () => context.go('/shops'),
+              ),
+            ),
+            SizedBox(
+              height: 120,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.pageHorizontal),
+                scrollDirection: Axis.horizontal,
+                itemCount: topFive.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(width: BBSpacing.md),
+                itemBuilder: (ctx, i) {
+                  final shop = topFive[i];
+                  return GestureDetector(
+                    onTap: () => ctx.go('/shops'),
+                    child: Container(
+                      width: 90,
+                      padding: const EdgeInsets.all(BBSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(BBRadius.xl),
+                        border: Border.all(color: colors.border),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        b.$1.split(' ').first,
-                        style: BBTypography.textTheme.labelMedium?.copyWith(
-                          color: colors.text,
-                          fontWeight: FontWeight.w700,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Row(
+                      child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(AppIcons.starFill, size: 10, color: BBColors.amber),
-                          const SizedBox(width: 2),
-                          Text(
-                            b.$3.toString(),
-                            style: BBTypography.textTheme.labelSmall?.copyWith(
-                              color: colors.textSecondary,
-                              fontSize: 10,
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: BBColors.amber.withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
                             ),
+                            child: Center(
+                              child: Text(
+                                shop.name.isNotEmpty
+                                    ? shop.name[0].toUpperCase()
+                                    : '?',
+                                style:
+                                    BBTypography.textTheme.titleLarge?.copyWith(
+                                  color: BBColors.amber,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            shop.name.split(' ').first,
+                            style:
+                                BBTypography.textTheme.labelMedium?.copyWith(
+                              color: colors.text,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(AppIcons.starFill,
+                                  size: 10, color: BBColors.amber),
+                              const SizedBox(width: 2),
+                              Text(
+                                shop.rating.toStringAsFixed(1),
+                                style:
+                                    BBTypography.textTheme.labelSmall?.copyWith(
+                                  color: colors.textSecondary,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: BBSpacing.xl),
-      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: BBSpacing.xl),
+          ],
+        );
+      },
     );
   }
 }
