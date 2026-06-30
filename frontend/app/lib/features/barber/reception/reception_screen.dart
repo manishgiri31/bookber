@@ -576,7 +576,7 @@ class _ScheduledBookingCard extends StatelessWidget {
                 Text(
                   [
                     serviceName,
-                    if (barberName != null) barberName,
+                    ?barberName,
                   ].join(' · '),
                   style: BBTypography.textTheme.bodySmall
                       ?.copyWith(color: colors.textSecondary),

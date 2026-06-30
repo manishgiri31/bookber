@@ -608,7 +608,7 @@ class _ScheduleStepState extends ConsumerState<_ScheduleStep> {
               firstDate: now,
               lastDate: now.add(const Duration(days: 30)),
             );
-            if (picked == null || !mounted) return;
+            if (picked == null || !context.mounted) return;
             final time = await showTimePicker(
               context: context,
               initialTime: const TimeOfDay(hour: 10, minute: 0),
@@ -721,7 +721,6 @@ class _ModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.bbColors;
     return Row(
       children: [
         Expanded(

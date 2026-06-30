@@ -86,25 +86,37 @@ async function main() {
 
   const owner1 = await prisma.user.upsert({
     where: { email: "owner.marcus@bookber.dev" },
-    update: { role: UserRole.BARBER },
+    update: { role: UserRole.OWNER },
     create: {
       fullName: "Marcus Thompson",
       email: "owner.marcus@bookber.dev",
       password: hash,
-      role: UserRole.BARBER,
+      role: UserRole.OWNER,
       phoneNumber: "+919000000002",
     },
   });
 
   const owner2 = await prisma.user.upsert({
     where: { email: "owner.james@bookber.dev" },
-    update: { role: UserRole.BARBER },
+    update: { role: UserRole.OWNER },
     create: {
       fullName: "James Rivera",
       email: "owner.james@bookber.dev",
       password: hash,
-      role: UserRole.BARBER,
+      role: UserRole.OWNER,
       phoneNumber: "+919000000003",
+    },
+  });
+
+  const receptionUser1 = await prisma.user.upsert({
+    where: { email: "reception.sara@bookber.dev" },
+    update: { role: UserRole.RECEPTION },
+    create: {
+      fullName: "Sara Menon",
+      email: "reception.sara@bookber.dev",
+      password: hash,
+      role: UserRole.RECEPTION,
+      phoneNumber: "+919000000007",
     },
   });
 
@@ -168,7 +180,7 @@ async function main() {
   );
 
   console.log(
-    `   ✓  1 admin · 2 owners · 3 barbers · ${customers.length} customers  (total ${1 + 2 + 3 + customers.length})`
+    `   ✓  1 admin · 2 owners · 1 reception · 3 barbers · ${customers.length} customers  (total ${1 + 2 + 1 + 3 + customers.length})`
   );
 
   // ─────────────────────────────────────────────────────────
@@ -467,6 +479,31 @@ async function main() {
   console.log(
     `   ✓  Alex (shop1) · Sam (shop1) · Mike (shop2)`
   );
+
+  // ─────────────────────────────────────────────────────────
+  // 7b. SHOP STAFF (owner + reception linkage)
+  // ─────────────────────────────────────────────────────────
+
+  console.log("\n👥  Linking shop staff …");
+
+  await prisma.shopStaff.upsert({
+    where: { shopId_userId: { shopId: shop1.id, userId: owner1.id } },
+    update: {},
+    create: { shopId: shop1.id, userId: owner1.id },
+  });
+  await prisma.shopStaff.upsert({
+    where: { shopId_userId: { shopId: shop2.id, userId: owner2.id } },
+    update: {},
+    create: { shopId: shop2.id, userId: owner2.id },
+  });
+  // Reception staff assigned to shop1
+  await prisma.shopStaff.upsert({
+    where: { shopId_userId: { shopId: shop1.id, userId: receptionUser1.id } },
+    update: {},
+    create: { shopId: shop1.id, userId: receptionUser1.id },
+  });
+
+  console.log("   ✓  Marcus → shop1 · James → shop2 · Sara (reception) → shop1");
 
   // ─────────────────────────────────────────────────────────
   // 8. BARBER ↔ SERVICE LINKS
@@ -1003,8 +1040,28 @@ async function main() {
     },
   });
 
+  // [12] SCHEDULED — tomorrow morning — Deepak — Premium Grooming — shop1, Barber1
+  const scheduledTime = new Date();
+  scheduledTime.setDate(scheduledTime.getDate() + 1);
+  scheduledTime.setHours(10, 30, 0, 0);
+  const b_s1_scheduled = await prisma.booking.create({
+    data: {
+      userId: customers[4].id, // Deepak
+      shopId: shop1.id,
+      barberId: barber1.id,
+      serviceId: services1[3].id, // Premium Grooming Package
+      status: BookingStatus.SCHEDULED,
+      walkIn: false,
+      scheduledStart: scheduledTime,
+      notes: "Please use the lavender conditioning treatment",
+      arrivalWindowStart: scheduledTime,
+      arrivalWindowEnd: addMinutes(scheduledTime, 30),
+    },
+  });
+
   console.log("   ✓  7 bookings (shop1): 3 completed · 1 in-service · 2 queued · 1 cancelled");
   console.log("   ✓  4 bookings (shop2): 2 completed · 1 queued · 1 no-show");
+  console.log("   ✓  1 SCHEDULED booking (shop1, tomorrow 10:30)");
 
   // ─────────────────────────────────────────────────────────
   // 11. QUEUE EVENTS
@@ -1020,7 +1077,7 @@ async function main() {
   };
 
   const queueEvents: QueueEventSeed[] = [
-    // ENQUEUED for every booking
+    // ENQUEUED for every booking (SCHEDULED bookings use PROMOTED when they become QUEUED)
     { shopId: shop1.id, bookingId: b_s1_1.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 100 } },
     { shopId: shop1.id, bookingId: b_s1_2.id, type: QueueEventType.ENQUEUED, payload: { lane: "WALKIN", position: 100 } },
     { shopId: shop1.id, bookingId: b_s1_3.id, type: QueueEventType.ENQUEUED, payload: { lane: "BOOKBER", position: 110 } },
@@ -1489,6 +1546,8 @@ async function main() {
     // Rebooking reminders sent (simulated past ones)
     { type: "REBOOKING_REMINDER_SENT", shopId: shop1.id, userId: customers[0].id, payload: { serviceId: services1[0].id, daysUntilDue: 27 } },
     { type: "REBOOKING_REMINDER_SENT", shopId: shop2.id, userId: customers[7].id, payload: { serviceId: services2[0].id, daysUntilDue: 26 } },
+    // Scheduled booking
+    { type: "BOOKING_SCHEDULED", shopId: shop1.id, bookingId: b_s1_scheduled.id, userId: customers[4].id, payload: { scheduledStart: scheduledTime, service: "Premium Grooming Package" } },
   ];
 
   await prisma.eventLog.createMany({ data: eventLogEntries });
@@ -1504,6 +1563,7 @@ async function main() {
   console.log(`  ADMIN       admin@bookber.dev`);
   console.log(`  OWNER       owner.marcus@bookber.dev    (The Classic Barber)`);
   console.log(`  OWNER       owner.james@bookber.dev     (Kings Cut Lounge)`);
+  console.log(`  RECEPTION   reception.sara@bookber.dev  (The Classic Barber)`);
   console.log(`  BARBER      barber.alex@bookber.dev     (shop1)`);
   console.log(`  BARBER      barber.sam@bookber.dev      (shop1)`);
   console.log(`  BARBER      barber.mike@bookber.dev     (shop2)`);
