@@ -59,15 +59,19 @@ export async function buildApp(): Promise<FastifyInstance> {
   const shopDeps = buildShopDependencies();
   // const serviceDeps = buildServiceManagementDependencies();
   const queueDeps = buildQueueDependencies(app);
-  const bookingDeps = buildBookingDependencies(queueDeps.engine);
   const notificationDeps = buildNotificationDependencies(app);
+  const loyaltyDeps = buildLoyaltyDependencies();
+  // Build booking AFTER loyalty and notification so cascade can be wired
+  const bookingDeps = buildBookingDependencies(queueDeps.engine, {
+    loyalty: loyaltyDeps.service,
+    notification: notificationDeps.service
+  });
   const analyticsDeps = buildAnalyticsContainer();
   const paymentDeps = buildPaymentDependencies(app);
   const reviewDeps = buildReviewDependencies();
   const geoDeps = buildGeolocationDependencies(app);
   const adminDeps = buildAdminDependencies(app);
   const walletDeps = buildWalletDependencies();
-  const loyaltyDeps = buildLoyaltyDependencies();
   const referralDeps = buildReferralDependencies();
   const couponDeps = buildCouponDependencies();
   console.log("✓ Dependency containers built");

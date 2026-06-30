@@ -65,9 +65,32 @@ class AuthRepository {
     final accessToken = await _storage.accessToken;
     if (accessToken == null) return null;
 
+    await _api.setAuthToken(accessToken);
+
+    // Read all cached fields in parallel — no network call needed.
+    final [id, role, name, email, phone] = await Future.wait([
+      _storage.read(StorageKeys.userId),
+      _storage.read(StorageKeys.userRole),
+      _storage.read(StorageKeys.userName),
+      _storage.read(StorageKeys.userEmail),
+      _storage.read(StorageKeys.userPhone),
+    ]);
+
+    if (id != null && role != null && name != null && email != null) {
+      return UserProfile(
+        id: id,
+        role: role,
+        name: name,
+        email: email,
+        phone: phone ?? '',
+      );
+    }
+
+    // Fallback: cache was incomplete, fetch from API once.
     try {
-      await _api.setAuthToken(accessToken);
-      return await getMe();
+      final user = await getMe();
+      await _cacheProfile(user);
+      return user;
     } catch (_) {
       await _storage.clearSession();
       return null;
@@ -75,14 +98,21 @@ class AuthRepository {
   }
 
   Future<void> _persistSession(AuthTokens tokens, UserProfile user) async {
-    await _storage.saveTokens(
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    );
     await Future.wait([
-      _storage.write(StorageKeys.userId, user.id),
-      _storage.write(StorageKeys.userRole, user.role),
+      _storage.saveTokens(
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+      ),
+      _cacheProfile(user),
     ]);
     await _api.setAuthToken(tokens.accessToken);
   }
+
+  Future<void> _cacheProfile(UserProfile user) => Future.wait([
+        _storage.write(StorageKeys.userId, user.id),
+        _storage.write(StorageKeys.userRole, user.role),
+        _storage.write(StorageKeys.userName, user.name),
+        _storage.write(StorageKeys.userEmail, user.email),
+        _storage.write(StorageKeys.userPhone, user.phone),
+      ]);
 }

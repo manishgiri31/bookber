@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
@@ -6,7 +7,7 @@ const queueStatusSchema = z.enum(["WAITING", "READY", "CALLED", "IN_SERVICE", "C
 export const barberRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/barbers/me
   app.get("/barbers/me", { preHandler: app.authorizeRoles(["BARBER"]) }, async (request) => {
-    const barber = await app.prisma.barber.findUnique({
+    let barber = await app.prisma.barber.findUnique({
       where: { userId: request.user.sub },
       include: {
         user: { select: { id: true, fullName: true, email: true, profileImage: true } },
@@ -14,6 +15,20 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
       }
     });
     if (!barber) throw app.httpErrors.notFound("Barber profile not found");
+
+    // Lazily generate a permanent, unguessable QR check-in token on first fetch
+    if (!barber.checkInToken) {
+      const token = randomBytes(20).toString("hex");
+      barber = await app.prisma.barber.update({
+        where: { id: barber.id },
+        data: { checkInToken: token },
+        include: {
+          user: { select: { id: true, fullName: true, email: true, profileImage: true } },
+          shop: { select: { id: true, name: true, address: true, city: true } }
+        }
+      });
+    }
+
     return { barber };
   });
 

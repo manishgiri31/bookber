@@ -43,7 +43,7 @@ class CheckoutScreen extends ConsumerWidget {
     if (checkoutState is CheckoutLoading) {
       return Scaffold(
         backgroundColor: colors.background,
-        body: const BBLoadingScreen(),
+        body: const BBSkeletonListView(),
       );
     }
 

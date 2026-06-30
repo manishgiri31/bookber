@@ -7,6 +7,7 @@ import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
 import '../../../core/widgets/bb_button.dart';
+import '../../../core/widgets/bb_loading.dart';
 import '../../../core/widgets/bb_text_field.dart';
 import '../../auth/data/auth_provider.dart';
 
@@ -26,7 +27,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final colors = context.bbColors;
 
     if (user == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: colors.background,
+        body: const BBSkeletonProfile(),
+      );
     }
 
     return Scaffold(

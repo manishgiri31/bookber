@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/storage/secure_storage.dart';
 import '../../shared/domain/queue_models.dart';
 
 // ─────────────── Barber profile ───────────────
@@ -17,6 +18,7 @@ class BarberProfile {
     required this.isAvailable,
     this.profileImage,
     this.email,
+    this.checkInToken,
   });
 
   final String id;
@@ -28,6 +30,8 @@ class BarberProfile {
   final bool isAvailable;
   final String? profileImage;
   final String? email;
+  /// Permanent per-barber token encoded in the check-in QR code.
+  final String? checkInToken;
 
   factory BarberProfile.fromJson(Map<String, dynamic> json) {
     final user = json['user'] as Map<String, dynamic>?;
@@ -42,6 +46,7 @@ class BarberProfile {
       isAvailable: (json['isAvailable'] as bool?) ?? true,
       profileImage: user?['profileImage']?.toString(),
       email: user?['email']?.toString(),
+      checkInToken: json['checkInToken']?.toString(),
     );
   }
 }
@@ -120,16 +125,47 @@ class BarberDashNotifier extends AutoDisposeNotifier<BarberDashState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final api = ref.read(apiClientProvider);
-      final meData =
-          await api.get<Map<String, dynamic>>(ApiEndpoints.barberMe);
+      final storage = ref.read(secureStorageProvider);
+      final cachedBarberId = await storage.read(StorageKeys.barberId);
+
+      late final Map<String, dynamic> meData;
+      late final Map<String, dynamic> statsData;
+      late final Map<String, dynamic> queueData;
+
+      if (cachedBarberId != null) {
+        // All three in parallel — the fast path after first load.
+        final results = await Future.wait([
+          api.get<Map<String, dynamic>>(ApiEndpoints.barberMe),
+          api.get<Map<String, dynamic>>(ApiEndpoints.barberStats(cachedBarberId)),
+          api.get<Map<String, dynamic>>(ApiEndpoints.barberQueue(cachedBarberId)),
+        ]);
+        meData = results[0];
+        statsData = results[1];
+        queueData = results[2];
+      } else {
+        // First-ever load: profile must come first to get the barber ID.
+        meData = await api.get<Map<String, dynamic>>(ApiEndpoints.barberMe);
+        final id = (meData['barber'] as Map<String, dynamic>?)?['id']?.toString()
+            ?? meData['id']?.toString()
+            ?? '';
+        if (id.isNotEmpty) {
+          await storage.write(StorageKeys.barberId, id);
+        }
+        final parallel = await Future.wait([
+          api.get<Map<String, dynamic>>(ApiEndpoints.barberStats(id)),
+          api.get<Map<String, dynamic>>(ApiEndpoints.barberQueue(id)),
+        ]);
+        statsData = parallel[0];
+        queueData = parallel[1];
+      }
+
       final profile = BarberProfile.fromJson(
         meData['barber'] as Map<String, dynamic>? ?? meData,
       );
-
-      final [statsData, queueData] = await Future.wait([
-        api.get<Map<String, dynamic>>(ApiEndpoints.barberStats(profile.id)),
-        api.get<Map<String, dynamic>>(ApiEndpoints.barberQueue(profile.id)),
-      ]);
+      // Keep cached ID in sync with the real profile ID.
+      if (cachedBarberId == null || cachedBarberId != profile.id) {
+        await storage.write(StorageKeys.barberId, profile.id);
+      }
 
       final stats = BarberStats.fromJson(statsData);
       final entries = (queueData['queue'] as List? ?? [])
@@ -180,6 +216,7 @@ class BarberDashNotifier extends AutoDisposeNotifier<BarberDashState> {
           isAvailable: !state.profile!.isAvailable,
           profileImage: state.profile!.profileImage,
           email: state.profile!.email,
+          checkInToken: state.profile!.checkInToken,
         ),
       );
     } catch (e) {

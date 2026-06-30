@@ -287,7 +287,7 @@ class _DashboardTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminDashboardProvider);
     return async.when(
-      loading: () => const BBLoadingScreen(),
+      loading: () => const BBSkeletonListView(),
       error: (e, _) => BBErrorWidget(
         error: e.toString(),
         onRetry: () => ref.invalidate(adminDashboardProvider),
@@ -510,7 +510,7 @@ class _BarbersTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminBarbersProvider);
     return async.when(
-      loading: () => const BBLoadingScreen(),
+      loading: () => const BBSkeletonListView(),
       error: (e, _) => BBErrorWidget(
         error: e.toString(),
         onRetry: () => ref.invalidate(adminBarbersProvider),
@@ -692,7 +692,7 @@ class _QueuesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final async = ref.watch(adminQueuesProvider);
     return async.when(
-      loading: () => const BBLoadingScreen(),
+      loading: () => const BBSkeletonListView(),
       error: (e, _) => BBErrorWidget(
         error: e.toString(),
         onRetry: () => ref.invalidate(adminQueuesProvider),

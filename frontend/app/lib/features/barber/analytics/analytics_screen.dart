@@ -31,7 +31,7 @@ class BarberAnalyticsScreen extends ConsumerWidget {
               style: BBTypography.textTheme.titleLarge
                   ?.copyWith(color: colors.text, fontWeight: FontWeight.w700)),
         ),
-        body: const BBLoadingScreen(),
+        body: const BBSkeletonAnalytics(),
       );
     }
 
@@ -58,7 +58,7 @@ class BarberAnalyticsScreen extends ConsumerWidget {
         ],
       ),
       body: state.isLoading
-          ? const BBLoadingScreen()
+          ? const BBSkeletonAnalytics()
           : state.error != null && state.daily == null
               ? BBErrorWidget(
                   error: state.error!,

@@ -1,6 +1,6 @@
 import { Prisma, type Booking, type QueueLane } from "@prisma/client";
 import type { Redis as RedisClient } from "ioredis";
-import { Errors } from "../../../shared/http/app-error.js";
+import { Errors, AppError } from "../../../shared/http/app-error.js";
 import { prisma } from "../../../shared/prisma/client.js";
 import { QueueRedisStore } from "../../../shared/redis/queue-redis.store.js";
 import type { AuthUser } from "../../auth/domain/auth.types.js";
@@ -286,6 +286,125 @@ export class QueueEngineService {
       await this.rebalanceLane(tx, booking.shopId, lane, WAIT_RECALC_TRIGGERS.CHECK_IN);
       return updated;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 5000, timeout: 10000 });
+  }
+
+  // ─── Scan-to-check-in: customer scans the barber's permanent QR ─────────────
+  async checkInByScan(user: AuthUser, checkInToken: string): Promise<Booking> {
+    return this.lock.withLock(`user:${user.id}:scan-checkin`, 8000, () =>
+      prisma.$transaction(async (tx) => {
+        // 1. Resolve barber by the unguessable QR token
+        const barber = await tx.barber.findUnique({
+          where: { checkInToken },
+          include: { shop: { select: { id: true, isActive: true, isAcceptingBookings: true } } }
+        });
+        if (!barber) throw Errors.notFound("Invalid check-in QR code");
+        if (!barber.shop.isActive) throw Errors.conflict("Shop is not active");
+
+        // 2. Find the scanning user's active booking at this shop
+        const booking = await tx.booking.findFirst({
+          where: {
+            userId: user.id,
+            shopId: barber.shopId,
+            status: { in: ["QUEUED", "READY", "CALLED"] }
+          },
+          include: { service: true, chair: true, queueEntry: true }
+        });
+        if (!booking) throw Errors.notFound("No active booking found at this shop");
+
+        // 3. Verify barber binding: if the customer chose a specific barber it must match
+        if (booking.barberId && booking.barberId !== barber.id) {
+          throw new AppError("FORBIDDEN", 403, "This QR belongs to a different barber. Please scan your assigned barber's code.");
+        }
+
+        // 4. If already CALLED with a chair, jump straight to IN_SERVICE
+        if (booking.status === "CALLED" && booking.chairId) {
+          return this._advanceToInService(tx, {
+            id: booking.id, shopId: booking.shopId,
+            userId: booking.userId, barberId: barber.id, chairId: booking.chairId
+          });
+        }
+
+        // 5. Verify arrival window (only matters for QUEUED/READY)
+        const now = new Date();
+        if (now < booking.arrivalWindowStart) {
+          throw Errors.conflict("Arrival window has not started yet");
+        }
+        if (now > booking.arrivalWindowEnd) {
+          throw Errors.conflict("Arrival window has expired");
+        }
+
+        // 6. Advance QUEUED/READY → READY (check-in), binding to this barber
+        await tx.booking.update({
+          where: { id: booking.id },
+          data: { status: "READY", barberId: barber.id }
+        });
+        await tx.queueEntry.update({
+          where: { bookingId: booking.id },
+          data: { queueStatus: "READY", barberId: barber.id, version: { increment: 1 } }
+        });
+        await this.repository.createQueueEvent(tx, {
+          shopId: booking.shopId,
+          bookingId: booking.id,
+          type: "DELAYED",
+          payload: { action: "SCAN_CHECK_IN", barberId: barber.id }
+        });
+
+        // Compute lane without calling queueLaneOf (avoids LoadedBooking type constraint)
+        const lane: QueueLane = booking.queueEntry?.lane ?? (booking.walkIn ? "WALKIN" : "BOOKBER");
+        await this.tryAssignNext(tx, booking.shopId, lane);
+        await this.rebalanceLane(tx, booking.shopId, lane, WAIT_RECALC_TRIGGERS.CHECK_IN);
+
+        // 7. Re-read to see if tryAssignNext assigned a chair (status → CALLED)
+        const refreshed = await tx.booking.findUnique({
+          where: { id: booking.id }
+        });
+        if (!refreshed) throw Errors.notFound("Booking not found after check-in");
+
+        // 8. If now CALLED with a chair, fuse into IN_SERVICE
+        if (refreshed.status === "CALLED" && refreshed.chairId) {
+          return this._advanceToInService(tx, {
+            id: refreshed.id, shopId: refreshed.shopId,
+            userId: refreshed.userId, barberId: barber.id, chairId: refreshed.chairId
+          });
+        }
+
+        return refreshed;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable, maxWait: 8000, timeout: 15000 })
+    );
+  }
+
+  // ─── Private helper: transition a booking to IN_SERVICE ─────────────────────
+  private async _advanceToInService(
+    tx: Prisma.TransactionClient,
+    params: { id: string; shopId: string; userId: string; barberId: string; chairId: string }
+  ): Promise<Booking> {
+    const start = new Date();
+    const updated = await tx.booking.update({
+      where: { id: params.id },
+      data: { status: "IN_SERVICE", barberId: params.barberId }
+    });
+    await tx.queueEntry.update({
+      where: { bookingId: params.id },
+      data: { queueStatus: "IN_SERVICE", version: { increment: 1 } }
+    });
+    await tx.chair.update({
+      where: { id: params.chairId },
+      data: { status: "OCCUPIED", activeServiceStart: start }
+    });
+    await this.repository.createQueueEvent(tx, {
+      shopId: params.shopId,
+      bookingId: params.id,
+      type: "IN_SERVICE",
+      payload: { source: "qr_scan" }
+    });
+    this.realtime.emitBookingInService({
+      shopId: params.shopId,
+      bookingId: params.id,
+      userId: params.userId,
+      barberId: params.barberId,
+      chairId: params.chairId
+    });
+    return updated;
   }
 
   async completeService(user: AuthUser, bookingId: string): Promise<Booking> {

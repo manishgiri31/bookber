@@ -48,7 +48,7 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
     final shopAsync = ref.watch(shopDetailProvider(widget.shopId));
 
     return shopAsync.when(
-      loading: () => const BBLoadingScreen(),
+      loading: () => const BBSkeletonShopDetail(),
       error: (e, _) => BBErrorWidget(error: e, fullScreen: true),
       data: (shop) => Scaffold(
         backgroundColor: colors.background,

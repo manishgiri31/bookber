@@ -66,7 +66,7 @@ class LoyaltyScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       appBar: AppBar(title: const Text('Loyalty Points')),
       body: async.when(
-        loading: () => const BBLoadingScreen(),
+        loading: () => const BBSkeletonListView(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (data) {
           final account = data['account'] as Map<String, dynamic>;

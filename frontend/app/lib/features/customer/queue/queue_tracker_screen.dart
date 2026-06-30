@@ -231,9 +231,17 @@ class _QueueView extends ConsumerWidget {
           const SizedBox(height: BBSpacing.xl),
 
           // Actions
+          if (status == 'READY' || status == 'CALLED') ...[
+            BBButton(
+              label: 'Scan Barber QR to Check In',
+              onPressed: () => context.push('/scan-checkin/$bookingId'),
+              icon: AppIcons.qrCode,
+            ),
+            const SizedBox(height: BBSpacing.sm),
+          ],
           if (status == 'READY') ...[
             BBButton(
-              label: 'Check In',
+              label: 'Check In Manually',
               onPressed: () async {
                 try {
                   await ref
@@ -247,6 +255,7 @@ class _QueueView extends ConsumerWidget {
                 }
               },
               icon: AppIcons.checkCircle,
+              variant: BBButtonVariant.secondary,
             ),
             const SizedBox(height: BBSpacing.sm),
           ],

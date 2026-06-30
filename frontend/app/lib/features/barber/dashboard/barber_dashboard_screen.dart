@@ -26,7 +26,7 @@ class BarberDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.background,
       body: state.isLoading
-          ? const BBLoadingScreen()
+          ? const BBSkeletonBarberDashboard()
           : state.error != null && state.profile == null
               ? (state.error!.toLowerCase().contains('not found') ||
                       state.error!.toLowerCase().contains('barber profile'))
@@ -588,7 +588,15 @@ class _QuickActions extends StatelessWidget {
                 onTap: () => context.push('/barber/services'),
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: _ActionCard(
+                icon: AppIcons.qrCode,
+                label: 'My QR',
+                color: const Color(0xFFEC4899),
+                onTap: () => context.push('/barber/qr'),
+              ),
+            ),
             const Spacer(),
           ],
         ),

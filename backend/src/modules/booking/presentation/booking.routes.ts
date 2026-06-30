@@ -5,6 +5,8 @@ export const bookingRoutes: FastifyPluginAsync = async (app) => {
   const controller = new BookingController(app.bookingDeps.service);
 
   app.post("/", { preHandler: app.authenticate }, controller.create);
+  // POST /bookings/check-in/scan — must be registered before /:bookingId to avoid conflict
+  app.post("/check-in/scan", { preHandler: app.authenticate }, controller.scanCheckIn);
   app.post("/:bookingId/check-in", { preHandler: app.authenticate }, controller.checkIn);
   app.post("/:bookingId/start", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.startService);
   app.post("/:bookingId/complete", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, controller.completeService);

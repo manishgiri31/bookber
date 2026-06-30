@@ -63,7 +63,7 @@ class _ShopManagementScreenState
         ),
       ),
       body: state.isLoading
-          ? const BBLoadingScreen()
+          ? const BBSkeletonShopManagement()
           : state.error != null && state.shop == null
               ? _ErrorView(
                   error: state.error!,

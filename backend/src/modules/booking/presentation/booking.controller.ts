@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { getAuthUser } from "../../auth/presentation/auth-user.js";
-import { cancelBookingSchema, createBookingSchema } from "../application/booking.schemas.js";
+import { cancelBookingSchema, createBookingSchema, scanCheckInSchema } from "../application/booking.schemas.js";
 import type { BookingService } from "../application/booking.service.js";
 
 export class BookingController {
@@ -15,6 +15,13 @@ export class BookingController {
   checkIn = async (request: FastifyRequest, reply: FastifyReply) => {
     const { bookingId } = request.params as { bookingId: string };
     const booking = await this.service.checkIn(getAuthUser(request), bookingId);
+    return reply.send({ booking });
+  };
+
+  // POST /bookings/check-in/scan  — customer scans the barber's permanent QR code
+  scanCheckIn = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { token } = scanCheckInSchema.parse(request.body);
+    const booking = await this.service.checkInByScan(getAuthUser(request), token);
     return reply.send({ booking });
   };
 

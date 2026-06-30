@@ -20,7 +20,7 @@ class WalletScreen extends ConsumerWidget {
     final state = ref.watch(walletProvider);
     final colors = context.bbColors;
 
-    if (state.isLoading) return const BBLoadingScreen();
+    if (state.isLoading) return const BBSkeletonWallet();
 
     return Scaffold(
       backgroundColor: colors.background,

@@ -1,5 +1,4 @@
 import pino from "pino";
-import pinoHttp from "pino-http";
 
 /**
  * Production-grade structured logging with Pino.
@@ -65,32 +64,6 @@ export function createChildLogger(parent: pino.Logger, context: Record<string, a
   return parent.child(context);
 }
 
-/**
- * Create HTTP request logging middleware
- */
-export function createHttpLogger(logger?: pino.Logger): any {
-  const baseLogger = logger || createLogger();
-
-  return (pinoHttp as any)({
-    logger: baseLogger,
-    customLogLevel: (req: any, res: any, err: any) => {
-      if (res.statusCode >= 500) {
-        return "error";
-      } else if (res.statusCode >= 400) {
-        return "warn";
-      } else if (res.statusCode >= 300) {
-        return "info";
-      }
-      return "debug";
-    },
-    customSuccessMessage: (req: any, res: any) => {
-      return `${req.method} ${req.url} completed with status ${res.statusCode}`;
-    },
-    customErrorMessage: (req: any, res: any, err: any) => {
-      return `${req.method} ${req.url} failed with status ${res.statusCode}: ${err?.message}`;
-    }
-  });
-}
 
 /**
  * Logger utility class for common operations

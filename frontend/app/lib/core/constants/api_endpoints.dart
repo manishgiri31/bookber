@@ -41,6 +41,7 @@ abstract final class ApiEndpoints {
   static const String bookings = '/bookings';
   static String bookingById(String id) => '/bookings/$id';
   static String checkIn(String id) => '/bookings/$id/check-in';
+  static const String checkInScan = '/bookings/check-in/scan';
   static String startService(String id) => '/bookings/$id/start';
   static String completeService(String id) => '/bookings/$id/complete';
   static String noShow(String id) => '/bookings/$id/no-show';

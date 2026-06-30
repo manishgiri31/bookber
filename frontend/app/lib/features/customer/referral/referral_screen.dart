@@ -44,7 +44,7 @@ class ReferralScreen extends ConsumerWidget {
       backgroundColor: colors.background,
       appBar: AppBar(title: const Text('Referrals')),
       body: async.when(
-        loading: () => const BBLoadingScreen(),
+        loading: () => const BBSkeletonListView(),
         error: (e, _) => Center(child: Text(e.toString())),
         data: (data) {
           final code = data['code'] as String;

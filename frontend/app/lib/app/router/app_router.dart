@@ -15,6 +15,7 @@ import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../../features/barber/analytics/analytics_screen.dart';
+import '../../features/barber/qr/barber_qr_screen.dart';
 import '../../features/barber/barber_shell.dart';
 import '../../features/barber/employees/employees_screen.dart';
 import '../../features/barber/reception/reception_screen.dart';
@@ -27,6 +28,7 @@ import '../../features/barber/dashboard/barber_dashboard_screen.dart';
 import '../../features/barber/profile/barber_profile_screen.dart';
 import '../../features/barber/queue/barber_queue_screen.dart';
 import '../../features/customer/arrival/smart_arrival_screen.dart';
+import '../../features/customer/arrival/scan_checkin_screen.dart';
 import '../../features/customer/gamification/gamification_screen.dart';
 import '../../features/customer/booking/booking_flow_screen.dart';
 import '../../features/customer/customer_shell.dart';
@@ -169,6 +171,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             SmartArrivalScreen(bookingId: state.pathParameters['bookingId']!),
       ),
       GoRoute(
+        path: '/scan-checkin/:bookingId',
+        builder: (_, state) =>
+            ScanCheckInScreen(bookingId: state.pathParameters['bookingId']!),
+      ),
+      GoRoute(
         path: '/gamification',
         builder: (_, _) => const GamificationScreen(),
       ),
@@ -197,6 +204,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
 
       // Barber full-screen routes (outside shell — no bottom nav)
+      GoRoute(
+          path: '/barber/qr',
+          builder: (_, _) => const BarberQrScreen()),
       GoRoute(
           path: '/barber/shop',
           builder: (_, _) => const ShopManagementScreen()),

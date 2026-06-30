@@ -31,6 +31,7 @@ model User {
   referralsGiven      Referral[]          @relation("ReferrerUser")
   referralsReceived   Referral[]          @relation("RefereeUser")
   couponRedemptions   CouponRedemption[]
+  shopStaff           ShopStaff[]
 
   @@index([role])
   @@index([email])
@@ -99,6 +100,7 @@ model Shop {
   owner                     User                      @relation("ShopOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   operatingHours            ShopOperatingHour[]
   photos                    ShopPhoto[]
+  staff                     ShopStaff[]
 
   @@index([city])
   @@index([latitude, longitude])
@@ -142,6 +144,8 @@ model Barber {
   updatedAt             DateTime        @updatedAt
   serviceSpeedFactor    Float           @default(1.0)
   averageServiceMinutes Int?
+  checkInToken          String?         @unique
+  onBreak               Boolean         @default(false)
   shop                  Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
   user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   bookings              Booking[]
@@ -212,6 +216,8 @@ model Booking {
   chairId            String?
   status             BookingStatus     @default(QUEUED)
   notes              String?
+  scheduledStart     DateTime?
+  travelMinutes      Int?
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
   arrivalWindowStart DateTime
@@ -229,12 +235,14 @@ model Booking {
   payment            Payment?
   queueEntry         QueueEntry?
   queueEvents        QueueEvent[]
+  referenceImages    BookingReferenceImage[]
 
   @@index([userId])
   @@index([userId, status])
   @@index([shopId, status])
   @@index([barberId, status])
   @@index([status])
+  @@index([scheduledStart])
 }
 
 model QueueEntry {
@@ -437,9 +445,12 @@ enum UserRole {
   CLIENT
   BARBER
   ADMIN
+  OWNER
+  RECEPTION
 }
 
 enum BookingStatus {
+  SCHEDULED
   QUEUED
   READY
   CALLED
@@ -491,10 +502,13 @@ enum QueueEventType {
   CHAIR_RELEASED
   DELAYED
   OVERRUN
+  SCAN_CHECK_IN
+  PROMOTED
 }
 
 enum EventLogType {
   BOOKING_CREATED
+  BOOKING_SCHEDULED
   BOOKING_CANCELLED
   BOOKING_NO_SHOW
   QUEUE_JOINED
@@ -504,6 +518,8 @@ enum EventLogType {
   PAYMENT_COMPLETED
   REVIEW_CREATED
   REBOOKING_REMINDER_SENT
+  LEAVE_NOW_SENT
+  RECEPTION_CHECKIN
 }
 
 enum PaymentMethod {
@@ -654,6 +670,33 @@ model CouponRedemption {
 
   @@index([couponId])
   @@index([userId])
+}
+
+// ─── Shop Staff ────────────────────────────────────────────────────────────────
+
+model ShopStaff {
+  id        String   @id @default(cuid())
+  shopId    String
+  userId    String
+  createdAt DateTime @default(now())
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([shopId, userId])
+  @@index([shopId])
+  @@index([userId])
+}
+
+// ─── Booking Reference Images ─────────────────────────────────────────────────
+
+model BookingReferenceImage {
+  id        String   @id @default(cuid())
+  bookingId String
+  url       String
+  createdAt DateTime @default(now())
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
 }
 
 enum CouponType {
