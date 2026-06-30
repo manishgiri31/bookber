@@ -57,6 +57,7 @@ try {
         console.log(`Shutting down due to ${signal}...`);
         infra.stopGaugeCollector();
         infra.stopRecoveryWorkers();
+        infra.stopScheduledPromoter();
         socketInfra.stop();
         await shutdownServer({
           app,

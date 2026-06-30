@@ -28,11 +28,11 @@ const authPluginImpl: FastifyPluginCallback = (app: FastifyInstance, _opts, done
     return Promise.resolve();
   });
 
-  app.decorate("authorizeRoles", (roles: Array<"CLIENT" | "BARBER" | "ADMIN">) => {
+  app.decorate("authorizeRoles", (roles: Array<"CLIENT" | "BARBER" | "ADMIN" | "OWNER" | "RECEPTION">) => {
     return async (request: FastifyRequest) => {
       await app.authenticate(request);
       const user = request.user;
-      if (!user?.sub || !roles.includes(user.role)) {
+      if (!user?.sub || !(roles as string[]).includes(user.role)) {
         throw app.httpErrors.forbidden("Insufficient permissions");
       }
     };
@@ -54,7 +54,7 @@ declare module "fastify" {
   interface FastifyInstance {
     authenticate: (request: FastifyRequest) => Promise<void>;
     authorizeRoles: (
-      roles: Array<"CLIENT" | "BARBER" | "ADMIN">
+      roles: Array<"CLIENT" | "BARBER" | "ADMIN" | "OWNER" | "RECEPTION">
     ) => (request: FastifyRequest) => Promise<void>;
   }
 }

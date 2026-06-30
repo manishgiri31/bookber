@@ -28,7 +28,11 @@ export class BookingService {
       serviceId: dto.serviceId,
       userId: user.id,
       barberId: dto.barberId,
-      walkIn: dto.walkIn
+      walkIn: dto.walkIn,
+      scheduledStart: dto.scheduledStart,
+      travelMinutes: dto.travelMinutes,
+      notes: dto.notes,
+      referenceImageUrls: dto.referenceImageUrls
     });
   }
 
@@ -95,5 +99,19 @@ export class BookingService {
 
   async listUserBookings(user: AuthUser, status?: string) {
     return this.repository.findBookingsByUserId(prisma, user.id, status);
+  }
+
+  async addReferenceImage(user: AuthUser, bookingId: string, url: string) {
+    const booking = await this.repository.findBookingById(prisma, bookingId);
+    if (!booking) throw Errors.notFound("Booking not found");
+    if (user.role !== "ADMIN" && booking.userId !== user.id) throw Errors.forbidden();
+    return prisma.bookingReferenceImage.create({ data: { bookingId, url } });
+  }
+
+  async listReferenceImages(user: AuthUser, bookingId: string) {
+    const booking = await this.repository.findBookingById(prisma, bookingId);
+    if (!booking) throw Errors.notFound("Booking not found");
+    if (user.role !== "ADMIN" && booking.userId !== user.id) throw Errors.forbidden();
+    return prisma.bookingReferenceImage.findMany({ where: { bookingId }, orderBy: { createdAt: "asc" } });
   }
 }

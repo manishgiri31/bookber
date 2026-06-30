@@ -15,6 +15,9 @@ class BookingFormData {
     this.selectedBarberId,
     this.selectedBarberName,
     this.joinQueue = false,
+    this.scheduledStart,
+    this.notes,
+    this.referenceImageUrls = const [],
   });
 
   final String shopId;
@@ -23,6 +26,14 @@ class BookingFormData {
   final String? selectedBarberId;
   final String? selectedBarberName;
   final bool joinQueue;
+  /// When set, booking is SCHEDULED for this time instead of joining queue now.
+  final DateTime? scheduledStart;
+  final String? notes;
+  final List<String> referenceImageUrls;
+
+  bool get isScheduled =>
+      scheduledStart != null &&
+      scheduledStart!.isAfter(DateTime.now().add(const Duration(minutes: 15)));
 
   double get totalAmount => selectedService?.price ?? 0;
   int get totalDuration => selectedService?.durationMin ?? 0;
@@ -34,6 +45,10 @@ class BookingFormData {
     String? selectedBarberName,
     bool? joinQueue,
     bool clearBarber = false,
+    DateTime? scheduledStart,
+    bool clearSchedule = false,
+    String? notes,
+    List<String>? referenceImageUrls,
   }) =>
       BookingFormData(
         shopId: shopId,
@@ -46,6 +61,10 @@ class BookingFormData {
             ? null
             : (selectedBarberName ?? this.selectedBarberName),
         joinQueue: joinQueue ?? this.joinQueue,
+        scheduledStart:
+            clearSchedule ? null : (scheduledStart ?? this.scheduledStart),
+        notes: notes ?? this.notes,
+        referenceImageUrls: referenceImageUrls ?? this.referenceImageUrls,
       );
 
   bool get canSubmit => selectedService != null;
@@ -78,6 +97,30 @@ class BookingFormNotifier extends StateNotifier<BookingFormData> {
   }
 
   void setJoinQueue(bool v) => state = state.copyWith(joinQueue: v);
+
+  void setScheduledStart(DateTime? dt) {
+    if (dt == null) {
+      state = state.copyWith(clearSchedule: true);
+    } else {
+      state = state.copyWith(scheduledStart: dt);
+    }
+  }
+
+  void setNotes(String? notes) => state = state.copyWith(notes: notes);
+
+  void addReferenceImageUrl(String url) {
+    if (url.isEmpty || state.referenceImageUrls.contains(url)) return;
+    state = state.copyWith(
+      referenceImageUrls: [...state.referenceImageUrls, url],
+    );
+  }
+
+  void removeReferenceImageUrl(String url) {
+    state = state.copyWith(
+      referenceImageUrls:
+          state.referenceImageUrls.where((u) => u != url).toList(),
+    );
+  }
 }
 
 final bookingFormFamily = StateNotifierProvider.autoDispose
@@ -121,13 +164,18 @@ class BookingSubmitNotifier extends StateNotifier<BookingSubmitState> {
     try {
       final api = _ref.read(apiClientProvider);
 
-      // POST /bookings already calls reserveQueue which creates the queue entry.
-      // walkIn=true for "Join Queue" flow, walkIn=false for "Book" flow.
+      // POST /bookings calls reserveQueue. Scheduled bookings get SCHEDULED status;
+      // immediate bookings (joinQueue=true) become QUEUED walk-ins.
       final body = {
         'shopId': form.shopId,
         'serviceId': form.selectedService!.id,
         if (form.selectedBarberId != null) 'barberId': form.selectedBarberId,
-        'walkIn': form.joinQueue,
+        'walkIn': form.joinQueue && !form.isScheduled,
+        if (form.isScheduled)
+          'scheduledStart': form.scheduledStart!.toUtc().toIso8601String(),
+        if (form.notes != null && form.notes!.isNotEmpty) 'notes': form.notes,
+        if (form.referenceImageUrls.isNotEmpty)
+          'referenceImageUrls': form.referenceImageUrls,
       };
 
       final data = await api.post<Map<String, dynamic>>(

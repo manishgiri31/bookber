@@ -32,6 +32,10 @@ export type ReserveQueueInput = {
   userId: string;
   barberId?: string | undefined;
   walkIn: boolean;
+  scheduledStart?: string | undefined;
+  travelMinutes?: number | undefined;
+  notes?: string | undefined;
+  referenceImageUrls?: string[] | undefined;
 };
 
 export class QueueEngineService {
@@ -93,6 +97,48 @@ export class QueueEngineService {
             const position = positionResult.position;
             const now = new Date();
 
+            // ── Scheduled booking path ─────────────────────────────────────────
+            if (input.scheduledStart) {
+              const scheduledDate = new Date(input.scheduledStart);
+              const minutesAhead = (scheduledDate.getTime() - now.getTime()) / 60_000;
+              if (minutesAhead > 15) {
+                const booking = await tx.booking.create({
+                  data: {
+                    userId: input.userId,
+                    shopId: input.shopId,
+                    ...(input.barberId ? { barberId: input.barberId } : {}),
+                    serviceId: input.serviceId,
+                    status: "SCHEDULED",
+                    scheduledStart: scheduledDate,
+                    travelMinutes: input.travelMinutes ?? null,
+                    notes: input.notes ?? null,
+                    arrivalWindowStart: scheduledDate,
+                    arrivalWindowEnd: addMinutes(scheduledDate, 30),
+                    walkIn: input.walkIn
+                  }
+                });
+                if (input.referenceImageUrls?.length) {
+                  await tx.bookingReferenceImage.createMany({
+                    data: input.referenceImageUrls.map((url) => ({ bookingId: booking.id, url }))
+                  });
+                }
+                await this.repository.createQueueEvent(tx, {
+                  shopId: input.shopId,
+                  bookingId: booking.id,
+                  type: "ENQUEUED",
+                  payload: { lane, scheduledStart: input.scheduledStart, deferred: true }
+                });
+                getEventLogService().recordAsync({
+                  type: "BOOKING_SCHEDULED" as import("@prisma/client").EventLogType,
+                  shopId: input.shopId,
+                  bookingId: booking.id,
+                  userId: input.userId,
+                  payload: { scheduledStart: input.scheduledStart, lane }
+                });
+                return booking;
+              }
+            }
+
             const booking = await tx.booking.create({
               data: {
                 userId: input.userId,
@@ -100,11 +146,17 @@ export class QueueEngineService {
                 ...(input.barberId ? { barberId: input.barberId } : {}),
                 serviceId: input.serviceId,
                 status: "QUEUED",
+                notes: input.notes ?? null,
                 arrivalWindowStart: now,
                 arrivalWindowEnd: addMinutes(now, 30),
                 walkIn: input.walkIn
               }
             });
+            if (input.referenceImageUrls?.length) {
+              await tx.bookingReferenceImage.createMany({
+                data: input.referenceImageUrls.map((url) => ({ bookingId: booking.id, url }))
+              });
+            }
 
             await tx.queueEntry.create({
               data: {
@@ -678,6 +730,15 @@ export class QueueEngineService {
     });
 
     if (!next) return;
+
+    // Skip assignment if the requested barber is on break
+    if (next.barberId) {
+      const assignedBarber = await tx.barber.findUnique({
+        where: { id: next.barberId },
+        select: { onBreak: true }
+      });
+      if (assignedBarber?.onBreak) return;
+    }
 
     const now = new Date();
     if (next.queueStatus === "WAITING" && now > next.booking.arrivalWindowEnd) {

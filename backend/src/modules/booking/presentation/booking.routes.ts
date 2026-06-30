@@ -15,4 +15,6 @@ export const bookingRoutes: FastifyPluginAsync = async (app) => {
   app.get("/my", { preHandler: app.authenticate }, controller.listMine);
   app.get("/:bookingId", { preHandler: app.authenticate }, controller.getOne);
   app.get("/shops/:shopId", { preHandler: app.authenticate }, controller.listShop);
+  app.post("/:bookingId/reference-images", { preHandler: app.authenticate }, controller.addReferenceImage);
+  app.get("/:bookingId/reference-images", { preHandler: app.authenticate }, controller.listReferenceImages);
 };

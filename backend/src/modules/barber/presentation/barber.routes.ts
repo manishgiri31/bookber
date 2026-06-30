@@ -99,6 +99,23 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
     return { barber };
   });
 
+  // PATCH /api/barbers/:barberId/break — toggle on-break status
+  app.patch("/barbers/:barberId/break", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+    const { barberId } = request.params as { barberId: string };
+    if (request.user.role === "BARBER") {
+      const ownBarber = await app.prisma.barber.findUnique({
+        where: { userId: request.user.sub },
+        select: { id: true }
+      });
+      if (!ownBarber || ownBarber.id !== barberId) {
+        throw app.httpErrors.forbidden("Cannot modify another barber's break status");
+      }
+    }
+    const { onBreak } = z.object({ onBreak: z.boolean() }).parse(request.body);
+    const barber = await app.prisma.barber.update({ where: { id: barberId }, data: { onBreak } });
+    return { barber };
+  });
+
   // GET /api/barbers/:barberId/working-hours (proxies shop operating hours)
   app.get("/barbers/:barberId/working-hours", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };

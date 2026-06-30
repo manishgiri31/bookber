@@ -29,11 +29,14 @@ class BookingFlowScreen extends ConsumerStatefulWidget {
 }
 
 class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
-  int _step = 0; // 0=services, 1=barber, 2=confirm
+  // Steps: 0=service, 1=barber, 2=schedule, 3=confirm
+  int _step = 0;
   bool _submitting = false;
   String? _submitError;
 
   late final _formArg = (shopId: widget.shopId, shopName: widget.shopName);
+
+  static const int _totalSteps = 4;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +54,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(3),
           child: LinearProgressIndicator(
-            value: (_step + 1) / 3,
+            value: (_step + 1) / _totalSteps,
             backgroundColor: colors.border,
             valueColor: AlwaysStoppedAnimation<Color>(colors.accent),
             minHeight: 3,
@@ -74,9 +77,15 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
               ),
             _BottomBar(
               step: _step,
+              totalSteps: _totalSteps,
               canProceed: form.selectedService != null,
               submitting: _submitting,
-              onBack: _step > 0 ? () => setState(() { _step--; _submitError = null; }) : null,
+              onBack: _step > 0
+                  ? () => setState(() {
+                        _step--;
+                        _submitError = null;
+                      })
+                  : null,
               onNext: _step == 0 && form.selectedService == null
                   ? null
                   : _handleNext,
@@ -90,6 +99,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
   String get _stepTitle => switch (_step) {
         0 => 'Select Service',
         1 => 'Choose Barber',
+        2 => 'Schedule',
         _ => 'Confirm Booking',
       };
 
@@ -104,19 +114,30 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
             shopId: widget.shopId,
             formArg: _formArg,
           ),
-        _ => _ConfirmStep(
+        2 => _ScheduleStep(
             key: const ValueKey(2),
+            formArg: _formArg,
+            joinQueue: widget.joinQueue,
+          ),
+        _ => _ConfirmStep(
+            key: const ValueKey(3),
             formArg: _formArg,
             joinQueue: widget.joinQueue,
           ),
       };
 
   Future<void> _handleNext() async {
-    if (_step < 2) {
-      setState(() { _step++; _submitError = null; });
+    if (_step < _totalSteps - 1) {
+      setState(() {
+        _step++;
+        _submitError = null;
+      });
       return;
     }
-    setState(() { _submitting = true; _submitError = null; });
+    setState(() {
+      _submitting = true;
+      _submitError = null;
+    });
     try {
       final form = ref.read(bookingFormFamily(_formArg));
       final result = await ref
@@ -129,8 +150,9 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
         context.go('/queue/${result.id}');
       } else {
         final st = ref.read(bookingSubmitProvider);
-        setState(() => _submitError =
-            st is BookingFailed ? st.message : 'Booking failed. Please try again.');
+        setState(() => _submitError = st is BookingFailed
+            ? st.message
+            : 'Booking failed. Please try again.');
       }
     } catch (e) {
       if (!mounted) return;
@@ -524,7 +546,353 @@ class _SelectableTile extends StatelessWidget {
   }
 }
 
-// ─────────────── Step 3: Confirm ───────────────
+// ─────────────── Step 3: Schedule ───────────────
+
+class _ScheduleStep extends ConsumerStatefulWidget {
+  const _ScheduleStep({
+    super.key,
+    required this.formArg,
+    required this.joinQueue,
+  });
+  final ({String shopId, String shopName}) formArg;
+  final bool joinQueue;
+
+  @override
+  ConsumerState<_ScheduleStep> createState() => _ScheduleStepState();
+}
+
+class _ScheduleStepState extends ConsumerState<_ScheduleStep> {
+  final _notesCtrl = TextEditingController();
+  final _imageUrlCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesCtrl.dispose();
+    _imageUrlCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final form = ref.watch(bookingFormFamily(widget.formArg));
+    final notifier = ref.read(bookingFormFamily(widget.formArg).notifier);
+
+    return ListView(
+      padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
+      children: [
+        Text(
+          'When do you want to go?',
+          style: BBTypography.textTheme.headlineSmall?.copyWith(
+            color: colors.text,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xs),
+        Text(
+          'Schedule for later, or join the queue now.',
+          style: BBTypography.textTheme.bodyMedium
+              ?.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: BBSpacing.xl),
+
+        // ── Mode toggle ──────────────────────────────────────────────
+        _ModeToggle(
+          isScheduled: form.scheduledStart != null,
+          onJoinNow: () => notifier.setScheduledStart(null),
+          onSchedule: () async {
+            final now = DateTime.now();
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: now.add(const Duration(days: 1)),
+              firstDate: now,
+              lastDate: now.add(const Duration(days: 30)),
+            );
+            if (picked == null || !mounted) return;
+            final time = await showTimePicker(
+              context: context,
+              initialTime: const TimeOfDay(hour: 10, minute: 0),
+            );
+            if (time == null || !mounted) return;
+            final dt = DateTime(
+                picked.year, picked.month, picked.day, time.hour, time.minute);
+            notifier.setScheduledStart(dt);
+          },
+        ),
+
+        if (form.scheduledStart != null) ...[
+          const SizedBox(height: BBSpacing.md),
+          _ScheduledTimeCard(dt: form.scheduledStart!),
+        ],
+
+        const SizedBox(height: BBSpacing.xl),
+
+        // ── Notes ────────────────────────────────────────────────────
+        Text(
+          'NOTES (optional)',
+          style: BBTypography.textTheme.labelSmall?.copyWith(
+            color: colors.textTertiary,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: BBSpacing.sm),
+        TextField(
+          controller: _notesCtrl,
+          maxLines: 3,
+          style: TextStyle(color: colors.text),
+          onChanged: notifier.setNotes,
+          decoration: InputDecoration(
+            hintText: 'Any requests for your barber…',
+            hintStyle: TextStyle(color: colors.textTertiary),
+            alignLabelWithHint: true,
+          ),
+        ),
+
+        const SizedBox(height: BBSpacing.xl),
+
+        // ── Reference images ─────────────────────────────────────────
+        Text(
+          'REFERENCE IMAGES (optional)',
+          style: BBTypography.textTheme.labelSmall?.copyWith(
+            color: colors.textTertiary,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: BBSpacing.xs),
+        Text(
+          'Share a photo URL showing the style you want.',
+          style: BBTypography.textTheme.bodySmall
+              ?.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(height: BBSpacing.sm),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _imageUrlCtrl,
+                style: TextStyle(color: colors.text),
+                decoration: InputDecoration(
+                  hintText: 'https://example.com/style.jpg',
+                  hintStyle: TextStyle(color: colors.textTertiary),
+                ),
+              ),
+            ),
+            const SizedBox(width: BBSpacing.sm),
+            IconButton(
+              icon: const Icon(AppIcons.add, color: BBColors.amber),
+              onPressed: () {
+                final url = _imageUrlCtrl.text.trim();
+                if (url.isNotEmpty) {
+                  notifier.addReferenceImageUrl(url);
+                  _imageUrlCtrl.clear();
+                }
+              },
+            ),
+          ],
+        ),
+        if (form.referenceImageUrls.isNotEmpty) ...[
+          const SizedBox(height: BBSpacing.sm),
+          Wrap(
+            spacing: BBSpacing.sm,
+            runSpacing: BBSpacing.sm,
+            children: form.referenceImageUrls
+                .map((url) => _ImageChip(
+                      url: url,
+                      onRemove: () => notifier.removeReferenceImageUrl(url),
+                    ))
+                .toList(),
+          ),
+        ],
+        const SizedBox(height: BBSpacing.xxl),
+      ],
+    );
+  }
+}
+
+class _ModeToggle extends StatelessWidget {
+  const _ModeToggle({
+    required this.isScheduled,
+    required this.onJoinNow,
+    required this.onSchedule,
+  });
+  final bool isScheduled;
+  final VoidCallback onJoinNow;
+  final VoidCallback onSchedule;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return Row(
+      children: [
+        Expanded(
+          child: _ModeOption(
+            icon: AppIcons.bolt,
+            label: 'Join Queue Now',
+            subtitle: 'Get in line immediately',
+            selected: !isScheduled,
+            onTap: onJoinNow,
+          ),
+        ),
+        const SizedBox(width: BBSpacing.sm),
+        Expanded(
+          child: _ModeOption(
+            icon: AppIcons.calendar,
+            label: 'Schedule',
+            subtitle: 'Pick date & time',
+            selected: isScheduled,
+            onTap: onSchedule,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModeOption extends StatelessWidget {
+  const _ModeOption({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.selected,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(BBSpacing.base),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.accent.withValues(alpha: 0.08)
+              : colors.surface,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(
+            color: selected ? colors.accent : colors.border,
+            width: selected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon,
+                size: 22,
+                color: selected ? colors.accent : colors.textSecondary),
+            const SizedBox(height: BBSpacing.sm),
+            Text(
+              label,
+              style: BBTypography.textTheme.titleSmall?.copyWith(
+                color: selected ? colors.text : colors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: BBTypography.textTheme.labelSmall
+                  ?.copyWith(color: colors.textTertiary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScheduledTimeCard extends StatelessWidget {
+  const _ScheduledTimeCard({required this.dt});
+  final DateTime dt;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final formatted =
+        '${_weekday(dt.weekday)}, ${dt.day} ${_month(dt.month)} at ${_time(dt)}';
+    return Container(
+      padding: const EdgeInsets.all(BBSpacing.base),
+      decoration: BoxDecoration(
+        color: BBColors.amber.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(BBRadius.lg),
+        border: Border.all(color: BBColors.amber.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(AppIcons.schedule, color: BBColors.amber, size: 22),
+          const SizedBox(width: BBSpacing.md),
+          Expanded(
+            child: Text(
+              formatted,
+              style: BBTypography.textTheme.bodyMedium?.copyWith(
+                color: colors.text,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _weekday(int d) =>
+      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d - 1];
+  String _month(int m) => [
+        'Jan','Feb','Mar','Apr','May','Jun',
+        'Jul','Aug','Sep','Oct','Nov','Dec'
+      ][m - 1];
+  String _time(DateTime dt) {
+    final h = dt.hour;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final period = h >= 12 ? 'PM' : 'AM';
+    final displayH = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    return '$displayH:$m $period';
+  }
+}
+
+class _ImageChip extends StatelessWidget {
+  const _ImageChip({required this.url, required this.onRemove});
+  final String url;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final short = url.length > 30 ? '…${url.substring(url.length - 27)}' : url;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.surfaceVariant,
+        borderRadius: BorderRadius.circular(BBRadius.full),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(AppIcons.image, size: 14, color: BBColors.info),
+          const SizedBox(width: 6),
+          Text(
+            short,
+            style: BBTypography.textTheme.labelSmall
+                ?.copyWith(color: colors.text),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: onRemove,
+            child: Icon(AppIcons.close, size: 14, color: colors.textTertiary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────── Step 4: Confirm ───────────────
 
 class _ConfirmStep extends ConsumerWidget {
   const _ConfirmStep({
@@ -569,6 +937,18 @@ class _SummaryCard extends StatelessWidget {
   final BookingFormData form;
   final bool joinQueue;
 
+  static String _formatDt(DateTime dt) {
+    final months = [
+      'Jan','Feb','Mar','Apr','May','Jun',
+      'Jul','Aug','Sep','Oct','Nov','Dec'
+    ];
+    final h = dt.hour;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final period = h >= 12 ? 'PM' : 'AM';
+    final dh = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    return '${dt.day} ${months[dt.month - 1]}, $dh:$m $period';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
@@ -595,13 +975,35 @@ class _SummaryCard extends StatelessWidget {
           Divider(color: colors.border, height: 1, indent: BBSpacing.base),
           _SummaryRow(
             label: 'Mode',
-            value: joinQueue ? 'Join Queue' : 'Book',
+            value: form.isScheduled
+                ? 'Scheduled'
+                : joinQueue
+                    ? 'Join Queue'
+                    : 'Book',
           ),
+          if (form.scheduledStart != null) ...[
+            Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+            _SummaryRow(
+              label: 'Time',
+              value: _formatDt(form.scheduledStart!),
+            ),
+          ],
           if (service != null) ...[
             Divider(color: colors.border, height: 1, indent: BBSpacing.base),
             _SummaryRow(
               label: 'Duration',
               value: service.durationLabel,
+            ),
+          ],
+          if (form.notes != null && form.notes!.isNotEmpty) ...[
+            Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+            _SummaryRow(label: 'Notes', value: form.notes!),
+          ],
+          if (form.referenceImageUrls.isNotEmpty) ...[
+            Divider(color: colors.border, height: 1, indent: BBSpacing.base),
+            _SummaryRow(
+              label: 'Images',
+              value: '${form.referenceImageUrls.length} reference photo(s)',
             ),
           ],
           Divider(color: colors.border, height: 1),
@@ -682,16 +1084,20 @@ class _SummaryRow extends StatelessWidget {
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.step,
+    required this.totalSteps,
     required this.canProceed,
     required this.submitting,
     required this.onNext,
     this.onBack,
   });
   final int step;
+  final int totalSteps;
   final bool canProceed;
   final bool submitting;
   final VoidCallback? onNext;
   final VoidCallback? onBack;
+
+  bool get _isLast => step == totalSteps - 1;
 
   @override
   Widget build(BuildContext context) {
@@ -717,13 +1123,11 @@ class _BottomBar extends StatelessWidget {
             ],
             Expanded(
               child: BBButton(
-                label: step == 2 ? 'Confirm Booking' : 'Continue',
+                label: _isLast ? 'Confirm Booking' : 'Continue',
                 onPressed: step == 0 && !canProceed ? null : onNext,
                 loading: submitting,
                 disabled: step == 0 && !canProceed,
-                icon: step == 2
-                    ? AppIcons.check
-                    : AppIcons.arrowForward,
+                icon: _isLast ? AppIcons.check : AppIcons.arrowForward,
                 iconAfter: true,
               ),
             ),

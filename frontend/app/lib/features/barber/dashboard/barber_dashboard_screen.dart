@@ -501,10 +501,13 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _QuickActions extends StatelessWidget {
+class _QuickActions extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.bbColors;
+    final state = ref.watch(barberDashProvider);
+    final onBreak = state.profile?.onBreak ?? false;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -597,10 +600,62 @@ class _QuickActions extends StatelessWidget {
                 onTap: () => context.push('/barber/qr'),
               ),
             ),
-            const Spacer(),
+            const SizedBox(width: BBSpacing.sm),
+            // Break toggle — prominent because it affects the queue
+            Expanded(
+              child: _BreakToggleCard(
+                onBreak: onBreak,
+                onTap: () =>
+                    ref.read(barberDashProvider.notifier).toggleBreak(),
+              ),
+            ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _BreakToggleCard extends StatelessWidget {
+  const _BreakToggleCard({required this.onBreak, required this.onTap});
+  final bool onBreak;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    final color = onBreak ? BBColors.error : colors.textSecondary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(BBSpacing.base),
+        decoration: BoxDecoration(
+          color: onBreak
+              ? BBColors.error.withValues(alpha: 0.10)
+              : colors.surfaceVariant,
+          borderRadius: BorderRadius.circular(BBRadius.lg),
+          border: Border.all(
+            color: onBreak
+                ? BBColors.error.withValues(alpha: 0.35)
+                : colors.border,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(AppIcons.pause, size: 20, color: color),
+            const SizedBox(width: BBSpacing.sm),
+            Expanded(
+              child: Text(
+                onBreak ? 'Resume' : 'Break',
+                style: BBTypography.textTheme.labelLarge?.copyWith(
+                  color: onBreak ? BBColors.error : colors.text,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

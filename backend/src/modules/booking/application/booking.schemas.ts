@@ -4,7 +4,11 @@ export const createBookingSchema = z.object({
   shopId: z.string().cuid(),
   serviceId: z.string().cuid(),
   barberId: z.string().cuid().optional(),
-  walkIn: z.boolean().default(false)
+  walkIn: z.boolean().default(false),
+  scheduledStart: z.string().datetime().optional(),
+  travelMinutes: z.number().int().min(0).max(120).optional(),
+  notes: z.string().max(500).optional(),
+  referenceImageUrls: z.array(z.string().url()).max(5).optional()
 });
 
 export const cancelBookingSchema = z.object({

@@ -67,4 +67,18 @@ export class BookingController {
     const bookings = await this.service.listUserBookings(getAuthUser(request), query.status);
     return { bookings };
   };
+
+  addReferenceImage = async (request: FastifyRequest, reply: FastifyReply) => {
+    const { bookingId } = request.params as { bookingId: string };
+    const { url } = (request.body ?? {}) as { url?: string };
+    if (!url) return reply.status(400).send({ message: "url is required" });
+    const image = await this.service.addReferenceImage(getAuthUser(request), bookingId, url);
+    return reply.status(201).send({ image });
+  };
+
+  listReferenceImages = async (request: FastifyRequest) => {
+    const { bookingId } = request.params as { bookingId: string };
+    const images = await this.service.listReferenceImages(getAuthUser(request), bookingId);
+    return { images };
+  };
 }

@@ -67,15 +67,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
       if (auth is AuthAuthenticated) {
         if (path == '/' || path == '/login' || path == '/register') {
-          if (auth.user.isBarber) return '/barber';
+          if (auth.user.isBarber || auth.user.isOwner) return '/barber';
+          if (auth.user.isReception) return '/barber/reception';
           if (auth.user.isAdmin) return '/admin';
           return '/home';
         }
-        if (auth.user.isBarber &&
+        if ((auth.user.isBarber || auth.user.isOwner) &&
             !path.startsWith('/barber') &&
             path != '/change-password' &&
             path != '/settings') {
           return '/barber';
+        }
+        if (auth.user.isReception &&
+            !path.startsWith('/barber/reception') &&
+            path != '/change-password' &&
+            path != '/settings') {
+          return '/barber/reception';
         }
         if (auth.user.isCustomer && path.startsWith('/barber')) {
           return '/home';

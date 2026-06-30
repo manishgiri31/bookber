@@ -18,6 +18,9 @@ class UserProfile {
   bool get isCustomer => role == 'customer';
   bool get isBarber => role == 'barber';
   bool get isAdmin => role == 'admin';
+  bool get isOwner => role == 'owner';
+  bool get isReception => role == 'reception';
+  bool get isShopStaff => isBarber || isOwner || isReception;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -58,6 +61,8 @@ class UserProfile {
         'CLIENT' => 'customer',
         'BARBER' => 'barber',
         'ADMIN' => 'admin',
+        'OWNER' => 'owner',
+        'RECEPTION' => 'reception',
         _ => (raw ?? 'customer').toLowerCase(),
       };
 }

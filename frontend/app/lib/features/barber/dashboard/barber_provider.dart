@@ -16,6 +16,7 @@ class BarberProfile {
     required this.shopName,
     required this.shopAddress,
     required this.isAvailable,
+    required this.onBreak,
     this.profileImage,
     this.email,
     this.checkInToken,
@@ -28,6 +29,7 @@ class BarberProfile {
   final String shopName;
   final String shopAddress;
   final bool isAvailable;
+  final bool onBreak;
   final String? profileImage;
   final String? email;
   /// Permanent per-barber token encoded in the check-in QR code.
@@ -44,6 +46,7 @@ class BarberProfile {
       shopName: shop?['name']?.toString() ?? '',
       shopAddress: shop?['address']?.toString() ?? '',
       isAvailable: (json['isAvailable'] as bool?) ?? true,
+      onBreak: (json['onBreak'] as bool?) ?? false,
       profileImage: user?['profileImage']?.toString(),
       email: user?['email']?.toString(),
       checkInToken: json['checkInToken']?.toString(),
@@ -205,18 +208,36 @@ class BarberDashNotifier extends AutoDisposeNotifier<BarberDashState> {
         ApiEndpoints.barberStatus(state.profile!.id),
         body: {'isAvailable': !state.profile!.isAvailable},
       );
+      final p = state.profile!;
       state = state.copyWith(
         profile: BarberProfile(
-          id: state.profile!.id,
-          userId: state.profile!.userId,
-          name: state.profile!.name,
-          shopId: state.profile!.shopId,
-          shopName: state.profile!.shopName,
-          shopAddress: state.profile!.shopAddress,
-          isAvailable: !state.profile!.isAvailable,
-          profileImage: state.profile!.profileImage,
-          email: state.profile!.email,
-          checkInToken: state.profile!.checkInToken,
+          id: p.id, userId: p.userId, name: p.name,
+          shopId: p.shopId, shopName: p.shopName, shopAddress: p.shopAddress,
+          isAvailable: !p.isAvailable, onBreak: p.onBreak,
+          profileImage: p.profileImage, email: p.email, checkInToken: p.checkInToken,
+        ),
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  Future<void> toggleBreak() async {
+    if (state.profile == null) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      final newBreak = !state.profile!.onBreak;
+      await api.patch<void>(
+        ApiEndpoints.barberBreak(state.profile!.id),
+        body: {'onBreak': newBreak},
+      );
+      final p = state.profile!;
+      state = state.copyWith(
+        profile: BarberProfile(
+          id: p.id, userId: p.userId, name: p.name,
+          shopId: p.shopId, shopName: p.shopName, shopAddress: p.shopAddress,
+          isAvailable: p.isAvailable, onBreak: newBreak,
+          profileImage: p.profileImage, email: p.email, checkInToken: p.checkInToken,
         ),
       );
     } catch (e) {

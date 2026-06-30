@@ -109,4 +109,20 @@ abstract final class ApiEndpoints {
 
   // Coupons
   static const String validateCoupon = '/coupons/validate';
+
+  // Barber break
+  static String barberBreak(String id) => '/api/barbers/$id/break';
+
+  // Booking reference images
+  static String referenceImages(String bookingId) => '/bookings/$bookingId/reference-images';
+
+  // Reception
+  static const String receptionQueue = '/api/reception/queue';
+  static const String receptionCheckIn = '/api/reception/check-in';
+  static const String receptionWalkIn = '/api/reception/walk-in';
+  static const String receptionScheduled = '/api/reception/scheduled';
+
+  // Shop staff
+  static String shopStaff(String shopId) => '/api/shops/$shopId/staff';
+  static String shopStaffMember(String shopId, String staffId) => '/api/shops/$shopId/staff/$staffId';
 }

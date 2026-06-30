@@ -44,6 +44,7 @@ import { prismaPlugin } from "./shared/prisma/prisma.plugin.js";
 import { redisPlugin } from "./shared/redis/redis.plugin.js";
 import { registerRoutes, type RouteDefinition } from "./shared/app/route-registry.js";
 import { barberRoutes } from "./modules/barber/presentation/barber.routes.js";
+import { receptionRoutes } from "./modules/barber/presentation/reception.routes.js";
 
 export async function buildApp(): Promise<FastifyInstance> {
   console.log("Creating Fastify instance...");
@@ -178,6 +179,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     { plugin: reviewRoutes, prefix: "" },
     { plugin: notificationRoutes, prefix: "" },
     { plugin: barberRoutes, prefix: "/api" },
+    { plugin: receptionRoutes, prefix: "/api" },
     { plugin: geolocationRoutes, prefix: "" },
     { plugin: adminRoutes, prefix: "" },
     { plugin: walletRoutes, prefix: "" },
@@ -215,7 +217,7 @@ declare module "fastify" {
     redis: import("ioredis").Redis | null;
     socketPublisher: SocketEventPublisher;
     authenticate: (request: FastifyRequest) => Promise<void>;
-    authorizeRoles: (roles: Array<"CLIENT" | "BARBER" | "ADMIN">) => (request: FastifyRequest) => Promise<void>;
+    authorizeRoles: (roles: Array<"CLIENT" | "BARBER" | "ADMIN" | "OWNER" | "RECEPTION">) => (request: FastifyRequest) => Promise<void>;
     io: import("socket.io").Server | null;
   }
 }

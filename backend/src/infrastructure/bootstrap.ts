@@ -7,10 +7,12 @@ import { rootLogger } from "./logging/structured-logger.js";
 import { registerMetricsRoutes, startGaugeCollector } from "./metrics/metrics.routes.js";
 import { getRedisManager } from "./redis/redis-manager.js";
 import { startRecoveryWorkers } from "./workers/recovery-bootstrap.js";
+import { ScheduledBookingPromoterWorker } from "./workers/scheduled-booking-promoter.worker.js";
 
 export type InfrastructureHandles = {
   stopGaugeCollector: () => void;
   stopRecoveryWorkers: () => void;
+  stopScheduledPromoter: () => void;
   redisManager: ReturnType<typeof getRedisManager>;
 };
 
@@ -57,6 +59,11 @@ export async function bootstrapInfrastructure(
     const stopRecoveryWorkers = startRecoveryWorkers(app, redisManager.client);
     console.log("✓ Recovery workers started");
 
+    console.log("Starting scheduled booking promoter...");
+    const promoter = new ScheduledBookingPromoterWorker(app.notificationDeps.service);
+    const stopScheduledPromoter = promoter.start();
+    console.log("✓ Scheduled booking promoter started");
+
     rootLogger.info(
       {
         prometheus: env.PROMETHEUS_ENABLED,
@@ -67,7 +74,7 @@ export async function bootstrapInfrastructure(
     );
 
     console.log("✓ Infrastructure bootstrap complete");
-    return { stopGaugeCollector, stopRecoveryWorkers, redisManager };
+    return { stopGaugeCollector, stopRecoveryWorkers, stopScheduledPromoter, redisManager };
   } catch (error) {
     console.error("Bootstrap infrastructure error:", error);
     console.error("Stack:", error instanceof Error ? error.stack : "No stack");
