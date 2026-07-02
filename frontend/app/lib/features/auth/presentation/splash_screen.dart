@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
 import '../../../core/design/bb_typography.dart';
+import '../../../core/providers/app_lock_provider.dart';
 import '../data/auth_provider.dart';
+import '../domain/auth_models.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -46,19 +48,33 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     super.dispose();
   }
 
+  void _routePastLock(UserProfile user) {
+    // Same source of truth the router's redirect consults, so the two never
+    // disagree about whether the app should be locked.
+    if (ref.read(biometricEnabledProvider)) {
+      context.go('/lock');
+      return;
+    }
+
+    ref.read(appLockProvider.notifier).unlock();
+    if (user.isBarber || user.isOwner) {
+      context.go('/barber');
+    } else if (user.isReception) {
+      context.go('/barber/reception');
+    } else if (user.isAdmin) {
+      context.go('/admin');
+    } else {
+      context.go('/home');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<AuthState>(authProvider, (_, next) {
       if (!mounted) return;
       switch (next) {
         case AuthAuthenticated(:final user):
-          if (user.isBarber) {
-            context.go('/barber');
-          } else if (user.isAdmin) {
-            context.go('/admin');
-          } else {
-            context.go('/home');
-          }
+          _routePastLock(user);
         case AuthUnauthenticated():
           context.go('/login');
         case _:

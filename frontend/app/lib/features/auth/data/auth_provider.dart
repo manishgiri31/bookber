@@ -64,7 +64,7 @@ class AuthNotifier extends Notifier<AuthState> {
   @override
   AuthState build() {
     // Start session restoration on init
-    _restoreSession();
+    Future.microtask(_restoreSession);
     return const AuthInitial();
   }
 

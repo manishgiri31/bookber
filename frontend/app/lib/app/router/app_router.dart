@@ -6,11 +6,13 @@ import 'package:go_router/go_router.dart';
 import '../../core/design/bb_colors.dart';
 import '../../core/design/bb_tokens.dart';
 import '../../core/design/bb_typography.dart';
+import '../../core/providers/app_lock_provider.dart';
 import '../../core/providers/providers.dart';
 import '../../core/providers/theme_provider.dart';
 import '../../core/widgets/bb_button.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../features/auth/data/auth_provider.dart';
+import '../../features/auth/presentation/biometric_lock_screen.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
@@ -66,7 +68,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
       if (auth is AuthAuthenticated) {
-        if (path == '/' || path == '/login' || path == '/register') {
+        final locked =
+            ref.read(appLockProvider) && ref.read(biometricEnabledProvider);
+        if (locked) {
+          return path == '/lock' ? null : '/lock';
+        }
+        if (path == '/' || path == '/login' || path == '/register' || path == '/lock') {
           if (auth.user.isBarber || auth.user.isOwner) return '/barber';
           if (auth.user.isReception) return '/barber/reception';
           if (auth.user.isAdmin) return '/admin';
@@ -94,6 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/', builder: (_, _) => const SplashScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
+      GoRoute(path: '/lock', builder: (_, _) => const BiometricLockScreen()),
       GoRoute(path: '/admin', builder: (_, _) => const AdminScreen()),
 
       // Customer shell
@@ -263,6 +271,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 class AuthStateListenable extends ChangeNotifier {
   AuthStateListenable(Ref ref) {
     ref.listen(authProvider, (_, _) => notifyListeners());
+    ref.listen(appLockProvider, (_, _) => notifyListeners());
+    ref.listen(biometricEnabledProvider, (_, _) => notifyListeners());
   }
 }
 
@@ -1050,21 +1060,57 @@ class _SwitchRow extends StatelessWidget {
 
 // ─────────────── Privacy & Security Screen ───────────────
 
-class PrivacySecurityScreen extends StatefulWidget {
+class PrivacySecurityScreen extends ConsumerStatefulWidget {
   const PrivacySecurityScreen({super.key});
 
   @override
-  State<PrivacySecurityScreen> createState() => _PrivacySecurityScreenState();
+  ConsumerState<PrivacySecurityScreen> createState() =>
+      _PrivacySecurityScreenState();
 }
 
-class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
-  bool _biometric = false;
+class _PrivacySecurityScreenState
+    extends ConsumerState<PrivacySecurityScreen> {
   bool _shareLocation = true;
   bool _dataSaver = false;
+  bool _biometricBusy = false;
+
+  Future<void> _onBiometricChanged(bool enabled) async {
+    if (!enabled) {
+      await ref.read(biometricEnabledProvider.notifier).set(false);
+      return;
+    }
+
+    setState(() => _biometricBusy = true);
+    final service = ref.read(biometricServiceProvider);
+    final available = await service.isAvailable;
+    if (!mounted) return;
+
+    if (!available) {
+      setState(() => _biometricBusy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No fingerprint or face unlock is set up on this device.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final confirmed = await service.authenticate(
+      'Confirm biometric unlock for BookBer',
+    );
+    if (!mounted) return;
+    setState(() => _biometricBusy = false);
+    if (confirmed) {
+      await ref.read(biometricEnabledProvider.notifier).set(true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
+    final biometricEnabled = ref.watch(biometricEnabledProvider);
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(title: const Text('Privacy & Security')),
@@ -1080,9 +1126,11 @@ class _PrivacySecurityScreenState extends State<PrivacySecurityScreen> {
               _SwitchRow(
                 icon: AppIcons.fingerprint,
                 label: 'Biometric Login',
-                subtitle: 'Use fingerprint or Face ID to sign in',
-                value: _biometric,
-                onChanged: (v) => setState(() => _biometric = v),
+                subtitle: _biometricBusy
+                    ? 'Checking...'
+                    : 'Use fingerprint or Face ID to unlock the app',
+                value: biometricEnabled,
+                onChanged: _biometricBusy ? (_) {} : _onBiometricChanged,
               ),
             ],
           ),

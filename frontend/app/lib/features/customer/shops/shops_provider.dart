@@ -177,7 +177,7 @@ class ShopsNotifier extends AutoDisposeNotifier<ShopsSearchState> {
         _loadAll();
       }
     });
-    _loadAll();
+    Future.microtask(_loadAll);
     return const ShopsSearchState(isLoading: true);
   }
 

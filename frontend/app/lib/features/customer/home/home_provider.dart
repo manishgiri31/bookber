@@ -61,7 +61,7 @@ class HomeNotifier extends AutoDisposeNotifier<HomeState> {
     ref.listen(locationProvider, (_, next) {
       if (next.hasValue) load();
     });
-    load();
+    Future.microtask(load);
     return const HomeState(isLoading: true);
   }
 

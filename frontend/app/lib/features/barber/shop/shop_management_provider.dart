@@ -117,7 +117,7 @@ class ShopManagementNotifier
     extends AutoDisposeNotifier<ShopManagementState> {
   @override
   ShopManagementState build() {
-    load();
+    Future.microtask(load);
     return const ShopManagementState(isLoading: true);
   }
 

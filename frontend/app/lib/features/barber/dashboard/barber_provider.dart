@@ -120,7 +120,7 @@ class BarberDashState {
 class BarberDashNotifier extends Notifier<BarberDashState> {
   @override
   BarberDashState build() {
-    load();
+    Future.microtask(load);
     return const BarberDashState(isLoading: true);
   }
 
