@@ -49,9 +49,14 @@ export class AuthController {
   };
 
   refresh = async (request: FastifyRequest, reply: FastifyReply) => {
-    const refreshToken = request.cookies[env.REFRESH_TOKEN_COOKIE_NAME];
+    // Accept refresh token from cookie (web) OR request body (mobile).
+    // Mobile clients (Flutter/React Native) cannot set cookies, so they send
+    // the refresh token in the JSON body instead.
+    const cookieToken = request.cookies[env.REFRESH_TOKEN_COOKIE_NAME];
+    const bodyToken = (request.body as Record<string, unknown> | null | undefined)?.refreshToken;
+    const rawToken = cookieToken ?? (typeof bodyToken === "string" ? bodyToken : undefined);
     const parsed = refreshSchema.parse(
-      refreshToken !== undefined ? { refreshToken } : {}
+      rawToken !== undefined ? { refreshToken: rawToken } : {}
     );
     const result = await this.authService.refresh(
       parsed.refreshToken !== undefined ? { refreshToken: parsed.refreshToken } : {}
@@ -65,9 +70,12 @@ export class AuthController {
   };
 
   logout = async (request: FastifyRequest, reply: FastifyReply) => {
-    const refreshToken = request.cookies[env.REFRESH_TOKEN_COOKIE_NAME];
+    // Same cookie-or-body fallback so mobile clients can properly revoke tokens.
+    const cookieToken = request.cookies[env.REFRESH_TOKEN_COOKIE_NAME];
+    const bodyToken = (request.body as Record<string, unknown> | null | undefined)?.refreshToken;
+    const rawToken = cookieToken ?? (typeof bodyToken === "string" ? bodyToken : undefined);
     const parsed = logoutSchema.parse(
-      refreshToken !== undefined ? { refreshToken } : {}
+      rawToken !== undefined ? { refreshToken: rawToken } : {}
     );
     await this.authService.logout(
       parsed.refreshToken !== undefined ? { refreshToken: parsed.refreshToken } : {}

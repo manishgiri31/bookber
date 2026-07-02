@@ -6,7 +6,7 @@ const queueStatusSchema = z.enum(["WAITING", "READY", "CALLED", "IN_SERVICE", "C
 
 export const barberRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/barbers/me
-  app.get("/barbers/me", { preHandler: app.authorizeRoles(["BARBER"]) }, async (request) => {
+  app.get("/barbers/me", { preHandler: app.authorizeRoles(["BARBER", "OWNER"]) }, async (request) => {
     let barber = await app.prisma.barber.findUnique({
       where: { userId: request.user.sub },
       include: {
@@ -33,7 +33,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // GET /api/barbers/:barberId/stats
-  app.get("/barbers/:barberId/stats", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.get("/barbers/:barberId/stats", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -49,7 +49,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // GET /api/barbers/:barberId/queue
-  app.get("/barbers/:barberId/queue", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.get("/barbers/:barberId/queue", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
     const entries = await app.prisma.queueEntry.findMany({
       where: { barberId, queueStatus: { in: ["WAITING", "CALLED", "READY", "IN_SERVICE"] } },
@@ -67,7 +67,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // GET /api/barbers/:barberId/bookings
-  app.get("/barbers/:barberId/bookings", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.get("/barbers/:barberId/bookings", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
     const q = request.query as { date?: string };
     const dateStr = !q.date || q.date === "today" ? new Date().toISOString().split("T")[0] : q.date;
@@ -83,7 +83,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // PATCH /api/barbers/:barberId/status
-  app.patch("/barbers/:barberId/status", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.patch("/barbers/:barberId/status", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
     if (request.user.role === "BARBER") {
       const ownBarber = await app.prisma.barber.findUnique({
@@ -100,7 +100,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // PATCH /api/barbers/:barberId/break — toggle on-break status
-  app.patch("/barbers/:barberId/break", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.patch("/barbers/:barberId/break", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
     if (request.user.role === "BARBER") {
       const ownBarber = await app.prisma.barber.findUnique({
@@ -117,7 +117,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // GET /api/barbers/:barberId/working-hours (proxies shop operating hours)
-  app.get("/barbers/:barberId/working-hours", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.get("/barbers/:barberId/working-hours", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
     const barber = await app.prisma.barber.findUnique({ where: { id: barberId }, select: { shopId: true } });
     if (!barber) throw app.httpErrors.notFound("Barber not found");
@@ -126,12 +126,12 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // POST /api/barbers/:barberId/working-hours (placeholder)
-  app.post("/barbers/:barberId/working-hours", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (_request, reply) => {
+  app.post("/barbers/:barberId/working-hours", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (_request, reply) => {
     return reply.status(204).send();
   });
 
   // PATCH /api/queue/:entryId/status (entryId may be the queue entry id OR the bookingId)
-  app.patch("/queue/:entryId/status", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request) => {
+  app.patch("/queue/:entryId/status", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { entryId } = request.params as { entryId: string };
     const rawStatus = ((request.body as { status?: string })?.status ?? "").toUpperCase();
     const status = queueStatusSchema.parse(rawStatus);
@@ -151,7 +151,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   });
 
   // POST /api/queue/walk-in
-  app.post("/queue/walk-in", { preHandler: app.authorizeRoles(["BARBER", "ADMIN"]) }, async (request, reply) => {
+  app.post("/queue/walk-in", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request, reply) => {
     const { shopId, serviceIds, customerName } = z.object({
       shopId: z.string(),
       serviceIds: z.array(z.string()).min(1),

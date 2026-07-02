@@ -54,7 +54,14 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      await _api.post<void>(ApiEndpoints.logout, body: {})
+      // Send the refresh token in the body so the backend can revoke it.
+      // Mobile clients have no cookie jar, so this is the only revocation path.
+      final refreshToken = await _storage.refreshToken;
+      await _api
+          .post<void>(
+            ApiEndpoints.logout,
+            body: refreshToken != null ? {'refreshToken': refreshToken} : {},
+          )
           .timeout(const Duration(seconds: 3));
     } catch (_) {}
     await _storage.clearSession();

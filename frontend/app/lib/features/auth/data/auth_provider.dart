@@ -2,8 +2,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/notifications_provider.dart';
 import '../../../core/providers/providers.dart';
+import '../../barber/dashboard/barber_provider.dart';
+import '../../customer/home/home_provider.dart';
+import '../../customer/payment/payment_provider.dart';
+import '../../customer/wallet/wallet_provider.dart';
 import '../domain/auth_models.dart';
 import 'auth_repository.dart';
+
+/// Invalidates every non-autoDispose provider that holds session-scoped data.
+/// Must be called on both login AND logout to guarantee that a new session
+/// never sees the previous user's cached state regardless of role.
+void _resetSessionScopedState(Ref ref) {
+  // Barber state
+  ref.invalidate(barberDashProvider);
+
+  // Customer state — these are non-autoDispose and survive navigation, so they
+  // must be explicitly cleared when the session boundary is crossed.
+  ref.invalidate(activeBookingsProvider);
+  ref.invalidate(homeProvider);
+  ref.invalidate(walletProvider);
+  ref.invalidate(paymentHistoryProvider);
+
+  // Cross-role
+  ref.invalidate(notificationsProvider);
+}
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepository(
@@ -69,6 +91,7 @@ class AuthNotifier extends Notifier<AuthState> {
       final (user, _) = await _repo.login(
         LoginRequest(email: email.trim(), password: password),
       );
+      _resetSessionScopedState(ref);
       state = AuthAuthenticated(user);
       _registerFcm();
       return true;
@@ -96,6 +119,7 @@ class AuthNotifier extends Notifier<AuthState> {
           role: role,
         ),
       );
+      _resetSessionScopedState(ref);
       state = AuthAuthenticated(user);
       _registerFcm();
       return true;
@@ -117,11 +141,13 @@ class AuthNotifier extends Notifier<AuthState> {
     ref.read(notificationsProvider.notifier).revokeToken().ignore();
     await _repo.logout(); // Has built-in 3-second timeout on the API call
     state = const AuthUnauthenticated();
+    _resetSessionScopedState(ref);
   }
 
   void forceLogout() {
     _repo.clearLocalSession();
     state = const AuthUnauthenticated();
+    _resetSessionScopedState(ref);
   }
 
   void _registerFcm() {

@@ -10,11 +10,27 @@ import '../storage/secure_storage.dart';
 class ApiClient {
   ApiClient({SecureStorage? storage, this.onSessionExpired})
       : _storage = storage ?? SecureStorage.instance {
-    _dio = Dio(
+    final opts = BaseOptions(
+      baseUrl: ApiEndpoints.baseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 20),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
+    );
+
+    _dio = Dio(opts);
+
+    // Separate Dio instance used exclusively for token refresh.
+    // It has NO auth interceptor, preventing the deadlock that occurs when
+    // the refresh request itself gets a 401 and re-enters the error handler.
+    _refreshDio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 20),
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -24,7 +40,7 @@ class ApiClient {
     );
 
     _dio.interceptors.addAll([
-      _AuthInterceptor(_storage, _dio, onSessionExpired),
+      _AuthInterceptor(_storage, _dio, _refreshDio, onSessionExpired),
       if (kDebugMode) LogInterceptor(requestBody: true, responseBody: true),
     ]);
   }
@@ -32,6 +48,7 @@ class ApiClient {
   final SecureStorage _storage;
   final void Function()? onSessionExpired;
   late final Dio _dio;
+  late final Dio _refreshDio;
 
   Future<T> get<T>(
     String path, {
@@ -125,12 +142,16 @@ class ApiClient {
 }
 
 class _AuthInterceptor extends Interceptor {
-  _AuthInterceptor(this._storage, this._dio, this._onSessionExpired);
+  _AuthInterceptor(this._storage, this._dio, this._refreshDio, this._onSessionExpired);
 
   final SecureStorage _storage;
   final Dio _dio;
+  final Dio _refreshDio;
   final void Function()? _onSessionExpired;
-  bool _isRefreshing = false;
+
+  /// Non-null while a refresh is in flight. Concurrent 401s await this
+  /// instead of each kicking off their own refresh or failing immediately.
+  Future<String?>? _refreshFuture;
 
   @override
   Future<void> onRequest(
@@ -149,42 +170,56 @@ class _AuthInterceptor extends Interceptor {
     DioException err,
     ErrorInterceptorHandler handler,
   ) async {
-    if (err.response?.statusCode == 401 && !_isRefreshing) {
-      _isRefreshing = true;
-      try {
-        final refreshToken = await _storage.refreshToken;
-        if (refreshToken == null) {
-          _isRefreshing = false;
-          handler.next(err);
-          return;
-        }
-
-        final response = await _dio.post<dynamic>(
-          ApiEndpoints.refresh,
-          data: {'refreshToken': refreshToken},
-        );
-
-        final data = response.data as Map<String, dynamic>;
-        final newAccessToken = data['accessToken'] as String?;
-        final newRefreshToken = data['refreshToken'] as String?;
-
-        if (newAccessToken != null && newRefreshToken != null) {
-          await _storage.saveTokens(
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-          );
-          err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
-          _isRefreshing = false;
-          final retry = await _dio.fetch<dynamic>(err.requestOptions);
-          handler.resolve(retry);
-          return;
-        }
-      } catch (_) {
-        await _storage.clearSession();
-        _onSessionExpired?.call();
-      }
-      _isRefreshing = false;
+    if (err.response?.statusCode != 401) {
+      handler.next(err);
+      return;
     }
-    handler.next(err);
+
+    final newAccessToken = await (_refreshFuture ??= _refresh());
+    if (newAccessToken == null) {
+      handler.next(err);
+      return;
+    }
+
+    try {
+      err.requestOptions.headers['Authorization'] = 'Bearer $newAccessToken';
+      final retry = await _dio.fetch<dynamic>(err.requestOptions);
+      handler.resolve(retry);
+    } catch (_) {
+      handler.next(err);
+    }
+  }
+
+  /// Performs the token refresh once; concurrent callers share this Future.
+  /// Uses _refreshDio (no interceptors) to avoid a deadlock where the refresh
+  /// request's own 401 would re-enter onError and await _refreshFuture.
+  Future<String?> _refresh() async {
+    try {
+      final refreshToken = await _storage.refreshToken;
+      if (refreshToken == null) return null;
+
+      final response = await _refreshDio.post<dynamic>(
+        ApiEndpoints.refresh,
+        data: {'refreshToken': refreshToken},
+      );
+
+      final data = response.data as Map<String, dynamic>;
+      final newAccessToken = data['accessToken'] as String?;
+      final newRefreshToken = data['refreshToken'] as String?;
+
+      if (newAccessToken == null || newRefreshToken == null) return null;
+
+      await _storage.saveTokens(
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      );
+      return newAccessToken;
+    } catch (_) {
+      await _storage.clearSession();
+      _onSessionExpired?.call();
+      return null;
+    } finally {
+      _refreshFuture = null;
+    }
   }
 }

@@ -46,24 +46,27 @@ export class AuthService {
   async login(input: { identifier: string; password: string }) {
     const user = await this.repository.findByIdentifier(input.identifier);
     if (!user) {
-      throw Errors.unauthenticated();
+      throw Errors.unauthenticated("Invalid email or password");
     }
 
-    const isLocked = await this.repository.isAccountLocked(user.id);
-    if (isLocked) {
-      throw Errors.forbidden();
+    const lockedUntil = await this.repository.getLockedUntil(user.id);
+    if (lockedUntil) {
+      const minutesRemaining = Math.ceil((lockedUntil.getTime() - Date.now()) / 60_000);
+      throw Errors.forbidden(
+        `Account temporarily locked due to too many failed login attempts. Try again in ${minutesRemaining} minute(s).`
+      );
     }
 
     const passwordMatch = await bcrypt.compare(input.password, user.password);
     if (!passwordMatch) {
       await this.handleFailedLogin(user.id);
-      throw Errors.unauthenticated();
+      throw Errors.unauthenticated("Invalid email or password");
     }
 
     await this.repository.resetFailedLoginAttempts(user.id);
 
     const authUser = await this.repository.findById(user.id);
-    if (!authUser) throw Errors.unauthenticated();
+    if (!authUser) throw Errors.unauthenticated("Invalid email or password");
 
     return this.issueTokens(authUser);
   }
@@ -113,8 +116,10 @@ export class AuthService {
   }
 
   private async handleFailedLogin(userId: string) {
-    await this.repository.incrementFailedLoginAttempts(userId);
-    await this.repository.lockAccount(userId, ACCOUNT_LOCK_DURATION_MINUTES);
+    const attempts = await this.repository.incrementFailedLoginAttempts(userId);
+    if (attempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+      await this.repository.lockAccount(userId, ACCOUNT_LOCK_DURATION_MINUTES);
+    }
   }
 
   private async issueTokens(user: AuthUser): Promise<{ user: AuthUser; tokens: TokenPair }> {

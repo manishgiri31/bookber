@@ -18,8 +18,10 @@ import '../dashboard/barber_provider.dart';
 final _barberBookingsProvider =
     FutureProvider.autoDispose<List<Booking>>((ref) async {
   final api = ref.watch(apiClientProvider);
-  final dash = ref.watch(barberDashProvider);
-  final barberId = dash.profile?.id;
+  // .select() narrows the dependency to just the barber ID, so toggling
+  // availability/break or refreshing queue/stats doesn't trigger a
+  // redundant refetch of bookings every time the dashboard state changes.
+  final barberId = ref.watch(barberDashProvider.select((s) => s.profile?.id));
   if (barberId == null) return [];
   try {
     final data = await api.get<Map<String, dynamic>>(

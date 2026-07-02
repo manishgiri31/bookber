@@ -66,27 +66,24 @@ export class PrismaAuthRepository {
     return user;
   }
 
-  async incrementFailedLoginAttempts(userId: string): Promise<void> {
-    await prisma.user.update({
+  async incrementFailedLoginAttempts(userId: string): Promise<number> {
+    const user = await prisma.user.update({
       where: { id: userId },
       data: {
         failedLoginAttempts: {
           increment: 1
         }
-      }
+      },
+      select: { failedLoginAttempts: true }
     });
+    return user.failedLoginAttempts;
   }
 
   async lockAccount(userId: string, lockDurationMinutes: number): Promise<void> {
     const lockedUntil = new Date(Date.now() + lockDurationMinutes * 60 * 1000);
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        lockedUntil,
-        failedLoginAttempts: {
-          increment: 1
-        }
-      }
+      data: { lockedUntil }
     });
   }
 
@@ -100,13 +97,13 @@ export class PrismaAuthRepository {
     });
   }
 
-  async isAccountLocked(userId: string): Promise<boolean> {
+  async getLockedUntil(userId: string): Promise<Date | null> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { lockedUntil: true }
     });
-    if (!user?.lockedUntil) return false;
-    return user.lockedUntil > new Date();
+    if (!user?.lockedUntil || user.lockedUntil <= new Date()) return null;
+    return user.lockedUntil;
   }
 
   async storeRefreshToken(input: StoreRefreshTokenInput) {

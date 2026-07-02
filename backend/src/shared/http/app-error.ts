@@ -11,7 +11,7 @@ export class AppError extends Error {
 
 export const Errors = {
   unauthenticated: (message = "Authentication required") => new AppError("UNAUTHENTICATED", 401, message),
-  forbidden: () => new AppError("FORBIDDEN", 403, "Forbidden"),
+  forbidden: (message = "Forbidden") => new AppError("FORBIDDEN", 403, message),
   notFound: (message = "Resource not found") => new AppError("NOT_FOUND", 404, message),
   conflict: (message: string, details?: unknown) => new AppError("CONFLICT", 409, message, details),
   validation: (message: string, details?: unknown) => new AppError("VALIDATION_ERROR", 400, message, details)

@@ -125,8 +125,8 @@ class BarberDashNotifier extends Notifier<BarberDashState> {
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, error: null);
     try {
+      state = state.copyWith(isLoading: true, error: null);
       final api = ref.read(apiClientProvider);
       final storage = ref.read(secureStorageProvider);
       final cachedBarberId = await storage.read(StorageKeys.barberId);
