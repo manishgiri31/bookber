@@ -169,6 +169,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.8"
+  eventify:
+    dependency: transitive
+    description:
+      name: eventify
+      sha256: b829429f08586cc2001c628e7499e3e3c2493a1d895fd73b00ecb23351aa5a66
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   fake_async:
     dependency: transitive
     description:
@@ -692,10 +700,10 @@ packages:
     dependency: "direct main"
     description:
       name: mobile_scanner
-      sha256: d234581c090526676fd8fab4ada92f35c6746e3fb4f05a399665d75a399fb760
+      sha256: c92c26bf2231695b6d3477c8dcf435f51e28f87b1745966b1fe4c47a286171ce
       url: "https://pub.dev"
     source: hosted
-    version: "5.2.3"
+    version: "7.2.0"
   objective_c:
     dependency: transitive
     description:
@@ -832,6 +840,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
+  razorpay_flutter:
+    dependency: "direct main"
+    description:
+      name: razorpay_flutter
+      sha256: a9026acf004df802128be6996a9397f5e9c20f32dd12ab215fd1659e0233c9f0
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.5"
   record_use:
     dependency: transitive
     description:

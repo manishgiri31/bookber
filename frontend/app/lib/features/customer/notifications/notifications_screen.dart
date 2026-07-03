@@ -29,9 +29,9 @@ extension _CatExt on _Category {
       };
 
   Color get color => switch (this) {
-        _Category.all => BBColors.amber,
+        _Category.all => BBColors.warning,
         _Category.booking => BBColors.info,
-        _Category.queue => BBColors.amber,
+        _Category.queue => BBColors.warning,
         _Category.offers => BBColors.success,
         _Category.loyalty => const Color(0xFFFFD700),
         _Category.system => BBColors.warning,
@@ -115,7 +115,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
           controller: _tab,
           labelColor: colors.text,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           tabs: _categories.map((c) => Tab(text: c.label)).toList(),

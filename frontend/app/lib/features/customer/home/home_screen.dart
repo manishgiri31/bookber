@@ -176,7 +176,7 @@ class _HeroHeader extends ConsumerWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(AppIcons.locationOnFill,
-                            size: 16, color: BBColors.amber),
+                            size: 16, color: context.bbColors.accent),
                         const SizedBox(width: 4),
                         locationAsync.isLoading
                             ? Container(
@@ -221,8 +221,8 @@ class _HeroHeader extends ConsumerWidget {
                             child: Container(
                               width: 16,
                               height: 16,
-                              decoration: const BoxDecoration(
-                                color: BBColors.amber,
+                              decoration: BoxDecoration(
+                                color: context.bbColors.accent,
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
@@ -248,7 +248,7 @@ class _HeroHeader extends ConsumerWidget {
                     child: Text(
                       (userName?.isNotEmpty == true) ? userName![0].toUpperCase() : '?',
                       style: BBTypography.textTheme.titleMedium?.copyWith(
-                        color: BBColors.amber,
+                        color: context.bbColors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -310,7 +310,7 @@ class _IconAction extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: accent
-              ? BBColors.amber.withValues(alpha: 0.15)
+              ? context.bbColors.accent.withValues(alpha: 0.15)
               : colors.surfaceVariant,
           shape: BoxShape.circle,
         ),
@@ -355,18 +355,18 @@ class _SearchBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: BBColors.amber.withValues(alpha: 0.1),
+                color: context.bbColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(BBRadius.full),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(AppIcons.filter, size: 14, color: BBColors.amber),
+                  Icon(AppIcons.filter, size: 14, color: context.bbColors.accent),
                   const SizedBox(width: 4),
                   Text(
                     'Filter',
                     style: BBTypography.textTheme.labelSmall?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -395,7 +395,7 @@ class _QuickActions extends StatelessWidget {
           _QuickActionChip(
             icon: AppIcons.bolt,
             label: 'Book Now',
-            color: BBColors.amber,
+            color: context.bbColors.accent,
             onTap: () => context.go('/shops'),
           ),
           const SizedBox(width: BBSpacing.sm),
@@ -558,14 +558,14 @@ class _ActiveBookingBanner extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  BBColors.amber.withValues(alpha: 0.15),
-                  BBColors.amber.withValues(alpha: 0.05),
+                  context.bbColors.accent.withValues(alpha: 0.15),
+                  context.bbColors.accent.withValues(alpha: 0.05),
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(BBRadius.xl),
-              border: Border.all(color: BBColors.amber.withValues(alpha: 0.2)),
+              border: Border.all(color: context.bbColors.accent.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
@@ -573,13 +573,13 @@ class _ActiveBookingBanner extends ConsumerWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.2),
+                    color: context.bbColors.accent.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     AppIcons.queue,
                     size: 20,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                   ),
                 ),
                 const SizedBox(width: BBSpacing.md),
@@ -590,7 +590,7 @@ class _ActiveBookingBanner extends ConsumerWidget {
                       Text(
                         'Active booking',
                         style: BBTypography.textTheme.labelSmall?.copyWith(
-                          color: BBColors.amber,
+                          color: context.bbColors.accent,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
                         ),
@@ -608,7 +608,7 @@ class _ActiveBookingBanner extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                     borderRadius: BorderRadius.circular(BBRadius.full),
                   ),
                   child: const Text(
@@ -735,13 +735,13 @@ class _SectionHeader extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
-                color: BBColors.amber.withValues(alpha: 0.1),
+                color: context.bbColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(BBRadius.full),
               ),
               child: Text(
                 'See all',
                 style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -870,7 +870,7 @@ class _ShopCard extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(AppIcons.starFill, size: 13, color: BBColors.amber),
+                      Icon(AppIcons.starFill, size: 13, color: context.bbColors.accent),
                       const SizedBox(width: 3),
                       Text(
                         shop.rating.toStringAsFixed(1),
@@ -934,7 +934,7 @@ class _ServiceCategoriesSection extends StatelessWidget {
   static const _cats = [
     (icon: AppIcons.scissors, label: 'Haircut', color: Color(0xFFFF6B6B)),
     (icon: AppIcons.autoFix, label: 'Fade', color: Color(0xFF20BF6B)),
-    (icon: AppIcons.face, label: 'Beard', color: BBColors.amber),
+    (icon: AppIcons.face, label: 'Beard', color: BBColors.warning),
     (icon: AppIcons.spa, label: 'Facial', color: Color(0xFFFF8E53)),
     (icon: AppIcons.waterDrop, label: 'Hair Wash', color: BBColors.info),
     (icon: AppIcons.selfImprovement, label: 'Massage', color: Color(0xFF8B78E6)),
@@ -1168,7 +1168,7 @@ class _TrendingBarbersSection extends ConsumerWidget {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: BBColors.amber.withValues(alpha: 0.12),
+                              color: context.bbColors.accent.withValues(alpha: 0.12),
                               shape: BoxShape.circle,
                             ),
                             child: Center(
@@ -1178,7 +1178,7 @@ class _TrendingBarbersSection extends ConsumerWidget {
                                     : '?',
                                 style:
                                     BBTypography.textTheme.titleLarge?.copyWith(
-                                  color: BBColors.amber,
+                                  color: context.bbColors.accent,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -1197,8 +1197,8 @@ class _TrendingBarbersSection extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(AppIcons.starFill,
-                                  size: 10, color: BBColors.amber),
+                              Icon(AppIcons.starFill,
+                                  size: 10, color: context.bbColors.accent),
                               const SizedBox(width: 2),
                               Text(
                                 shop.rating.toStringAsFixed(1),
@@ -1373,7 +1373,7 @@ class _ShopListTile extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(AppIcons.starFill, size: 13, color: BBColors.amber),
+                      Icon(AppIcons.starFill, size: 13, color: context.bbColors.accent),
                       const SizedBox(width: 3),
                       Text(
                         shop.rating.toStringAsFixed(1),

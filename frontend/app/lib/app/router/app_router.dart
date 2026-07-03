@@ -548,14 +548,14 @@ class _ThemeOption extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 color: selected
-                    ? BBColors.amber.withValues(alpha: 0.12)
+                    ? context.bbColors.accent.withValues(alpha: 0.12)
                     : colors.surfaceVariant,
                 borderRadius: BorderRadius.circular(BBRadius.sm),
               ),
               child: Icon(
                 icon,
                 size: 18,
-                color: selected ? BBColors.amber : colors.textSecondary,
+                color: selected ? context.bbColors.accent : colors.textSecondary,
               ),
             ),
             const SizedBox(width: BBSpacing.md),
@@ -581,7 +581,7 @@ class _ThemeOption extends StatelessWidget {
             ),
             if (selected)
               Icon(AppIcons.checkCircleFill,
-                  size: 20, color: BBColors.amber),
+                  size: 20, color: context.bbColors.accent),
           ],
         ),
       ),
@@ -664,7 +664,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                 ? AppIcons.starFill
                                 : AppIcons.star,
                             size: 44,
-                            color: BBColors.amber,
+                            color: context.bbColors.accent,
                           ),
                         ),
                       ),
@@ -675,7 +675,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                     Text(
                       ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][_overallRating],
                       style: BBTypography.textTheme.labelMedium?.copyWith(
-                        color: BBColors.amber,
+                        color: context.bbColors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -731,7 +731,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                           ? AppIcons.starFill
                                           : AppIcons.star,
                                       size: 24,
-                                      color: BBColors.amber,
+                                      color: context.bbColors.accent,
                                     ),
                                   ),
                                 ),
@@ -779,13 +779,13 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
                                   vertical: BBSpacing.sm),
                               decoration: BoxDecoration(
                                 color: _tipAmount == t
-                                    ? BBColors.amber
+                                    ? context.bbColors.accent
                                     : colors.surfaceVariant,
                                 borderRadius:
                                     BorderRadius.circular(BBRadius.md),
                                 border: Border.all(
                                   color: _tipAmount == t
-                                      ? BBColors.amber
+                                      ? context.bbColors.accent
                                       : colors.border,
                                 ),
                               ),
@@ -1050,7 +1050,7 @@ class _SwitchRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: BBColors.amber,
+            activeTrackColor: context.bbColors.accent,
           ),
         ],
       ),
@@ -1255,14 +1255,14 @@ class HelpCentreScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(BBSpacing.base),
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.08),
+              color: context.bbColors.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(BBRadius.lg),
-              border: Border.all(color: BBColors.amber.withValues(alpha: 0.2)),
+              border: Border.all(color: context.bbColors.accent.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
-                const Icon(AppIcons.support,
-                    color: BBColors.amber, size: 28),
+                Icon(AppIcons.support,
+                    color: context.bbColors.accent, size: 28),
                 const SizedBox(width: BBSpacing.md),
                 Expanded(
                   child: Column(
@@ -1284,8 +1284,8 @@ class HelpCentreScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(AppIcons.arrowForwardSmall,
-                    size: 14, color: BBColors.amber),
+                Icon(AppIcons.arrowForwardSmall,
+                    size: 14, color: context.bbColors.accent),
               ],
             ),
           ),
@@ -1488,12 +1488,12 @@ class AboutScreen extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.12),
+                    color: context.bbColors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(BBRadius.xl),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(AppIcons.scissors,
-                        size: 40, color: BBColors.amber),
+                        size: 40, color: context.bbColors.accent),
                   ),
                 ),
                 const SizedBox(height: BBSpacing.md),

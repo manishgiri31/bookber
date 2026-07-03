@@ -161,7 +161,7 @@ class _BarberServicesScreenState extends ConsumerState<BarberServicesScreen>
           controller: _tab,
           labelColor: colors.text,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
           tabs: _categories.map((c) => Tab(text: c)).toList(),
@@ -258,7 +258,7 @@ class _ServiceCard extends ConsumerWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: service.isActive
-                      ? BBColors.amber.withValues(alpha: 0.12)
+                      ? context.bbColors.accent.withValues(alpha: 0.12)
                       : colors.surfaceVariant,
                   borderRadius: BorderRadius.circular(BBRadius.md),
                 ),
@@ -266,7 +266,7 @@ class _ServiceCard extends ConsumerWidget {
                   AppIcons.scissors,
                   size: 20,
                   color:
-                      service.isActive ? BBColors.amber : colors.textTertiary,
+                      service.isActive ? context.bbColors.accent : colors.textTertiary,
                 ),
               ),
               const SizedBox(width: BBSpacing.md),
@@ -296,7 +296,7 @@ class _ServiceCard extends ConsumerWidget {
                 value: service.isActive,
                 onChanged: (_) =>
                     ref.read(_servicesProvider.notifier).toggle(service.id),
-                activeTrackColor: BBColors.amber,
+                activeTrackColor: context.bbColors.accent,
               ),
             ],
           ),

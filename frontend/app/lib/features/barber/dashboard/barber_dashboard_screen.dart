@@ -38,7 +38,7 @@ class BarberDashboardScreen extends ConsumerWidget {
                       fullScreen: true,
                     )
               : RefreshIndicator(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   onRefresh: () =>
                       ref.read(barberDashProvider.notifier).refresh(),
                   child: CustomScrollView(
@@ -106,7 +106,7 @@ class BarberDashboardScreen extends ConsumerWidget {
                                   color: state.queueEntries
                                           .where((e) => e.status.isActive)
                                           .isNotEmpty
-                                      ? BBColors.amber.withValues(alpha: 0.12)
+                                      ? context.bbColors.accent.withValues(alpha: 0.12)
                                       : colors.surfaceVariant,
                                   borderRadius:
                                       BorderRadius.circular(BBRadius.full),
@@ -118,7 +118,7 @@ class BarberDashboardScreen extends ConsumerWidget {
                                     color: state.queueEntries
                                             .where((e) => e.status.isActive)
                                             .isNotEmpty
-                                        ? BBColors.amber
+                                        ? context.bbColors.accent
                                         : colors.textSecondary,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -379,8 +379,8 @@ class _RevenueCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(AppIcons.starFill,
-                        size: 16, color: BBColors.amber),
+                    Icon(AppIcons.starFill,
+                        size: 16, color: context.bbColors.accent),
                     const SizedBox(width: 4),
                     Text(
                       stats.averageRating.toStringAsFixed(1),
@@ -465,7 +465,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
-    final accent = color ?? (highlight ? BBColors.amber : colors.text);
+    final accent = color ?? (highlight ? context.bbColors.accent : colors.text);
     return Container(
       padding: const EdgeInsets.all(BBSpacing.md),
       decoration: BoxDecoration(
@@ -473,7 +473,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(BBRadius.lg),
         border: Border.all(
           color: highlight
-              ? BBColors.amber.withValues(alpha: 0.4)
+              ? context.bbColors.accent.withValues(alpha: 0.4)
               : colors.border,
         ),
       ),
@@ -525,7 +525,7 @@ class _QuickActions extends ConsumerWidget {
               child: _ActionCard(
                 icon: AppIcons.queue,
                 label: 'Queue',
-                color: BBColors.amber,
+                color: context.bbColors.accent,
                 onTap: () => context.go('/barber/queue'),
               ),
             ),
@@ -721,7 +721,7 @@ class _QueueCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(BBRadius.lg),
         border: Border.all(
           color: entry.status == QueueStatus.inService
-              ? BBColors.amber.withValues(alpha: 0.5)
+              ? context.bbColors.accent.withValues(alpha: 0.5)
               : colors.border,
         ),
       ),
@@ -733,14 +733,14 @@ class _QueueCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.15),
+                  color: context.bbColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     '#${entry.position}',
                     style: BBTypography.textTheme.labelMedium?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

@@ -35,13 +35,21 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/barbers/:barberId/stats
   app.get("/barbers/:barberId/stats", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
+    const barber = await app.prisma.barber.findUnique({ where: { id: barberId }, select: { shopId: true } });
+    if (!barber) throw app.httpErrors.notFound("Barber not found");
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(startOfDay.getTime() + 86400000);
 
     const [todayBookings, activeQueue, completedToday] = await Promise.all([
       app.prisma.booking.count({ where: { barberId, arrivalWindowStart: { gte: startOfDay, lt: endOfDay } } }),
-      app.prisma.queueEntry.count({ where: { barberId, queueStatus: { in: ["WAITING", "CALLED", "READY"] } } }),
+      app.prisma.queueEntry.count({
+        where: {
+          shopId: barber.shopId,
+          OR: [{ barberId }, { barberId: null }],
+          queueStatus: { in: ["WAITING", "CALLED", "READY"] }
+        }
+      }),
       app.prisma.booking.count({ where: { barberId, status: "COMPLETED", updatedAt: { gte: startOfDay, lt: endOfDay } } })
     ]);
 
@@ -51,8 +59,16 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/barbers/:barberId/queue
   app.get("/barbers/:barberId/queue", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
+    const barber = await app.prisma.barber.findUnique({ where: { id: barberId }, select: { shopId: true } });
+    if (!barber) throw app.httpErrors.notFound("Barber not found");
+    // Include entries already assigned to this barber, plus unassigned shop-wide
+    // entries (e.g. reception walk-ins) so any barber at the shop can pick them up.
     const entries = await app.prisma.queueEntry.findMany({
-      where: { barberId, queueStatus: { in: ["WAITING", "CALLED", "READY", "IN_SERVICE"] } },
+      where: {
+        shopId: barber.shopId,
+        OR: [{ barberId }, { barberId: null }],
+        queueStatus: { in: ["WAITING", "CALLED", "READY", "IN_SERVICE"] }
+      },
       orderBy: { position: "asc" },
       include: {
         booking: {
@@ -69,13 +85,21 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
   // GET /api/barbers/:barberId/bookings
   app.get("/barbers/:barberId/bookings", { preHandler: app.authorizeRoles(["BARBER", "OWNER", "ADMIN"]) }, async (request) => {
     const { barberId } = request.params as { barberId: string };
+    const barber = await app.prisma.barber.findUnique({ where: { id: barberId }, select: { shopId: true } });
+    if (!barber) throw app.httpErrors.notFound("Barber not found");
     const q = request.query as { date?: string };
     const dateStr = !q.date || q.date === "today" ? new Date().toISOString().split("T")[0] : q.date;
     const day = new Date(`${dateStr}T00:00:00.000Z`);
     const nextDay = new Date(day.getTime() + 86400000);
 
+    // Include bookings already assigned to this barber, plus unassigned
+    // shop-wide bookings (customer chose "any barber") so they're visible somewhere.
     const bookings = await app.prisma.booking.findMany({
-      where: { barberId, arrivalWindowStart: { gte: day, lt: nextDay } },
+      where: {
+        shopId: barber.shopId,
+        OR: [{ barberId }, { barberId: null }],
+        arrivalWindowStart: { gte: day, lt: nextDay }
+      },
       orderBy: { arrivalWindowStart: "asc" },
       include: { service: true, user: { select: { id: true, fullName: true } } }
     });

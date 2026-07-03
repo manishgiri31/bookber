@@ -64,7 +64,7 @@ class _ReceptionScreenState extends ConsumerState<ReceptionScreen>
           controller: _tab,
           labelColor: colors.text,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           tabs: const [
             Tab(text: 'Walk-In'),
             Tab(text: 'Queue'),
@@ -139,13 +139,13 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
           Container(
             padding: const EdgeInsets.all(BBSpacing.base),
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.08),
+              color: context.bbColors.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(BBRadius.lg),
-              border: Border.all(color: BBColors.amber.withValues(alpha: 0.2)),
+              border: Border.all(color: context.bbColors.accent.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
-                const Icon(AppIcons.personAdd, color: BBColors.amber, size: 24),
+                Icon(AppIcons.personAdd, color: context.bbColors.accent, size: 24),
                 const SizedBox(width: BBSpacing.md),
                 Expanded(
                   child: Text(
@@ -185,12 +185,12 @@ class _WalkInTabState extends ConsumerState<_WalkInTab> {
                             horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
                           color: _selectedService == s
-                              ? BBColors.amber
+                              ? context.bbColors.accent
                               : colors.surfaceVariant,
                           borderRadius: BorderRadius.circular(BBRadius.full),
                           border: Border.all(
                             color: _selectedService == s
-                                ? BBColors.amber
+                                ? context.bbColors.accent
                                 : colors.border,
                           ),
                         ),
@@ -259,8 +259,8 @@ class _QueueTab extends ConsumerWidget {
     final async = ref.watch(_receptionQueueProvider);
 
     return async.when(
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: BBColors.amber)),
+      loading: () => Center(
+          child: CircularProgressIndicator(color: context.bbColors.accent)),
       error: (e, _) => Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -294,7 +294,7 @@ class _QueueTab extends ConsumerWidget {
               ),
             )
           : RefreshIndicator(
-              color: BBColors.amber,
+              color: context.bbColors.accent,
               onRefresh: () async => ref.invalidate(_receptionQueueProvider),
               child: ListView.separated(
                 padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
@@ -357,7 +357,7 @@ class _QueueEntryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(BBRadius.lg),
         border: Border.all(
           color: status == 'IN_SERVICE'
-              ? BBColors.amber.withValues(alpha: 0.5)
+              ? context.bbColors.accent.withValues(alpha: 0.5)
               : colors.border,
         ),
       ),
@@ -367,14 +367,14 @@ class _QueueEntryCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.12),
+              color: context.bbColors.accent.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 '#$position',
                 style: BBTypography.textTheme.labelMedium?.copyWith(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -406,8 +406,8 @@ class _QueueEntryCard extends StatelessWidget {
             const SizedBox(width: BBSpacing.sm),
             TextButton(
               onPressed: onCheckIn,
-              child: const Text('Check In',
-                  style: TextStyle(color: BBColors.amber)),
+              child: Text('Check In',
+                  style: TextStyle(color: context.bbColors.accent)),
             ),
           ],
         ],
@@ -424,8 +424,8 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, label) = switch (status) {
       'WAITING' => (BBColors.info, 'Waiting'),
-      'READY' => (BBColors.amber, 'Ready'),
-      'CALLED' => (BBColors.amber, 'Called'),
+      'READY' => (context.bbColors.accent, 'Ready'),
+      'CALLED' => (context.bbColors.accent, 'Called'),
       'IN_SERVICE' => (BBColors.success, 'In Service'),
       _ => (context.bbColors.textTertiary, status),
     };
@@ -457,8 +457,8 @@ class _ScheduledTab extends ConsumerWidget {
     final async = ref.watch(_receptionScheduledProvider);
 
     return async.when(
-      loading: () => const Center(
-          child: CircularProgressIndicator(color: BBColors.amber)),
+      loading: () => Center(
+          child: CircularProgressIndicator(color: context.bbColors.accent)),
       error: (e, _) => Center(
         child: Text(e.toString(),
             style: BBTypography.textTheme.bodyMedium
@@ -480,7 +480,7 @@ class _ScheduledTab extends ConsumerWidget {
               ),
             )
           : RefreshIndicator(
-              color: BBColors.amber,
+              color: context.bbColors.accent,
               onRefresh: () async =>
                   ref.invalidate(_receptionScheduledProvider),
               child: ListView.separated(
@@ -534,7 +534,7 @@ class _ScheduledBookingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(BBRadius.lg),
         border: Border.all(
           color: isScheduled
-              ? BBColors.amber.withValues(alpha: 0.3)
+              ? context.bbColors.accent.withValues(alpha: 0.3)
               : colors.border,
         ),
       ),
@@ -545,7 +545,7 @@ class _ScheduledBookingCard extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: isScheduled
-                  ? BBColors.amber.withValues(alpha: 0.10)
+                  ? context.bbColors.accent.withValues(alpha: 0.10)
                   : colors.surfaceVariant,
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
@@ -554,7 +554,7 @@ class _ScheduledBookingCard extends StatelessWidget {
                 timeStr,
                 textAlign: TextAlign.center,
                 style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: isScheduled ? BBColors.amber : colors.textSecondary,
+                  color: isScheduled ? context.bbColors.accent : colors.textSecondary,
                   fontWeight: FontWeight.w700,
                   fontSize: 11,
                 ),
@@ -594,14 +594,14 @@ class _ScheduledBookingCard extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: (isScheduled ? BBColors.amber : BBColors.info)
+              color: (isScheduled ? context.bbColors.accent : BBColors.info)
                   .withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(BBRadius.full),
             ),
             child: Text(
               isScheduled ? 'Scheduled' : 'Queued',
               style: BBTypography.textTheme.labelSmall?.copyWith(
-                color: isScheduled ? BBColors.amber : BBColors.info,
+                color: isScheduled ? context.bbColors.accent : BBColors.info,
                 fontWeight: FontWeight.w600,
               ),
             ),

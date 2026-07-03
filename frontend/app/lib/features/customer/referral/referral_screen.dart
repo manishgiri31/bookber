@@ -101,15 +101,15 @@ class _ReferralCodeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(BBSpacing.xl),
       decoration: BoxDecoration(
-        color: BBColors.amber.withValues(alpha: 0.08),
+        color: context.bbColors.accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(BBRadius.xl),
         border:
-            Border.all(color: BBColors.amber.withValues(alpha: 0.3), width: 1.5),
+            Border.all(color: context.bbColors.accent.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Column(
         children: [
-          const Icon(AppIcons.gift,
-              color: BBColors.amber, size: 36),
+          Icon(AppIcons.gift,
+              color: context.bbColors.accent, size: 36),
           const SizedBox(height: BBSpacing.sm),
           Text(
             'Your Referral Code',
@@ -127,7 +127,7 @@ class _ReferralCodeCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: BBSpacing.lg, vertical: BBSpacing.sm),
               decoration: BoxDecoration(
-                color: BBColors.amber.withValues(alpha: 0.15),
+                color: context.bbColors.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(BBRadius.md),
               ),
               child: Row(
@@ -136,14 +136,14 @@ class _ReferralCodeCard extends StatelessWidget {
                   Text(
                     code,
                     style: BBTypography.textTheme.headlineSmall?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 4,
                     ),
                   ),
                   const SizedBox(width: BBSpacing.sm),
-                  const Icon(AppIcons.copy,
-                      color: BBColors.amber, size: 18),
+                  Icon(AppIcons.copy,
+                      color: context.bbColors.accent, size: 18),
                 ],
               ),
             ),

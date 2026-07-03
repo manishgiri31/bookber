@@ -147,7 +147,7 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
       setState(() => _submitting = false);
       if (result != null) {
         ref.read(bookingSubmitProvider.notifier).reset();
-        context.go('/queue/${result.id}');
+        context.pushReplacement('/queue/${result.id}');
       } else {
         final st = ref.read(bookingSubmitProvider);
         setState(() => _submitError = st is BookingFailed
@@ -679,7 +679,7 @@ class _ScheduleStepState extends ConsumerState<_ScheduleStep> {
             ),
             const SizedBox(width: BBSpacing.sm),
             IconButton(
-              icon: const Icon(AppIcons.add, color: BBColors.amber),
+              icon: Icon(AppIcons.add, color: context.bbColors.accent),
               onPressed: () {
                 final url = _imageUrlCtrl.text.trim();
                 if (url.isNotEmpty) {
@@ -817,13 +817,13 @@ class _ScheduledTimeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(BBSpacing.base),
       decoration: BoxDecoration(
-        color: BBColors.amber.withValues(alpha: 0.08),
+        color: context.bbColors.accent.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(BBRadius.lg),
-        border: Border.all(color: BBColors.amber.withValues(alpha: 0.3)),
+        border: Border.all(color: context.bbColors.accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(AppIcons.schedule, color: BBColors.amber, size: 22),
+          Icon(AppIcons.schedule, color: context.bbColors.accent, size: 22),
           const SizedBox(width: BBSpacing.md),
           Expanded(
             child: Text(

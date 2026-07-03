@@ -48,9 +48,9 @@ class _ShopManagementScreenState
         title: const Text('Manage Shop'),
         bottom: TabBar(
           controller: _tab,
-          labelColor: BBColors.amber,
+          labelColor: context.bbColors.accent,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           labelStyle: BBTypography.textTheme.labelMedium
               ?.copyWith(fontWeight: FontWeight.w600),
           tabs: const [
@@ -150,7 +150,7 @@ class _ServicesTab extends ConsumerWidget {
               onPressed: isSaving
                   ? null
                   : () => _showServiceForm(context, ref, null),
-              backgroundColor: BBColors.amber,
+              backgroundColor: context.bbColors.accent,
               icon: const Icon(AppIcons.add, color: Colors.black),
               label: Text(
                 'Add Service',
@@ -248,13 +248,13 @@ class _ServiceCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: BBColors.amber.withValues(alpha: 0.1),
+                color: context.bbColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(BBRadius.md),
               ),
               child: Icon(
                 _iconForCategory(service.category),
                 size: 22,
-                color: BBColors.amber,
+                color: context.bbColors.accent,
               ),
             ),
             const SizedBox(width: BBSpacing.md),
@@ -273,7 +273,7 @@ class _ServiceCard extends StatelessWidget {
                       Text(
                         service.priceLabel,
                         style: BBTypography.textTheme.bodySmall?.copyWith(
-                            color: BBColors.amber, fontWeight: FontWeight.w700),
+                            color: context.bbColors.accent, fontWeight: FontWeight.w700),
                       ),
                       Text(
                         '  ·  ${service.durationLabel}',
@@ -566,10 +566,10 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
                       selected: _category == c.$1,
                       onSelected: (_) =>
                           setState(() => _category = c.$1),
-                      selectedColor: BBColors.amber.withValues(alpha: 0.15),
+                      selectedColor: context.bbColors.accent.withValues(alpha: 0.15),
                       labelStyle: TextStyle(
                         color: _category == c.$1
-                            ? BBColors.amber
+                            ? context.bbColors.accent
                             : colors.textSecondary,
                         fontWeight: _category == c.$1
                             ? FontWeight.w600
@@ -577,7 +577,7 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
                       ),
                       side: BorderSide(
                         color: _category == c.$1
-                            ? BBColors.amber.withValues(alpha: 0.5)
+                            ? context.bbColors.accent.withValues(alpha: 0.5)
                             : colors.border,
                       ),
                       backgroundColor: colors.surface,
@@ -829,7 +829,7 @@ class _ScheduleTabState extends ConsumerState<_ScheduleTab> {
           child: TextButton.icon(
             icon: const Icon(AppIcons.addCircle, size: 18),
             label: const Text('Add Holiday'),
-            style: TextButton.styleFrom(foregroundColor: BBColors.amber),
+            style: TextButton.styleFrom(foregroundColor: context.bbColors.accent),
             onPressed: _addHoliday,
           ),
         ),
@@ -875,7 +875,7 @@ class _TimeField extends StatelessWidget {
             Row(
               children: [
                 Icon(AppIcons.accessTime,
-                    size: 16, color: BBColors.amber),
+                    size: 16, color: context.bbColors.accent),
                 const SizedBox(width: 6),
                 Text(
                   ctrl.text.isEmpty ? '--:--' : ctrl.text,
@@ -931,8 +931,8 @@ class _ToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: BBColors.amber,
-            activeTrackColor: BBColors.amber.withValues(alpha: 0.3),
+            activeThumbColor: context.bbColors.accent,
+            activeTrackColor: context.bbColors.accent.withValues(alpha: 0.3),
           ),
         ],
       ),
@@ -1157,7 +1157,7 @@ class _GalleryTabState extends State<_GalleryTab> {
               icon:
                   const Icon(AppIcons.addPhoto, size: 18),
               label: const Text('Add Photo'),
-              style: TextButton.styleFrom(foregroundColor: BBColors.amber),
+              style: TextButton.styleFrom(foregroundColor: context.bbColors.accent),
               onPressed: () {
                 setState(() => _photoCount++);
                 showBBSnackbar(context,
@@ -1486,7 +1486,7 @@ class _SectionHeader extends StatelessWidget {
     final colors = context.bbColors;
     return Row(
       children: [
-        Icon(icon, size: 18, color: BBColors.amber),
+        Icon(icon, size: 18, color: context.bbColors.accent),
         const SizedBox(width: BBSpacing.sm),
         Text(
           title.toUpperCase(),

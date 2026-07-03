@@ -28,7 +28,7 @@ void showBBSnackbar(
                 ? BBColors.error
                 : isSuccess
                     ? BBColors.success
-                    : BBColors.amber,
+                    : context.bbColors.accent,
           ),
           const SizedBox(width: BBSpacing.sm),
           Expanded(

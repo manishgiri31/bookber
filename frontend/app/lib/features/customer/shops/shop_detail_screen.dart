@@ -202,9 +202,9 @@ class _ShopDetailScreenState extends ConsumerState<ShopDetailScreen>
               delegate: _TabBarDelegate(
                 TabBar(
                   controller: _tab,
-                  labelColor: BBColors.amber,
+                  labelColor: context.bbColors.accent,
                   unselectedLabelColor: colors.textSecondary,
-                  indicatorColor: BBColors.amber,
+                  indicatorColor: context.bbColors.accent,
                   indicatorSize: TabBarIndicatorSize.label,
                   indicatorWeight: 2.5,
                   labelStyle: BBTypography.textTheme.labelLarge?.copyWith(
@@ -351,7 +351,7 @@ class _ShopHeader extends StatelessWidget {
               _StatChip(
                 icon: AppIcons.starFill,
                 label: '${shop.rating.toStringAsFixed(1)} (${shop.reviewCount})',
-                iconColor: BBColors.amber,
+                iconColor: context.bbColors.accent,
               ),
               const SizedBox(width: BBSpacing.sm),
               _StatChip(
@@ -475,11 +475,11 @@ class _ServiceRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.1),
+              color: context.bbColors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
-            child: const Center(
-              child: Icon(AppIcons.scissors, size: 18, color: BBColors.amber),
+            child: Center(
+              child: Icon(AppIcons.scissors, size: 18, color: context.bbColors.accent),
             ),
           ),
           const SizedBox(width: BBSpacing.md),
@@ -507,13 +507,13 @@ class _ServiceRow extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.1),
+              color: context.bbColors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(BBRadius.full),
             ),
             child: Text(
               service.priceLabel,
               style: BBTypography.textTheme.labelLarge?.copyWith(
-                color: BBColors.amber,
+                color: context.bbColors.accent,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -579,14 +579,14 @@ class _BarberCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.15),
+                  color: context.bbColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
                     barber.name.isNotEmpty ? barber.name[0].toUpperCase() : 'B',
                     style: BBTypography.textTheme.titleLarge?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -631,7 +631,7 @@ class _BarberCard extends StatelessWidget {
                 if (barber.rating != null)
                   Row(
                     children: [
-                      const Icon(AppIcons.starFill, size: 12, color: BBColors.amber),
+                      Icon(AppIcons.starFill, size: 12, color: context.bbColors.accent),
                       const SizedBox(width: 3),
                       Text(
                         barber.rating!.toStringAsFixed(1),
@@ -719,7 +719,7 @@ class _ReviewCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.15),
+                  color: context.bbColors.accent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -728,7 +728,7 @@ class _ReviewCard extends StatelessWidget {
                         ? review.customerName[0].toUpperCase()
                         : 'A',
                     style: BBTypography.textTheme.labelLarge?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -755,7 +755,7 @@ class _ReviewCard extends StatelessWidget {
                                 ? AppIcons.starFill
                                 : AppIcons.star,
                             size: 12,
-                            color: BBColors.amber,
+                            color: context.bbColors.accent,
                           ),
                         ),
                         const SizedBox(width: 5),

@@ -95,7 +95,7 @@ class _QueueView extends ConsumerWidget {
                   Text(
                     '#${position.position}',
                     style: BBTypography.textTheme.displayLarge?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontSize: 80,
                       fontWeight: FontWeight.w700,
                     ),
@@ -107,10 +107,10 @@ class _QueueView extends ConsumerWidget {
                     ),
                   ),
                 ] else if (status == 'READY') ...[
-                  const Icon(
+                  Icon(
                     AppIcons.bellActive,
                     size: 60,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                   ),
                   const SizedBox(height: BBSpacing.md),
                   Text(
@@ -126,10 +126,10 @@ class _QueueView extends ConsumerWidget {
                     ),
                   ),
                 ] else if (status == 'CALLED') ...[
-                  const Icon(
+                  Icon(
                     AppIcons.chairFill,
                     size: 60,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                   ),
                   const SizedBox(height: BBSpacing.md),
                   Text(
@@ -142,15 +142,15 @@ class _QueueView extends ConsumerWidget {
                     Text(
                       position.chairLabel!,
                       style: BBTypography.textTheme.displaySmall?.copyWith(
-                        color: BBColors.amber,
+                        color: context.bbColors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                 ] else if (status == 'IN_SERVICE') ...[
-                  const Icon(
+                  Icon(
                     AppIcons.scissors,
                     size: 60,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                   ),
                   const SizedBox(height: BBSpacing.md),
                   Text(
@@ -394,10 +394,10 @@ class _NotInQueue extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               AppIcons.queue,
               size: 64,
-              color: BBColors.amber,
+              color: context.bbColors.accent,
             ),
             const SizedBox(height: BBSpacing.base),
             Text(

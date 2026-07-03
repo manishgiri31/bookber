@@ -254,9 +254,9 @@ class _AdminScreenState extends ConsumerState<AdminScreen>
         ],
         bottom: TabBar(
           controller: _tabs,
-          labelColor: BBColors.amber,
+          labelColor: context.bbColors.accent,
           unselectedLabelColor: colors.textTertiary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           labelStyle: BBTypography.textTheme.labelMedium
               ?.copyWith(fontWeight: FontWeight.w600),
           tabs: const [
@@ -294,7 +294,7 @@ class _DashboardTab extends ConsumerWidget {
         fullScreen: true,
       ),
       data: (data) => RefreshIndicator(
-        color: BBColors.amber,
+        color: context.bbColors.accent,
         onRefresh: () async => ref.invalidate(adminDashboardProvider),
         child: ListView(
           padding: const EdgeInsets.symmetric(
@@ -327,7 +327,7 @@ class _KpiGrid extends StatelessWidget {
       _KpiItem('Users', '${analytics.totalUsers}', AppIcons.people,
           BBColors.info),
       _KpiItem('Barbers', '${analytics.totalBarbers}',
-          AppIcons.scissors, BBColors.amber),
+          AppIcons.scissors, context.bbColors.accent),
       _KpiItem('Shops', '${analytics.totalShops}', AppIcons.store,
           BBColors.success),
       _KpiItem('Bookings', '${analytics.totalBookings}',
@@ -335,7 +335,7 @@ class _KpiGrid extends StatelessWidget {
       _KpiItem('Active', '${analytics.activeBookings}',
           AppIcons.circleFill, BBColors.error),
       _KpiItem('Avg Rating', analytics.averageRating.toStringAsFixed(1),
-          AppIcons.starFill, BBColors.amber),
+          AppIcons.starFill, context.bbColors.accent),
     ];
     return GridView.builder(
       shrinkWrap: true,
@@ -525,7 +525,7 @@ class _BarbersTab extends ConsumerWidget {
               ),
             )
           : RefreshIndicator(
-              color: BBColors.amber,
+              color: context.bbColors.accent,
               onRefresh: () async => ref.invalidate(adminBarbersProvider),
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(
@@ -617,7 +617,7 @@ class _BarberModerationCard extends StatelessWidget {
           const SizedBox(height: BBSpacing.sm),
           Row(
             children: [
-              Icon(AppIcons.starFill, size: 13, color: BBColors.amber),
+              Icon(AppIcons.starFill, size: 13, color: context.bbColors.accent),
               const SizedBox(width: 3),
               Text(
                 barber.averageRating.toStringAsFixed(1),
@@ -716,7 +716,7 @@ class _QueuesTab extends ConsumerWidget {
               ),
             )
           : RefreshIndicator(
-              color: BBColors.amber,
+              color: context.bbColors.accent,
               onRefresh: () async => ref.invalidate(adminQueuesProvider),
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(
@@ -766,7 +766,7 @@ class _QueueMonitorCard extends StatelessWidget {
                 value: '${queue.totalQueued}',
                 color: queue.totalQueued > 10
                     ? BBColors.warning
-                    : BBColors.amber,
+                    : context.bbColors.accent,
               ),
               const SizedBox(width: BBSpacing.base),
               _QueueStat(

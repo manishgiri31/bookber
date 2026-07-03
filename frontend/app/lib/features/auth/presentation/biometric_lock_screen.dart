@@ -92,7 +92,7 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
                   child: Icon(
                     AppIcons.fingerprint,
                     size: 40,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                   ),
                 ),
                 const SizedBox(height: BBSpacing.xl),

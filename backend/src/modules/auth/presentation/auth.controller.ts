@@ -53,7 +53,7 @@ export class AuthController {
     // Mobile clients (Flutter/React Native) cannot set cookies, so they send
     // the refresh token in the JSON body instead.
     const cookieToken = request.cookies[env.REFRESH_TOKEN_COOKIE_NAME];
-    const bodyToken = (request.body as Record<string, unknown> | null | undefined)?.refreshToken;
+    const bodyToken = (request.body as Record<string, unknown> | null | undefined)?.["refreshToken"];
     const rawToken = cookieToken ?? (typeof bodyToken === "string" ? bodyToken : undefined);
     const parsed = refreshSchema.parse(
       rawToken !== undefined ? { refreshToken: rawToken } : {}
@@ -72,7 +72,7 @@ export class AuthController {
   logout = async (request: FastifyRequest, reply: FastifyReply) => {
     // Same cookie-or-body fallback so mobile clients can properly revoke tokens.
     const cookieToken = request.cookies[env.REFRESH_TOKEN_COOKIE_NAME];
-    const bodyToken = (request.body as Record<string, unknown> | null | undefined)?.refreshToken;
+    const bodyToken = (request.body as Record<string, unknown> | null | undefined)?.["refreshToken"];
     const rawToken = cookieToken ?? (typeof bodyToken === "string" ? bodyToken : undefined);
     const parsed = logoutSchema.parse(
       rawToken !== undefined ? { refreshToken: rawToken } : {}

@@ -244,14 +244,14 @@ class _InstructionPanel extends StatelessWidget {
 class _ProcessingPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
           width: 36,
           height: 36,
           child: CircularProgressIndicator(
-            color: BBColors.amber,
+            color: context.bbColors.accent,
             strokeWidth: 3,
           ),
         ),
@@ -311,9 +311,9 @@ class _ErrorPanel extends StatelessWidget {
         const SizedBox(height: 16),
         TextButton(
           onPressed: onRetry,
-          child: const Text(
+          child: Text(
             'Try again',
-            style: TextStyle(color: BBColors.amber, fontSize: 15),
+            style: TextStyle(color: context.bbColors.accent, fontSize: 15),
           ),
         ),
       ],

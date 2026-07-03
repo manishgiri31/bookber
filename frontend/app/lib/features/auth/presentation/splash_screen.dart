@@ -102,7 +102,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       borderRadius: BorderRadius.circular(BBRadius.xxl),
                       boxShadow: [
                         BoxShadow(
-                          color: BBColors.amber.withValues(alpha: 0.4),
+                          color: context.bbColors.accent.withValues(alpha: 0.4),
                           blurRadius: 32,
                           offset: const Offset(0, 12),
                         ),
@@ -142,7 +142,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        BBColors.amber.withValues(alpha: 0.7),
+                        context.bbColors.accent.withValues(alpha: 0.7),
                       ),
                     ),
                   ),

@@ -40,7 +40,7 @@ class _FavouritesScreenState extends State<FavouritesScreen>
           controller: _tab,
           labelColor: colors.text,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           indicatorSize: TabBarIndicatorSize.label,
           tabs: const [
             Tab(text: 'Shops'),
@@ -159,8 +159,8 @@ class _FavShopCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(AppIcons.starFill,
-                        size: 12, color: BBColors.amber),
+                    Icon(AppIcons.starFill,
+                        size: 12, color: context.bbColors.accent),
                     const SizedBox(width: 3),
                     Text(
                       rating.toStringAsFixed(1),
@@ -197,13 +197,13 @@ class _FavShopCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: BBColors.amber.withValues(alpha: 0.12),
+                    color: context.bbColors.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(BBRadius.full),
                   ),
                   child: Text(
                     'Rebook',
                     style: BBTypography.textTheme.labelSmall?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -270,14 +270,14 @@ class _FavBarberCard extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.12),
+              color: context.bbColors.accent.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 name[0].toUpperCase(),
                 style: BBTypography.textTheme.titleLarge?.copyWith(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -314,8 +314,8 @@ class _FavBarberCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(AppIcons.starFill,
-                      size: 14, color: BBColors.amber),
+                  Icon(AppIcons.starFill,
+                      size: 14, color: context.bbColors.accent),
                   const SizedBox(width: 3),
                   Text(
                     rating.toStringAsFixed(1),

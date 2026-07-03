@@ -39,7 +39,7 @@ class _GamificationScreenState extends State<GamificationScreen>
           controller: _tab,
           labelColor: colors.text,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           tabs: const [
             Tab(text: 'Badges'),
             Tab(text: 'Challenges'),
@@ -62,10 +62,10 @@ class _GamificationScreenState extends State<GamificationScreen>
 // ── Badges ────────────────────────────────────────────────────────────────────
 
 const _badges = [
-  (AppIcons.starFill, 'First Booking', 'Made your first booking', true, BBColors.amber),
+  (AppIcons.starFill, 'First Booking', 'Made your first booking', true, BBColors.warning),
   (AppIcons.repeat, 'Regular', 'Booked 5+ times', true, BBColors.success),
   (AppIcons.timer, 'On Time', 'No no-shows in 10 bookings', true, BBColors.info),
-  (AppIcons.people, 'Social', 'Referred 3 friends', false, BBColors.amber),
+  (AppIcons.people, 'Social', 'Referred 3 friends', false, BBColors.warning),
   (AppIcons.loyalty, 'Gold Member', 'Reached Gold tier', false, Color(0xFFFFD700)),
   (AppIcons.fire, '7-Day Streak', '7 consecutive booking weeks', false, BBColors.error),
   (AppIcons.premium, 'VIP', 'Reached Platinum tier', false, Color(0xFFE5E4E2)),
@@ -85,10 +85,10 @@ class _BadgesTab extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(BBSpacing.base),
           decoration: BoxDecoration(
-            color: BBColors.amber.withValues(alpha: 0.08),
+            color: context.bbColors.accent.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(BBRadius.xl),
             border: Border.all(
-                color: BBColors.amber.withValues(alpha: 0.3), width: 1.5),
+                color: context.bbColors.accent.withValues(alpha: 0.3), width: 1.5),
           ),
           child: Row(
             children: [
@@ -96,7 +96,7 @@ class _BadgesTab extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -126,7 +126,7 @@ class _BadgesTab extends StatelessWidget {
                       value: 0.65,
                       backgroundColor: colors.border,
                       valueColor:
-                          const AlwaysStoppedAnimation(BBColors.amber),
+                          AlwaysStoppedAnimation(context.bbColors.accent),
                       borderRadius:
                           BorderRadius.circular(BBRadius.full),
                       minHeight: 6,
@@ -353,13 +353,13 @@ class _ChallengeCard extends StatelessWidget {
           const SizedBox(height: BBSpacing.sm),
           Row(
             children: [
-              const Icon(AppIcons.loyalty,
-                  size: 14, color: BBColors.amber),
+              Icon(AppIcons.loyalty,
+                  size: 14, color: context.bbColors.accent),
               const SizedBox(width: 4),
               Text(
                 reward,
                 style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -373,7 +373,7 @@ class _ChallengeCard extends StatelessWidget {
                   value: pct,
                   backgroundColor: colors.border,
                   valueColor: AlwaysStoppedAnimation(
-                    isDone ? BBColors.success : BBColors.amber,
+                    isDone ? BBColors.success : context.bbColors.accent,
                   ),
                   borderRadius: BorderRadius.circular(BBRadius.full),
                   minHeight: 6,
@@ -424,12 +424,12 @@ class _LeaderboardTab extends StatelessWidget {
           padding: const EdgeInsets.all(BBSpacing.base),
           decoration: BoxDecoration(
             color: isMe
-                ? BBColors.amber.withValues(alpha: 0.08)
+                ? context.bbColors.accent.withValues(alpha: 0.08)
                 : colors.surface,
             borderRadius: BorderRadius.circular(BBRadius.lg),
             border: Border.all(
               color: isMe
-                  ? BBColors.amber.withValues(alpha: 0.3)
+                  ? context.bbColors.accent.withValues(alpha: 0.3)
                   : colors.border,
               width: isMe ? 1.5 : 1,
             ),
@@ -451,7 +451,7 @@ class _LeaderboardTab extends StatelessWidget {
                 child: Text(
                   entry.$1,
                   style: BBTypography.textTheme.titleSmall?.copyWith(
-                    color: isMe ? BBColors.amber : colors.text,
+                    color: isMe ? context.bbColors.accent : colors.text,
                     fontWeight:
                         isMe ? FontWeight.w700 : FontWeight.w500,
                   ),
@@ -459,8 +459,8 @@ class _LeaderboardTab extends StatelessWidget {
               ),
               Row(
                 children: [
-                  const Icon(AppIcons.loyalty,
-                      size: 14, color: BBColors.amber),
+                  Icon(AppIcons.loyalty,
+                      size: 14, color: context.bbColors.accent),
                   const SizedBox(width: 4),
                   Text(
                     '${entry.$2} pts',

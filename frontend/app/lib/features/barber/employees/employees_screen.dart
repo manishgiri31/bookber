@@ -220,7 +220,7 @@ class EmployeesScreen extends ConsumerWidget {
                       ),
                     )
                   : RefreshIndicator(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       onRefresh: () =>
                           ref.read(shopStaffProvider(shopId).notifier).refresh(),
                       child: ListView.separated(
@@ -269,7 +269,7 @@ class _EmployeeCard extends ConsumerWidget {
     final colors = context.bbColors;
 
     final roleColor = switch (member.role.toUpperCase()) {
-      'OWNER' => BBColors.amber,
+      'OWNER' => context.bbColors.accent,
       'RECEPTION' => BBColors.info,
       _ => BBColors.success,
     };
@@ -293,14 +293,14 @@ class _EmployeeCard extends ConsumerWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.12),
+              color: context.bbColors.accent.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 member.initials,
                 style: BBTypography.textTheme.titleLarge?.copyWith(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   fontWeight: FontWeight.w700,
                 ),
               ),

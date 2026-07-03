@@ -89,9 +89,9 @@ class _BarberBookingsScreenState extends ConsumerState<BarberBookingsScreen>
         ],
         bottom: TabBar(
           controller: _tab,
-          labelColor: BBColors.amber,
+          labelColor: context.bbColors.accent,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           indicatorSize: TabBarIndicatorSize.label,
           tabs: [
             Tab(text: 'Upcoming (${upcoming.length})'),
@@ -182,7 +182,7 @@ class _BookingCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(BBRadius.lg),
         border: Border.all(
           color: isActive
-              ? BBColors.amber.withValues(alpha: 0.4)
+              ? context.bbColors.accent.withValues(alpha: 0.4)
               : colors.border,
         ),
       ),

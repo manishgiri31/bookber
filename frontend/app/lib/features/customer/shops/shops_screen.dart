@@ -43,6 +43,7 @@ class _ShopsScreenState extends ConsumerState<ShopsScreen> {
       BuildContext context, WidgetRef ref, ShopsSearchState state) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius:
@@ -286,11 +287,11 @@ class _FilterBar extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: hasActiveFilters ? BBColors.amber : colors.surface,
+                  color: hasActiveFilters ? context.bbColors.accent : colors.surface,
                   borderRadius: BorderRadius.circular(BBRadius.full),
                   border: Border.all(
                     color:
-                        hasActiveFilters ? BBColors.amber : colors.border,
+                        hasActiveFilters ? context.bbColors.accent : colors.border,
                   ),
                 ),
                 child: Row(
@@ -592,7 +593,9 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.bbColors;
-    return Padding(
+    return SafeArea(
+      top: false,
+      child: Padding(
       padding: const EdgeInsets.fromLTRB(
           BBSpacing.pageHorizontal, BBSpacing.lg, BBSpacing.pageHorizontal, BBSpacing.xl),
       child: Column(
@@ -645,10 +648,10 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
                       duration: const Duration(milliseconds: 120),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: selected ? BBColors.amber : colors.surface,
+                        color: selected ? context.bbColors.accent : colors.surface,
                         borderRadius: BorderRadius.circular(BBRadius.md),
                         border: Border.all(
-                          color: selected ? BBColors.amber : colors.border,
+                          color: selected ? context.bbColors.accent : colors.border,
                         ),
                       ),
                       child: Column(
@@ -665,7 +668,7 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
                               children: [
                                 Icon(AppIcons.starFill,
                                     size: 12,
-                                    color: selected ? colors.background : BBColors.amber),
+                                    color: selected ? colors.background : context.bbColors.accent),
                                 const SizedBox(width: 2),
                                 Text('$r+',
                                     style: BBTypography.textTheme.labelSmall?.copyWith(
@@ -705,10 +708,10 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
                       duration: const Duration(milliseconds: 120),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: selected ? BBColors.amber : colors.surface,
+                        color: selected ? context.bbColors.accent : colors.surface,
                         borderRadius: BorderRadius.circular(BBRadius.md),
                         border: Border.all(
-                          color: selected ? BBColors.amber : colors.border,
+                          color: selected ? context.bbColors.accent : colors.border,
                         ),
                       ),
                       child: Text(
@@ -750,7 +753,7 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: BBColors.amber,
+                backgroundColor: context.bbColors.accent,
                 foregroundColor: colors.background,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -776,6 +779,7 @@ class _AdvancedFiltersSheetState extends State<_AdvancedFiltersSheet> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -825,7 +829,7 @@ class _ToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: BBColors.amber,
+            activeTrackColor: context.bbColors.accent,
           ),
         ],
       ),

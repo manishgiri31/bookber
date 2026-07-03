@@ -363,7 +363,7 @@ class _RatingBreakdownCard extends StatelessWidget {
                             ? AppIcons.starFill
                             : AppIcons.star,
                         size: 14,
-                        color: BBColors.amber,
+                        color: context.bbColors.accent,
                       );
                     }),
                   ),
@@ -395,8 +395,8 @@ class _RatingBreakdownCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 4),
-                          const Icon(AppIcons.starFill,
-                              size: 10, color: BBColors.amber),
+                          Icon(AppIcons.starFill,
+                              size: 10, color: context.bbColors.accent),
                           const SizedBox(width: BBSpacing.sm),
                           Expanded(
                             child: LinearProgressIndicator(
@@ -406,7 +406,7 @@ class _RatingBreakdownCard extends StatelessWidget {
                                 stars >= 4
                                     ? BBColors.success
                                     : stars == 3
-                                        ? BBColors.amber
+                                        ? context.bbColors.accent
                                         : BBColors.error,
                               ),
                               borderRadius:
@@ -492,7 +492,7 @@ class _BioBannerState extends State<_BioBanner> {
                 child: Text(
                   _editing ? 'Save' : 'Edit',
                   style: BBTypography.textTheme.labelSmall?.copyWith(
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -522,7 +522,7 @@ class _BioBannerState extends State<_BioBanner> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(BBRadius.md),
                       borderSide:
-                          const BorderSide(color: BBColors.amber, width: 1.5),
+                          BorderSide(color: context.bbColors.accent, width: 1.5),
                     ),
                   ),
                 )
@@ -594,15 +594,15 @@ class _ExperienceSection extends StatelessWidget {
             children: _specialties.map((s) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: BBColors.amber.withValues(alpha: 0.08),
+                color: context.bbColors.accent.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(BBRadius.full),
                 border: Border.all(
-                    color: BBColors.amber.withValues(alpha: 0.25)),
+                    color: context.bbColors.accent.withValues(alpha: 0.25)),
               ),
               child: Text(
                 s,
                 style: BBTypography.textTheme.labelSmall?.copyWith(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   fontWeight: FontWeight.w600,
                 ),
               ),

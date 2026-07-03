@@ -50,7 +50,7 @@ class _BookingsScreenState extends ConsumerState<BookingsScreen>
           controller: _tab,
           labelColor: colors.text,
           unselectedLabelColor: colors.textSecondary,
-          indicatorColor: BBColors.amber,
+          indicatorColor: context.bbColors.accent,
           indicatorSize: TabBarIndicatorSize.label,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
@@ -136,7 +136,7 @@ class _BookingCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(BBRadius.xl),
         border: Border.all(
           color: booking.isActive
-              ? BBColors.amber.withValues(alpha: 0.4)
+              ? context.bbColors.accent.withValues(alpha: 0.4)
               : colors.border,
         ),
       ),
@@ -153,7 +153,7 @@ class _BookingCard extends ConsumerWidget {
                       ? colors.surfaceVariant
                       : isCompleted
                           ? BBColors.success.withValues(alpha: 0.12)
-                          : BBColors.amber.withValues(alpha: 0.12),
+                          : context.bbColors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(BBRadius.md),
                 ),
                 child: Icon(
@@ -167,7 +167,7 @@ class _BookingCard extends ConsumerWidget {
                       ? colors.textTertiary
                       : isCompleted
                           ? BBColors.success
-                          : BBColors.amber,
+                          : context.bbColors.accent,
                 ),
               ),
               const SizedBox(width: BBSpacing.md),
@@ -221,7 +221,7 @@ class _BookingCard extends ConsumerWidget {
                   child: _ActionChip(
                     label: 'Track Queue',
                     icon: AppIcons.queue,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                     onTap: () => context.push('/queue/${booking.id}'),
                   ),
                 ),
@@ -230,7 +230,7 @@ class _BookingCard extends ConsumerWidget {
                   child: _ActionChip(
                     label: 'Review',
                     icon: AppIcons.star,
-                    color: BBColors.amber,
+                    color: context.bbColors.accent,
                     onTap: () => context.push('/review/${booking.id}'),
                   ),
                 ),

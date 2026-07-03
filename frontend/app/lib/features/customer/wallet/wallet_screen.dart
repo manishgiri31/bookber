@@ -137,7 +137,7 @@ class _BalanceCard extends StatelessWidget {
       padding: const EdgeInsets.all(BBSpacing.xl),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [BBColors.amber, BBColors.amber.withValues(alpha: 0.7)],
+          colors: [context.bbColors.accent, context.bbColors.accent.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

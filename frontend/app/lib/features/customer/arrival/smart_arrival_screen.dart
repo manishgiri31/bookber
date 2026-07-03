@@ -220,7 +220,7 @@ class _ArrivalView extends StatelessWidget {
                   icon: AppIcons.queue,
                   label: 'Queue Wait',
                   value: _queueWait > 0 ? '~${_queueWait}m' : 'Ready',
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                 ),
               ),
               const SizedBox(width: BBSpacing.sm),
@@ -311,7 +311,7 @@ class _ArrivalView extends StatelessWidget {
                   min: 1,
                   max: 60,
                   divisions: 59,
-                  activeColor: BBColors.amber,
+                  activeColor: context.bbColors.accent,
                   inactiveColor: colors.border,
                   onChanged: (v) => onChangeTravelTime(v.round()),
                 ),
@@ -347,12 +347,12 @@ class _ArrivalView extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: BBColors.amber.withValues(alpha: 0.12),
+                      color: context.bbColors.accent.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Icon(AppIcons.person,
-                          color: BBColors.amber, size: 22),
+                          color: context.bbColors.accent, size: 22),
                     ),
                   ),
                   const SizedBox(width: BBSpacing.md),
@@ -379,7 +379,7 @@ class _ArrivalView extends StatelessWidget {
                   Text(
                     '#${position.position}',
                     style: BBTypography.textTheme.headlineSmall?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

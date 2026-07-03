@@ -86,7 +86,7 @@ class MyReviewsScreen extends ConsumerWidget {
                 icon: AppIcons.star,
               )
             : RefreshIndicator(
-                color: BBColors.amber,
+                color: context.bbColors.accent,
                 onRefresh: () => ref.refresh(_myReviewsProvider.future),
                 child: ListView.separated(
                   padding: const EdgeInsets.all(BBSpacing.pageHorizontal),
@@ -144,7 +144,7 @@ class _ReviewCard extends StatelessWidget {
                     ? AppIcons.starFill
                     : AppIcons.star,
                 size: 16,
-                color: BBColors.amber,
+                color: context.bbColors.accent,
               ),
             ),
           ),

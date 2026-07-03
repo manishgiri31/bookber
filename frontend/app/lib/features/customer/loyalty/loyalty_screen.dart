@@ -74,7 +74,7 @@ class LoyaltyScreen extends ConsumerWidget {
               data['transactions'] as List<Map<String, dynamic>>;
           final points = account['points'] as int? ?? 0;
           final tier = account['tier'] as String? ?? 'BRONZE';
-          final tierColor = _tierColors[tier] ?? BBColors.amber;
+          final tierColor = _tierColors[tier] ?? context.bbColors.accent;
           final nextTierThreshold = _nextThreshold(tier);
           final progress = nextTierThreshold != null
               ? (points / nextTierThreshold).clamp(0.0, 1.0)
@@ -300,13 +300,13 @@ class _RedeemCard extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: canRedeem
-                  ? BBColors.amber.withValues(alpha: 0.12)
+                  ? context.bbColors.accent.withValues(alpha: 0.12)
                   : colors.surfaceVariant,
               borderRadius: BorderRadius.circular(BBRadius.md),
             ),
             child: Icon(
               AppIcons.redeem,
-              color: canRedeem ? BBColors.amber : colors.textTertiary,
+              color: canRedeem ? context.bbColors.accent : colors.textTertiary,
               size: 22,
             ),
           ),
@@ -340,7 +340,7 @@ class _RedeemCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   borderRadius: BorderRadius.circular(BBRadius.full),
                 ),
                 child: Text(
@@ -481,7 +481,7 @@ class _AllTiersProgress extends StatelessWidget {
           children: _order.asMap().entries.map((e) {
             final i = e.key;
             final t = e.value;
-            final color = _tierColors[t] ?? BBColors.amber;
+            final color = _tierColors[t] ?? context.bbColors.accent;
             final isActive = i <= currentIdx;
             return Expanded(
               child: Column(

@@ -45,7 +45,7 @@ class BarberQueueScreen extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   borderRadius: BorderRadius.circular(BBRadius.full),
                 ),
                 child: Text(
@@ -68,7 +68,7 @@ class BarberQueueScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/barber/reception'),
-        backgroundColor: BBColors.amber,
+        backgroundColor: context.bbColors.accent,
         foregroundColor: colors.background,
         icon: const Icon(AppIcons.personAdd),
         label: const Text('Walk-in'),
@@ -103,7 +103,7 @@ class BarberQueueScreen extends ConsumerWidget {
                             icon: const Icon(AppIcons.personAdd),
                             label: const Text('Add Walk-in'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: BBColors.amber,
+                              backgroundColor: context.bbColors.accent,
                               foregroundColor: colors.background,
                             ),
                           ),
@@ -198,14 +198,14 @@ class BarberQueueScreen extends ConsumerWidget {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: BBColors.amber.withValues(alpha: 0.12),
+                      color: context.bbColors.accent.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
                         b[0],
                         style: BBTypography.textTheme.titleMedium?.copyWith(
-                          color: BBColors.amber,
+                          color: context.bbColors.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -258,7 +258,7 @@ class _FullQueueCard extends StatelessWidget {
           color: isPriority
               ? BBColors.error.withValues(alpha: 0.4)
               : entry.status == QueueStatus.inService
-                  ? BBColors.amber.withValues(alpha: 0.5)
+                  ? context.bbColors.accent.withValues(alpha: 0.5)
                   : colors.border,
           width: isPriority ? 1.5 : 1,
         ),
@@ -278,14 +278,14 @@ class _FullQueueCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isPriority
                           ? BBColors.error.withValues(alpha: 0.12)
-                          : BBColors.amber.withValues(alpha: 0.15),
+                          : context.bbColors.accent.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
                         '#${entry.position}',
                         style: BBTypography.textTheme.labelLarge?.copyWith(
-                          color: isPriority ? BBColors.error : BBColors.amber,
+                          color: isPriority ? BBColors.error : context.bbColors.accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),

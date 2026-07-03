@@ -2,6 +2,7 @@
 import '../../../core/design/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 import '../../../core/design/bb_colors.dart';
 import '../../../core/design/bb_tokens.dart';
@@ -11,7 +12,7 @@ import '../../../core/widgets/bb_loading.dart';
 import '../../../core/widgets/bb_snackbar.dart';
 import 'payment_provider.dart';
 
-class CheckoutScreen extends ConsumerWidget {
+class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({
     super.key,
     required this.bookingId,
@@ -26,7 +27,49 @@ class CheckoutScreen extends ConsumerWidget {
   final String serviceName;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
+}
+
+class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
+  late final Razorpay _razorpay;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay()
+      ..on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess)
+      ..on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError)
+      ..on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
+  }
+
+  void _onPaymentSuccess(PaymentSuccessResponse r) {
+    ref.read(checkoutProvider.notifier).verifyPayment(
+          bookingId: widget.bookingId,
+          razorpayOrderId: r.orderId ?? '',
+          razorpayPaymentId: r.paymentId ?? '',
+          razorpaySignature: r.signature ?? '',
+        );
+  }
+
+  void _onPaymentError(PaymentFailureResponse r) {
+    if (!mounted) return;
+    showBBSnackbar(context,
+        message: r.message ?? 'Payment failed', isError: true);
+  }
+
+  void _onExternalWallet(ExternalWalletResponse r) {
+    if (!mounted) return;
+    showBBSnackbar(context, message: 'Redirecting to ${r.walletName}...');
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.bbColors;
     final checkoutState = ref.watch(checkoutProvider);
 
@@ -91,14 +134,14 @@ class CheckoutScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: BBSpacing.base),
-                  _SummaryRow(label: 'Shop', value: shopName),
-                  _SummaryRow(label: 'Service', value: serviceName),
+                  _SummaryRow(label: 'Shop', value: widget.shopName),
+                  _SummaryRow(label: 'Service', value: widget.serviceName),
                   const Divider(height: 24),
                   _SummaryRow(
                     label: 'Total',
-                    value: '₹${amount.toStringAsFixed(0)}',
+                    value: '₹${widget.amount.toStringAsFixed(0)}',
                     bold: true,
-                    valueColor: BBColors.amber,
+                    valueColor: context.bbColors.accent,
                   ),
                 ],
               ),
@@ -120,7 +163,7 @@ class CheckoutScreen extends ConsumerWidget {
               title: 'UPI / Card',
               subtitle: 'Pay securely with Razorpay',
               color: BBColors.info,
-              onTap: () => _payWithRazorpay(context, ref),
+              onTap: _payWithRazorpay,
             ),
             const SizedBox(height: BBSpacing.sm),
 
@@ -130,7 +173,7 @@ class CheckoutScreen extends ConsumerWidget {
               title: 'Pay at Shop',
               subtitle: 'Cash payment after service',
               color: BBColors.success,
-              onTap: () => _payAtShop(context, ref),
+              onTap: _payAtShop,
             ),
 
             const Spacer(),
@@ -158,26 +201,23 @@ class CheckoutScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _payWithRazorpay(
-      BuildContext context, WidgetRef ref) async {
+  Future<void> _payWithRazorpay() async {
     final order = await ref
         .read(checkoutProvider.notifier)
-        .createOrder(bookingId, amount);
+        .createOrder(widget.bookingId, widget.amount);
 
-    if (order == null || !context.mounted) return;
+    if (order == null || !mounted) return;
 
     if (order.isStub || order.keyId.isEmpty || order.keyId == 'placeholder') {
       // Razorpay not configured — simulate success
-      if (context.mounted) {
-        showBBSnackbar(
-          context,
-          message:
-              'Razorpay not configured. Add RAZORPAY_KEY_ID to backend .env to enable real payments. Marking as paid.',
-          isSuccess: false,
-        );
-      }
+      showBBSnackbar(
+        context,
+        message:
+            'Razorpay not configured. Add RAZORPAY_KEY_ID to backend .env to enable real payments. Marking as paid.',
+        isSuccess: false,
+      );
       await ref.read(checkoutProvider.notifier).verifyPayment(
-            bookingId: bookingId,
+            bookingId: widget.bookingId,
             razorpayOrderId: order.razorpayOrderId,
             razorpayPaymentId: 'stub_pay_${DateTime.now().millisecondsSinceEpoch}',
             razorpaySignature: 'stub_sig',
@@ -185,39 +225,17 @@ class CheckoutScreen extends ConsumerWidget {
       return;
     }
 
-    // TODO: When razorpay_flutter package is installed, launch the Razorpay checkout:
-    //
-    // final razorpay = Razorpay();
-    // razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, (PaymentSuccessResponse r) async {
-    //   await ref.read(checkoutProvider.notifier).verifyPayment(
-    //     bookingId: bookingId,
-    //     razorpayOrderId: order.razorpayOrderId,
-    //     razorpayPaymentId: r.paymentId!,
-    //     razorpaySignature: r.signature!,
-    //   );
-    // });
-    // razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, (PaymentFailureResponse r) {
-    //   showBBSnackbar(context, message: r.message ?? 'Payment failed', isError: true);
-    // });
-    // razorpay.open({
-    //   'key': order.keyId,
-    //   'amount': (order.amount * 100).toInt(),
-    //   'currency': order.currency,
-    //   'order_id': order.razorpayOrderId,
-    //   'name': 'BookBer',
-    //   'description': '$serviceName at $shopName',
-    // });
-
-    // Placeholder until razorpay_flutter is added to pubspec:
-    if (context.mounted) {
-      showBBSnackbar(
-        context,
-        message: 'Add razorpay_flutter to pubspec.yaml to enable payment sheet.',
-      );
-    }
+    _razorpay.open({
+      'key': order.keyId,
+      'amount': (order.amount * 100).toInt(),
+      'currency': order.currency,
+      'order_id': order.razorpayOrderId,
+      'name': 'BookBer',
+      'description': '${widget.serviceName} at ${widget.shopName}',
+    });
   }
 
-  Future<void> _payAtShop(BuildContext context, WidgetRef ref) async {
+  Future<void> _payAtShop() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -235,7 +253,9 @@ class CheckoutScreen extends ConsumerWidget {
       ),
     );
     if (confirmed == true) {
-      await ref.read(checkoutProvider.notifier).payAtShop(bookingId, amount);
+      await ref
+          .read(checkoutProvider.notifier)
+          .payAtShop(widget.bookingId, widget.amount);
     }
   }
 }
@@ -443,7 +463,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                 ),
               )
             : RefreshIndicator(
-                color: BBColors.amber,
+                color: context.bbColors.accent,
                 onRefresh: () async =>
                     ref.invalidate(paymentHistoryProvider),
                 child: ListView.separated(

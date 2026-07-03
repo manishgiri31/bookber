@@ -67,7 +67,7 @@ class BarberAnalyticsScreen extends ConsumerWidget {
                   fullScreen: true,
                 )
               : RefreshIndicator(
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   onRefresh: () =>
                       ref.read(barberAnalyticsProvider(shopId).notifier).refresh(),
                   child: ListView(
@@ -151,7 +151,7 @@ class _WeeklyInsightsSection extends StatelessWidget {
                 value: '${insights.avgWaitMinutes.toStringAsFixed(0)}m',
                 change: -insights.waitChange,
                 icon: AppIcons.timer,
-                color: BBColors.amber,
+                color: context.bbColors.accent,
                 invertChange: true,
               ),
             ),
@@ -173,13 +173,13 @@ class _WeeklyInsightsSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(BBSpacing.md),
             decoration: BoxDecoration(
-              color: BBColors.amber.withValues(alpha: 0.08),
+              color: context.bbColors.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(BBRadius.lg),
-              border: Border.all(color: BBColors.amber.withValues(alpha: 0.2)),
+              border: Border.all(color: context.bbColors.accent.withValues(alpha: 0.2)),
             ),
             child: Row(
               children: [
-                Icon(AppIcons.starFill, size: 16, color: BBColors.amber),
+                Icon(AppIcons.starFill, size: 16, color: context.bbColors.accent),
                 const SizedBox(width: BBSpacing.sm),
                 Text(
                   'Busiest day: ${insights.peakDay}',
@@ -347,7 +347,7 @@ class _TodayStatsSection extends StatelessWidget {
             _MiniStat(
               label: 'Revenue',
               value: '₹${daily.totalRevenue.toStringAsFixed(0)}',
-              color: BBColors.amber,
+              color: context.bbColors.accent,
             ),
           ],
         ),
@@ -380,9 +380,9 @@ class _TodayStatsSection extends StatelessWidget {
                         value: daily.chairUtilizationPct.clamp(0.0, 1.0),
                         minHeight: 8,
                         backgroundColor:
-                            BBColors.amber.withValues(alpha: 0.15),
+                            context.bbColors.accent.withValues(alpha: 0.15),
                         valueColor:
-                            AlwaysStoppedAnimation<Color>(BBColors.amber),
+                            AlwaysStoppedAnimation<Color>(context.bbColors.accent),
                       ),
                     ),
                   ),
@@ -390,7 +390,7 @@ class _TodayStatsSection extends StatelessWidget {
                   Text(
                     '${(daily.chairUtilizationPct * 100).toStringAsFixed(0)}%',
                     style: BBTypography.textTheme.labelMedium?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -551,8 +551,8 @@ class _PeakHoursSection extends StatelessWidget {
                           BarChartRodData(
                             toY: b.bookingCount.toDouble(),
                             color: isPeak
-                                ? BBColors.amber
-                                : BBColors.amber.withValues(alpha: 0.35),
+                                ? context.bbColors.accent
+                                : context.bbColors.accent.withValues(alpha: 0.35),
                             width: 8,
                             borderRadius: BorderRadius.circular(3),
                           ),
@@ -617,7 +617,7 @@ class _UtilizationSection extends StatelessWidget {
                   Text(
                     '${(report.overallChairPct * 100).toStringAsFixed(0)}%',
                     style: BBTypography.textTheme.labelMedium?.copyWith(
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -629,8 +629,8 @@ class _UtilizationSection extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: report.overallChairPct.clamp(0.0, 1.0),
                   minHeight: 6,
-                  backgroundColor: BBColors.amber.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation<Color>(BBColors.amber),
+                  backgroundColor: context.bbColors.accent.withValues(alpha: 0.15),
+                  valueColor: AlwaysStoppedAnimation<Color>(context.bbColors.accent),
                 ),
               ),
               if (report.barbers.isNotEmpty) ...[
@@ -792,7 +792,7 @@ class _RevenueChartSection extends StatelessWidget {
                     return LineTooltipItem(
                       '₹${s.y.toStringAsFixed(0)}',
                       BBTypography.textTheme.labelSmall!.copyWith(
-                        color: BBColors.amber,
+                        color: context.bbColors.accent,
                         fontWeight: FontWeight.w700,
                       ),
                     );
@@ -803,13 +803,13 @@ class _RevenueChartSection extends StatelessWidget {
                 LineChartBarData(
                   spots: spots,
                   isCurved: true,
-                  color: BBColors.amber,
+                  color: context.bbColors.accent,
                   barWidth: 2.5,
                   dotData: FlDotData(
                     show: true,
                     getDotPainter: (s, _, p, i) => FlDotCirclePainter(
                       radius: 3,
-                      color: BBColors.amber,
+                      color: context.bbColors.accent,
                       strokeWidth: 1.5,
                       strokeColor: colors.surface,
                     ),
@@ -820,8 +820,8 @@ class _RevenueChartSection extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        BBColors.amber.withValues(alpha: 0.15),
-                        BBColors.amber.withValues(alpha: 0.0),
+                        context.bbColors.accent.withValues(alpha: 0.15),
+                        context.bbColors.accent.withValues(alpha: 0.0),
                       ],
                     ),
                   ),
@@ -856,7 +856,7 @@ class _WeeklyHighlightsSection extends StatelessWidget {
         label: 'Avg Wait',
         value: '${insights.avgWaitMinutes.toStringAsFixed(0)}m',
         icon: AppIcons.timer,
-        color: BBColors.amber,
+        color: context.bbColors.accent,
       ),
       (
         label: 'No-shows',

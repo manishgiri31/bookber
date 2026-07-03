@@ -38,10 +38,10 @@ class BarberQrScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(BBSpacing.base),
                 decoration: BoxDecoration(
-                  color: BBColors.amber.withValues(alpha: 0.06),
+                  color: context.bbColors.accent.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(BBRadius.lg),
                   border: Border.all(
-                    color: BBColors.amber.withValues(alpha: 0.2),
+                    color: context.bbColors.accent.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Text(
@@ -61,7 +61,7 @@ class BarberQrScreen extends ConsumerWidget {
               Expanded(
                 child: Center(
                   child: state.isLoading
-                      ? const CircularProgressIndicator(color: BBColors.amber)
+                      ? CircularProgressIndicator(color: context.bbColors.accent)
                       : state.profile?.checkInToken == null
                           ? _NoTokenWidget(
                               onRetry: () => ref
