@@ -226,6 +226,7 @@ model Booking {
   cancellationReason String?
   cancelledAt        DateTime?
   noShowAt           DateTime?
+  checkedInAt        DateTime?
   barber             Barber?           @relation(fields: [barberId], references: [id])
   chair              Chair?            @relation(fields: [chairId], references: [id])
   service            Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
@@ -487,6 +488,10 @@ enum ServiceCategory {
   HAIRCUT
   BEARD
   COMBO
+  SHAVE
+  COLOR
+  TREATMENT
+  OTHER
 }
 
 enum QueueEventType {

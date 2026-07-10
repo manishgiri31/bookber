@@ -407,7 +407,11 @@ function buildInitialShopAverages(
   const buckets: Record<ServiceCategory, number[]> = {
     HAIRCUT: [],
     BEARD: [],
-    COMBO: []
+    COMBO: [],
+    SHAVE: [],
+    COLOR: [],
+    TREATMENT: [],
+    OTHER: []
   };
   for (const s of services) {
     buckets[s.category].push(s.durationMinutes);
@@ -418,7 +422,11 @@ function buildInitialShopAverages(
   return {
     HAIRCUT: avg(buckets.HAIRCUT, 30),
     BEARD: avg(buckets.BEARD, 15),
-    COMBO: avg(buckets.COMBO, 45)
+    COMBO: avg(buckets.COMBO, 45),
+    SHAVE: avg(buckets.SHAVE, 15),
+    COLOR: avg(buckets.COLOR, 60),
+    TREATMENT: avg(buckets.TREATMENT, 30),
+    OTHER: avg(buckets.OTHER, 30)
   };
 }
 

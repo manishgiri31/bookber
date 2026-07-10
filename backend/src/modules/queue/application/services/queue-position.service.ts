@@ -109,6 +109,7 @@ export class QueuePositionService {
   async buildSnapshot(shopId: string, version: number): Promise<QueueSnapshot> {
     const mapEntry = async (lane: QueueLane): Promise<QueueSnapshotEntry[]> => {
       const rows = await this.repository.listActiveQueueEntries(prisma, shopId, lane);
+      const effectivePositions = await this.repository.getEffectivePositions(prisma, shopId, lane);
       return rows.map((row) => ({
         activeQueueId: row.id,
         bookingId: row.bookingId,
@@ -117,7 +118,7 @@ export class QueuePositionService {
         userId: row.booking.userId,
         serviceId: row.booking.serviceId,
         lane: row.lane,
-        position: row.position,
+        position: effectivePositions.get(row.position) ?? row.position,
         queueStatus: row.queueStatus,
         bookingStatus: row.booking.status,
         estimatedWaitMinutes: row.estimatedWaitMinutes,

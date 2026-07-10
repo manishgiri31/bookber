@@ -36,11 +36,22 @@ export const updateShopSchema = createShopSchema.partial().extend({
   isActive: z.boolean().optional()
 });
 
+export const serviceCategorySchema = z.enum([
+  "HAIRCUT",
+  "BEARD",
+  "COMBO",
+  "SHAVE",
+  "COLOR",
+  "TREATMENT",
+  "OTHER"
+]);
+
 export const createServiceSchema = z.object({
   name: z.string().min(2).max(120),
   description: z.string().max(1000).optional(),
   durationMinutes: z.number().int().min(5).max(600),
-  price: z.number().nonnegative()
+  price: z.number().nonnegative(),
+  category: serviceCategorySchema.optional()
 });
 
 export const updateServiceSchema = createServiceSchema.partial().extend({

@@ -148,7 +148,8 @@ export class ShopService {
       name: dto.name,
       description: dto.description ?? null,
       durationMinutes: dto.durationMinutes,
-      price: dto.price
+      price: dto.price,
+      ...(dto.category !== undefined ? { category: dto.category } : {})
     });
   }
 
@@ -163,6 +164,7 @@ export class ShopService {
     if (dto.description !== undefined) updateData.description = dto.description;
     if (dto.durationMinutes !== undefined) updateData.durationMinutes = dto.durationMinutes;
     if (dto.price !== undefined) updateData.price = dto.price;
+    if (dto.category !== undefined) updateData.category = dto.category;
     if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
 
     return this.repository.updateService(serviceId, updateData);

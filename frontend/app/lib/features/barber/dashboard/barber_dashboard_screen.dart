@@ -47,6 +47,7 @@ class BarberDashboardScreen extends ConsumerWidget {
                       SliverToBoxAdapter(
                         child: _Header(state: state),
                       ),
+                      _CurrentlyServingBanner(state: state),
                       if (state.stats != null) ...[
                         SliverToBoxAdapter(
                           child: Padding(
@@ -188,7 +189,7 @@ class BarberDashboardScreen extends ConsumerWidget {
                                       await ref
                                           .read(barberDashProvider.notifier)
                                           .updateEntryStatus(
-                                            state.queueEntries[i].id,
+                                            state.queueEntries[i],
                                             status,
                                           );
                                       if (ctx.mounted) {
@@ -212,6 +213,102 @@ class BarberDashboardScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+    );
+  }
+}
+
+// Pinned near the top of the Dashboard so the barber sees who's in the chair
+// right now the moment they open the app — the barber-side analogue of the
+// customer app's "active booking" tracker, without a redundant redirect since
+// the Dashboard already *is* the barber's always-on queue view.
+class _CurrentlyServingBanner extends ConsumerWidget {
+  const _CurrentlyServingBanner({required this.state});
+  final BarberDashState state;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entry = state.queueEntries
+        .where((e) => e.status == QueueStatus.inService)
+        .firstOrNull;
+    if (entry == null) return const SliverToBoxAdapter(child: SizedBox.shrink());
+
+    final colors = context.bbColors;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          BBSpacing.pageHorizontal, 0, BBSpacing.pageHorizontal, BBSpacing.base),
+        child: Container(
+          padding: const EdgeInsets.all(BBSpacing.base),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                context.bbColors.accent.withValues(alpha: 0.15),
+                context.bbColors.accent.withValues(alpha: 0.05),
+              ],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.circular(BBRadius.xl),
+            border: Border.all(color: context.bbColors.accent.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: context.bbColors.accent.withValues(alpha: 0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(AppIcons.scissors,
+                    size: 20, color: context.bbColors.accent),
+              ),
+              const SizedBox(width: BBSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CURRENTLY SERVING',
+                      style: BBTypography.textTheme.labelSmall?.copyWith(
+                        color: context.bbColors.accent,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      entry.customerName ?? 'Customer',
+                      style: BBTypography.textTheme.titleMedium?.copyWith(
+                        color: colors.text,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              BBButton(
+                label: 'Complete',
+                small: true,
+                onPressed: () async {
+                  try {
+                    await ref
+                        .read(barberDashProvider.notifier)
+                        .updateEntryStatus(entry, QueueStatus.completed.apiValue);
+                    if (context.mounted) {
+                      showBBSnackbar(context,
+                          message: 'Service completed', isSuccess: true);
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      showBBSnackbar(context, message: e.toString(), isError: true);
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

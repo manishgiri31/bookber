@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
+import { getAuthUser } from "../../auth/presentation/auth-user.js";
 
 const queueStatusSchema = z.enum(["WAITING", "READY", "CALLED", "IN_SERVICE", "COMPLETED", "SKIPPED", "NO_SHOW", "CANCELLED"]);
 
@@ -41,7 +42,9 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(startOfDay.getTime() + 86400000);
 
-    const [todayBookings, activeQueue, completedToday] = await Promise.all([
+    const startOfWeek = new Date(startOfDay.getTime() - startOfDay.getDay() * 86400000);
+
+    const [todayBookings, activeQueue, completedToday, paidToday, paidThisWeek] = await Promise.all([
       app.prisma.booking.count({ where: { barberId, arrivalWindowStart: { gte: startOfDay, lt: endOfDay } } }),
       app.prisma.queueEntry.count({
         where: {
@@ -50,10 +53,34 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
           queueStatus: { in: ["WAITING", "CALLED", "READY"] }
         }
       }),
-      app.prisma.booking.count({ where: { barberId, status: "COMPLETED", updatedAt: { gte: startOfDay, lt: endOfDay } } })
+      app.prisma.booking.count({ where: { barberId, status: "COMPLETED", updatedAt: { gte: startOfDay, lt: endOfDay } } }),
+      app.prisma.payment.findMany({
+        where: {
+          status: "PAID",
+          booking: { barberId, status: "COMPLETED", updatedAt: { gte: startOfDay, lt: endOfDay } }
+        },
+        select: { amount: true }
+      }),
+      app.prisma.payment.findMany({
+        where: {
+          status: "PAID",
+          booking: { barberId, status: "COMPLETED", updatedAt: { gte: startOfWeek, lt: endOfDay } }
+        },
+        select: { amount: true }
+      })
     ]);
 
-    return { todayBookings, activeQueue, completedToday, date: today.toISOString().split("T")[0] };
+    const revenueToday = paidToday.reduce((sum, p) => sum + p.amount, 0);
+    const revenueWeek = paidThisWeek.reduce((sum, p) => sum + p.amount, 0);
+
+    return {
+      todayBookings,
+      activeQueue,
+      completedToday,
+      revenueToday,
+      revenueWeek,
+      date: today.toISOString().split("T")[0]
+    };
   });
 
   // GET /api/barbers/:barberId/queue
@@ -161,7 +188,7 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
     const status = queueStatusSchema.parse(rawStatus);
     const existing = await app.prisma.queueEntry.findFirst({
       where: { OR: [{ id: entryId }, { bookingId: entryId }] },
-      include: { booking: { select: { shopId: true } } }
+      include: { booking: { select: { id: true, shopId: true, status: true } } }
     });
     if (!existing) throw app.httpErrors.notFound("Queue entry not found");
     if (request.user.role === "BARBER") {
@@ -170,6 +197,44 @@ export const barberRoutes: FastifyPluginAsync = async (app) => {
       });
       if (!ownBarber) throw app.httpErrors.forbidden("Not authorized to manage this queue");
     }
+
+    if (status === "IN_SERVICE") {
+      // Delegate to the real start-service flow so the QR check-in requirement
+      // and chair bookkeeping are actually enforced — this dashboard action
+      // used to just flip QueueEntry.queueStatus directly, bypassing both.
+      // Earlier dashboard actions (Ready) only sync QueueEntry.queueStatus, not
+      // Booking.status, so repair that here before startService()'s own
+      // CALLED/READY precondition is checked.
+      if (
+        existing.booking.status !== existing.queueStatus &&
+        (existing.queueStatus === "READY" || existing.queueStatus === "CALLED")
+      ) {
+        await app.prisma.booking.update({
+          where: { id: existing.booking.id },
+          data: { status: existing.queueStatus }
+        });
+      }
+      const booking = await app.bookingDeps.service.startService(getAuthUser(request), existing.booking.id);
+      return { booking };
+    }
+
+    if (status === "COMPLETED") {
+      // Delegate to the real booking-completion flow so payment/invoice/loyalty
+      // actually run — this dashboard action used to just flip
+      // QueueEntry.queueStatus directly, silently skipping payment creation.
+      // Earlier dashboard actions (Ready/Start) only sync QueueEntry.queueStatus,
+      // not Booking.status, so repair that here before the strict IN_SERVICE
+      // precondition inside completeService() is checked.
+      if (existing.booking.status !== "IN_SERVICE") {
+        await app.prisma.booking.update({
+          where: { id: existing.booking.id },
+          data: { status: "IN_SERVICE" }
+        });
+      }
+      const booking = await app.bookingDeps.service.completeService(getAuthUser(request), existing.booking.id);
+      return { booking };
+    }
+
     const entry = await app.prisma.queueEntry.update({ where: { id: existing.id }, data: { queueStatus: status } });
     return { entry };
   });

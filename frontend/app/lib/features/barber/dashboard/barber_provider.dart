@@ -187,13 +187,35 @@ class BarberDashNotifier extends Notifier<BarberDashState> {
     }
   }
 
-  Future<void> updateEntryStatus(String entryId, String newStatus) async {
+  /// Transitions a queue entry's status. IN_SERVICE and COMPLETED route
+  /// through their booking-level endpoints (not the raw queue-status PATCH)
+  /// because those are the only paths that also flip Booking.status and run
+  /// the real engine logic — QR check-in verification and chair bookkeeping
+  /// for Start, payment/invoice/loyalty for Complete. The raw PATCH only
+  /// ever touched QueueEntry.queueStatus, so using it for these silently
+  /// skipped all of that (e.g. no payment record was ever created). Other
+  /// transitions (Ready/No Show) stay on the raw PATCH; the backend syncs
+  /// Booking.status itself before delegating, so callers don't need every
+  /// prior step to have gone through the stricter engine preconditions.
+  Future<void> updateEntryStatus(
+    QueueEntry entry,
+    String newStatus,
+  ) async {
     try {
       final api = ref.read(apiClientProvider);
-      await api.patch<void>(
-        ApiEndpoints.queueEntryStatus(entryId),
-        body: {'status': newStatus},
-      );
+      switch (newStatus) {
+        case 'IN_SERVICE':
+          await api.post<void>(
+              ApiEndpoints.startService(entry.bookingId), body: {});
+        case 'COMPLETED':
+          await api.post<void>(
+              ApiEndpoints.completeService(entry.bookingId), body: {});
+        default:
+          await api.patch<void>(
+            ApiEndpoints.queueEntryStatus(entry.id),
+            body: {'status': newStatus},
+          );
+      }
       await load();
     } catch (e) {
       state = state.copyWith(error: e.toString());

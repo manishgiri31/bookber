@@ -122,7 +122,7 @@ class _ServicesTab extends ConsumerWidget {
                     BBButton(
                       label: 'Add Service',
                       icon: AppIcons.add,
-                      onPressed: () => _showServiceForm(context, ref, null),
+                      onPressed: () => _showAddServiceOptions(context, ref),
                     ),
                   ],
                 ),
@@ -149,7 +149,7 @@ class _ServicesTab extends ConsumerWidget {
             child: FloatingActionButton.extended(
               onPressed: isSaving
                   ? null
-                  : () => _showServiceForm(context, ref, null),
+                  : () => _showAddServiceOptions(context, ref),
               backgroundColor: context.bbColors.accent,
               icon: const Icon(AppIcons.add, color: Colors.black),
               label: Text(
@@ -164,14 +164,35 @@ class _ServicesTab extends ConsumerWidget {
   }
 
   void _showServiceForm(
-      BuildContext context, WidgetRef ref, ServiceItem? existing) {
+      BuildContext context, WidgetRef ref, ServiceItem? existing,
+      {_CatalogService? prefill}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _ServiceFormSheet(
         existing: existing,
+        prefill: prefill,
         shopId: ref.read(shopManagementProvider).shop?.id ?? '',
+      ),
+    );
+  }
+
+  void _showAddServiceOptions(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ServiceCatalogSheet(
+        existingServices: shop?.services ?? [],
+        onPickCatalog: (item) {
+          Navigator.of(context).pop();
+          _showServiceForm(context, ref, null, prefill: item);
+        },
+        onCustom: () {
+          Navigator.of(context).pop();
+          _showServiceForm(context, ref, null);
+        },
       ),
     );
   }
@@ -359,12 +380,185 @@ class _ServiceCard extends StatelessWidget {
       };
 }
 
+// ─── Service Catalog ──────────────────────────────────────────────────────────
+
+/// A predefined, commonly-offered salon service. Suggested price/duration are
+/// starting points the barber can adjust for their shop before saving.
+class _CatalogService {
+  const _CatalogService(this.name, this.category, this.durationMinutes, this.suggestedPrice);
+  final String name;
+  final String category;
+  final int durationMinutes;
+  final double suggestedPrice;
+}
+
+const _serviceCatalog = <_CatalogService>[
+  _CatalogService('Classic Haircut', 'HAIRCUT', 30, 150),
+  _CatalogService('Skin Fade', 'HAIRCUT', 45, 200),
+  _CatalogService('Kids Haircut', 'HAIRCUT', 20, 100),
+  _CatalogService('Hair Trim', 'HAIRCUT', 15, 100),
+  _CatalogService('Beard Trim', 'BEARD', 15, 80),
+  _CatalogService('Beard Shape Up', 'BEARD', 20, 100),
+  _CatalogService('Shave', 'SHAVE', 20, 100),
+  _CatalogService('Haircut + Beard Combo', 'COMBO', 50, 250),
+  _CatalogService('Hair Wash', 'OTHER', 15, 50),
+  _CatalogService('Hair Color', 'COLOR', 60, 500),
+  _CatalogService('Head Massage', 'TREATMENT', 20, 120),
+  _CatalogService('Hair Spa', 'TREATMENT', 45, 350),
+  _CatalogService('Facial', 'TREATMENT', 40, 300),
+  _CatalogService('Hair Straightening', 'TREATMENT', 90, 800),
+  _CatalogService('Face Cleanup', 'TREATMENT', 25, 200),
+];
+
+class _ServiceCatalogSheet extends StatelessWidget {
+  const _ServiceCatalogSheet({
+    required this.existingServices,
+    required this.onPickCatalog,
+    required this.onCustom,
+  });
+
+  final List<ServiceItem> existingServices;
+  final ValueChanged<_CatalogService> onPickCatalog;
+  final VoidCallback onCustom;
+
+  bool _alreadyAdded(_CatalogService item) => existingServices.any(
+      (s) => s.name.trim().toLowerCase() == item.name.trim().toLowerCase());
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.bbColors;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) => Container(
+        decoration: BoxDecoration(
+          color: colors.background,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: BBSpacing.base),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.border,
+                borderRadius: BorderRadius.circular(BBRadius.full),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(BBSpacing.pageHorizontal,
+                  BBSpacing.base, BBSpacing.pageHorizontal, BBSpacing.sm),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Add a Service',
+                      style: BBTypography.textTheme.titleLarge?.copyWith(
+                          color: colors.text, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: onCustom,
+                    icon: const Icon(AppIcons.add, size: 18),
+                    label: const Text('Custom'),
+                    style: TextButton.styleFrom(
+                        foregroundColor: context.bbColors.accent),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: BBSpacing.pageHorizontal),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Common services — tap to add the ones you offer',
+                  style: BBTypography.textTheme.bodySmall
+                      ?.copyWith(color: colors.textSecondary),
+                ),
+              ),
+            ),
+            const SizedBox(height: BBSpacing.sm),
+            Expanded(
+              child: ListView.separated(
+                controller: scrollController,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: BBSpacing.pageHorizontal,
+                    vertical: BBSpacing.xs),
+                itemCount: _serviceCatalog.length,
+                separatorBuilder: (_, _) => Divider(
+                    color: colors.border, height: 1, indent: 56),
+                itemBuilder: (context, i) {
+                  final item = _serviceCatalog[i];
+                  final added = _alreadyAdded(item);
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: context.bbColors.accent.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(BBRadius.md),
+                      ),
+                      child: Icon(
+                        _iconForCategory(item.category),
+                        size: 20,
+                        color: context.bbColors.accent,
+                      ),
+                    ),
+                    title: Text(item.name,
+                        style: BBTypography.textTheme.titleSmall
+                            ?.copyWith(color: colors.text, fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      '₹${item.suggestedPrice.toStringAsFixed(0)}  ·  ${item.durationMinutes}m',
+                      style: BBTypography.textTheme.bodySmall
+                          ?.copyWith(color: colors.textSecondary),
+                    ),
+                    trailing: added
+                        ? Chip(
+                            label: const Text('Added'),
+                            labelStyle: BBTypography.textTheme.labelSmall
+                                ?.copyWith(color: BBColors.success),
+                            backgroundColor:
+                                BBColors.success.withValues(alpha: 0.1),
+                            side: BorderSide.none,
+                            visualDensity: VisualDensity.compact,
+                          )
+                        : TextButton(
+                            onPressed: () => onPickCatalog(item),
+                            child: const Text('Add'),
+                          ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _iconForCategory(String cat) => switch (cat.toUpperCase()) {
+        'HAIRCUT' => AppIcons.scissors,
+        'BEARD' => AppIcons.face,
+        'COMBO' => AppIcons.spa,
+        'SHAVE' => AppIcons.wash,
+        'COLOR' => AppIcons.colorLens,
+        _ => AppIcons.scissors,
+      };
+}
+
 // ─── Service Form Sheet ────────────────────────────────────────────────────────
 
 class _ServiceFormSheet extends ConsumerStatefulWidget {
-  const _ServiceFormSheet({required this.existing, required this.shopId});
+  const _ServiceFormSheet({required this.existing, required this.shopId, this.prefill});
   final ServiceItem? existing;
   final String shopId;
+  final _CatalogService? prefill;
 
   @override
   ConsumerState<_ServiceFormSheet> createState() => _ServiceFormSheetState();
@@ -399,6 +593,12 @@ class _ServiceFormSheetState extends ConsumerState<_ServiceFormSheet> {
       _priceCtrl.text = s.price.toStringAsFixed(0);
       _durationCtrl.text = s.durationMin.toString();
       _category = s.category.isNotEmpty ? s.category : 'HAIRCUT';
+    } else if (widget.prefill != null) {
+      final p = widget.prefill!;
+      _nameCtrl.text = p.name;
+      _priceCtrl.text = p.suggestedPrice.toStringAsFixed(0);
+      _durationCtrl.text = p.durationMinutes.toString();
+      _category = p.category;
     }
   }
 

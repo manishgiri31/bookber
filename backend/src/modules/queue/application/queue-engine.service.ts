@@ -318,7 +318,7 @@ export class QueueEngineService {
 
       const updated = await tx.booking.update({
         where: { id: bookingId },
-        data: { status: "READY" }
+        data: { status: "READY", checkedInAt: now }
       });
 
       await tx.queueEntry.update({
@@ -388,7 +388,7 @@ export class QueueEngineService {
         // 6. Advance QUEUED/READY → READY (check-in), binding to this barber
         await tx.booking.update({
           where: { id: booking.id },
-          data: { status: "READY", barberId: barber.id }
+          data: { status: "READY", barberId: barber.id, checkedInAt: now }
         });
         await tx.queueEntry.update({
           where: { bookingId: booking.id },
@@ -433,7 +433,8 @@ export class QueueEngineService {
     const start = new Date();
     const updated = await tx.booking.update({
       where: { id: params.id },
-      data: { status: "IN_SERVICE", barberId: params.barberId }
+      // This path is only reached via checkInByScan, so the scan itself is the check-in.
+      data: { status: "IN_SERVICE", barberId: params.barberId, checkedInAt: start }
     });
     await tx.queueEntry.update({
       where: { bookingId: params.id },
@@ -834,6 +835,12 @@ export class QueueEngineService {
         throw Errors.conflict("Booking cannot start service");
       }
       if (!booking.chairId) throw Errors.conflict("No chair assigned");
+      // Walk-ins are registered by staff who've already confirmed the customer is
+      // physically present, so the QR check-in requirement only applies to
+      // app-originated (BookBer lane) reservations.
+      if (!booking.walkIn && !booking.checkedInAt) {
+        throw Errors.conflict("Customer has not checked in yet — ask them to scan your QR code first");
+      }
 
       const start = new Date();
       const updated = await tx.booking.update({

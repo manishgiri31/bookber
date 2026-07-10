@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/location_provider.dart';
 import '../../../core/providers/notifications_provider.dart';
 import '../../../core/providers/providers.dart';
 import '../../barber/dashboard/barber_provider.dart';
@@ -93,7 +94,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       _resetSessionScopedState(ref);
       state = AuthAuthenticated(user);
-      _registerFcm();
+      _requestPostLoginPermissions();
       return true;
     } catch (e) {
       state = AuthError(e.toString());
@@ -121,7 +122,7 @@ class AuthNotifier extends Notifier<AuthState> {
       );
       _resetSessionScopedState(ref);
       state = AuthAuthenticated(user);
-      _registerFcm();
+      _requestPostLoginPermissions();
       return true;
     } catch (e) {
       state = AuthError(e.toString());
@@ -152,6 +153,16 @@ class AuthNotifier extends Notifier<AuthState> {
 
   void _registerFcm() {
     ref.read(notificationsProvider.notifier).registerToken();
+  }
+
+  /// Runs right after an interactive login/register — the natural moment to
+  /// ask for permissions, rather than showing dialogs before the user has
+  /// seen any app content, or leaving location permission to be requested
+  /// lazily (previously it only fired if the user happened to tap a specific
+  /// button on the home screen, so most users were never prompted at all).
+  void _requestPostLoginPermissions() {
+    _registerFcm();
+    ref.read(locationProvider.notifier).refresh();
   }
 
   void clearError() {

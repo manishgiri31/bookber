@@ -6,6 +6,8 @@ import 'package:socket_io_client/socket_io_client.dart' as io;
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/providers/providers.dart';
 import '../../shared/domain/queue_models.dart';
+import '../booking/booking_provider.dart';
+import '../home/home_provider.dart';
 
 // ─────────────── Queue state ───────────────
 
@@ -189,6 +191,10 @@ class MyQueueNotifier extends StateNotifier<QueueState> {
     final api = _ref.read(apiClientProvider);
     await api.post<void>(ApiEndpoints.cancelBooking(_bookingId), body: {});
     await _load();
+    // These providers are autoDispose but the home screen underneath this route
+    // stays mounted (offstage) during navigation, so it never naturally refetches.
+    _ref.invalidate(activeBookingsProvider);
+    _ref.invalidate(myBookingsProvider);
   }
 
   Future<void> refresh() => _load();

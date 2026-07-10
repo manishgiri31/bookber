@@ -21,7 +21,6 @@ import '../../features/barber/qr/barber_qr_screen.dart';
 import '../../features/barber/barber_shell.dart';
 import '../../features/barber/employees/employees_screen.dart';
 import '../../features/barber/reception/reception_screen.dart';
-import '../../features/barber/services/barber_services_screen.dart';
 import '../../features/barber/shop/shop_management_screen.dart';
 import '../../features/customer/notifications/notifications_screen.dart';
 import '../../features/customer/payment/checkout_screen.dart';
@@ -233,7 +232,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           builder: (_, _) => const EmployeesScreen()),
       GoRoute(
           path: '/barber/services',
-          builder: (_, _) => const BarberServicesScreen()),
+          // Both entry points ("Services" and "Manage Shop") now open the
+          // same real, backend-wired screen — there used to be a second,
+          // mock-data-only Services screen here that never persisted anything.
+          builder: (_, _) => const ShopManagementScreen()),
 
       // Shared
       GoRoute(

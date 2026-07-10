@@ -1,14 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/design/app_icons.dart';
 import '../../core/design/bb_colors.dart';
 import '../../core/design/bb_tokens.dart';
 import '../../core/design/bb_typography.dart';
+import '../shared/domain/booking_models.dart';
+import 'home/home_provider.dart';
 
-class CustomerShell extends StatelessWidget {
+class CustomerShell extends ConsumerStatefulWidget {
   const CustomerShell({super.key, required this.child});
   final Widget child;
+
+  @override
+  ConsumerState<CustomerShell> createState() => _CustomerShellState();
+}
+
+class _CustomerShellState extends ConsumerState<CustomerShell>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Reopening the app should re-check for an active booking, the same way
+    // a ride-hailing app resumes straight into an in-progress ride.
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(activeBookingsProvider);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +46,21 @@ class CustomerShell extends StatelessWidget {
     final location = GoRouterState.of(context).uri.path;
     final currentIndex = _indexFor(location);
 
+    // Only take over navigation from the Home tab itself — a booking becoming
+    // active shouldn't yank the user out of Shops/Bookings/Profile.
+    ref.listen<AsyncValue<List<Booking>>>(activeBookingsProvider, (prev, next) {
+      final booking = next.valueOrNull?.firstOrNull;
+      if (booking == null) return;
+      final currentPath = GoRouterState.of(context).uri.path;
+      if (currentPath != '/home') return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go('/queue/${booking.id}');
+      });
+    });
+
     return Scaffold(
       extendBody: true,
-      body: child,
+      body: widget.child,
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         child: ClipRRect(

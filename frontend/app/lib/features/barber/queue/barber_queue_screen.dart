@@ -130,7 +130,7 @@ class BarberQueueScreen extends ConsumerWidget {
                             try {
                               await ref
                                   .read(barberDashProvider.notifier)
-                                  .updateEntryStatus(entry.id, status);
+                                  .updateEntryStatus(entry, status);
                               if (ctx.mounted) {
                                 showBBSnackbar(ctx,
                                     message: 'Status updated',

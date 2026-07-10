@@ -1,4 +1,4 @@
-import type { Prisma, Shop } from "@prisma/client";
+import type { Prisma, Shop, ServiceCategory } from "@prisma/client";
 import { prisma } from "../../../shared/prisma/client.js";
 import type { ChairStatus, PaginationResult, ShopSearchParams, ServiceSearchParams } from "../domain/shop.types.js";
 
@@ -38,10 +38,13 @@ export class PrismaShopRepository {
     // Check Barber employee record first, then fall back to shop ownership
     const barber = await prisma.barber.findUnique({
       where: { userId },
-      include: { shop: true }
+      include: { shop: { include: { services: { where: { isActive: true } }, chairs: true } } }
     });
     if (barber?.shop) return barber.shop;
-    return prisma.shop.findFirst({ where: { ownerId: userId } }) || null;
+    return prisma.shop.findFirst({
+      where: { ownerId: userId },
+      include: { services: { where: { isActive: true } }, chairs: true }
+    });
   }
 
   async upsertBarberProfile(userId: string, shopId: string) {
@@ -52,7 +55,7 @@ export class PrismaShopRepository {
     });
   }
 
-  async createService(shopId: string, data: { name: string; description: string | null; durationMinutes: number; price: number }) {
+  async createService(shopId: string, data: { name: string; description: string | null; durationMinutes: number; price: number; category?: ServiceCategory }) {
     return prisma.service.create({ data: { shopId, ...data } });
   }
 
