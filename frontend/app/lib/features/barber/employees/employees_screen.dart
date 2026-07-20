@@ -97,12 +97,12 @@ class ShopStaffNotifier
     }
   }
 
-  Future<bool> addByEmail(String email) async {
+  Future<bool> addByEmail(String email, {String role = 'RECEPTION'}) async {
     try {
       final api = ref.read(apiClientProvider);
       await api.post<Map<String, dynamic>>(
         ApiEndpoints.shopStaff(arg),
-        body: {'email': email.trim()},
+        body: {'email': email.trim(), 'role': role},
       );
       await _load();
       return true;
@@ -402,6 +402,7 @@ class _AddEmployeeSheet extends ConsumerStatefulWidget {
 class _AddEmployeeSheetState extends ConsumerState<_AddEmployeeSheet> {
   final _emailCtrl = TextEditingController();
   bool _loading = false;
+  String _role = 'BARBER';
 
   @override
   void dispose() {
@@ -441,7 +442,7 @@ class _AddEmployeeSheetState extends ConsumerState<_AddEmployeeSheet> {
           ),
           const SizedBox(height: BBSpacing.sm),
           Text(
-            'Enter the email address of a BookBer user to add them as reception staff.',
+            'Enter the email address of a BookBer user and choose their role at this shop.',
             style: BBTypography.textTheme.bodySmall
                 ?.copyWith(color: colors.textSecondary),
           ),
@@ -455,6 +456,39 @@ class _AddEmployeeSheetState extends ConsumerState<_AddEmployeeSheet> {
               hintText: 'staff@example.com',
               prefixIcon: const Icon(AppIcons.mail),
             ),
+          ),
+          const SizedBox(height: BBSpacing.base),
+          Text(
+            'Role',
+            style: BBTypography.textTheme.labelMedium
+                ?.copyWith(color: colors.textSecondary),
+          ),
+          const SizedBox(height: BBSpacing.sm),
+          Wrap(
+            spacing: BBSpacing.sm,
+            children: [
+              ChoiceChip(
+                label: const Text('Barber'),
+                selected: _role == 'BARBER',
+                onSelected:
+                    _loading ? null : (_) => setState(() => _role = 'BARBER'),
+              ),
+              ChoiceChip(
+                label: const Text('Reception'),
+                selected: _role == 'RECEPTION',
+                onSelected: _loading
+                    ? null
+                    : (_) => setState(() => _role = 'RECEPTION'),
+              ),
+            ],
+          ),
+          const SizedBox(height: BBSpacing.xs),
+          Text(
+            _role == 'BARBER'
+                ? 'Can manage shop info, services, schedule and queue like an owner.'
+                : 'Can manage the walk-in queue and reception desk only.',
+            style: BBTypography.textTheme.labelSmall
+                ?.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: BBSpacing.xl),
           BBButton(
@@ -473,7 +507,7 @@ class _AddEmployeeSheetState extends ConsumerState<_AddEmployeeSheet> {
     setState(() => _loading = true);
     final success = await ref
         .read(shopStaffProvider(widget.shopId).notifier)
-        .addByEmail(email);
+        .addByEmail(email, role: _role);
     if (!mounted) return;
     setState(() => _loading = false);
     Navigator.of(context).pop();

@@ -18,6 +18,7 @@ class Booking {
     this.totalAmount = 0.0,
     this.finalAmount = 0.0,
     this.notes,
+    this.hasReview = false,
   });
 
   final String id;
@@ -36,6 +37,7 @@ class Booking {
   final double totalAmount;
   final double finalAmount;
   final String? notes;
+  final bool hasReview;
 
   bool get isActive => ['QUEUED', 'READY', 'CALLED', 'IN_SERVICE'].contains(status);
   String get serviceNames =>
@@ -81,6 +83,7 @@ class Booking {
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       finalAmount: (json['finalAmount'] as num?)?.toDouble() ?? 0.0,
       notes: json['notes']?.toString(),
+      hasReview: json['review'] != null,
     );
   }
 }

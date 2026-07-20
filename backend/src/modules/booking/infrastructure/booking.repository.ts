@@ -107,7 +107,8 @@ export class PrismaBookingRepository {
         service: true,
         barber: { include: { user: true } },
         chair: true,
-        queueEntry: true
+        queueEntry: true,
+        review: { select: { id: true } }
       }
     });
     return Promise.all(bookings.map((booking) => this.withEffectivePosition(db, booking)));

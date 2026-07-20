@@ -225,13 +225,23 @@ class _BookingCard extends ConsumerWidget {
                     onTap: () => context.push('/queue/${booking.id}'),
                   ),
                 ),
-              if (isCompleted) ...[
+              if (isCompleted && !booking.hasReview) ...[
                 Expanded(
                   child: _ActionChip(
                     label: 'Review',
                     icon: AppIcons.star,
                     color: context.bbColors.accent,
                     onTap: () => context.push('/review/${booking.id}'),
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ] else if (isCompleted && booking.hasReview) ...[
+                Expanded(
+                  child: _ActionChip(
+                    label: 'Reviewed',
+                    icon: AppIcons.checkCircle,
+                    color: BBColors.success,
+                    onTap: () {},
                   ),
                 ),
                 const SizedBox(width: 6),

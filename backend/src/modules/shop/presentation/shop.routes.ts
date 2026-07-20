@@ -34,17 +34,20 @@ export const shopRoutes: FastifyPluginAsync = async (app) => {
     return { staff };
   });
 
-  // POST /shops/:shopId/staff — add a user as RECEPTION staff (accepts email or userId)
+  // POST /shops/:shopId/staff — add a user as RECEPTION or BARBER staff (accepts email or userId)
   app.post("/:shopId/staff", { preHandler: app.authorizeRoles(["OWNER", "ADMIN"]) }, async (request, reply) => {
     const { shopId } = request.params as { shopId: string };
     if (request.user.role === "OWNER") {
       const shop = await app.prisma.shop.findUnique({ where: { id: shopId }, select: { ownerId: true } });
       if (!shop || shop.ownerId !== request.user.sub) throw app.httpErrors.forbidden("Not the shop owner");
     }
-    const body = z.union([
-      z.object({ email: z.string().email() }),
-      z.object({ userId: z.string().cuid() }),
-    ]).parse(request.body);
+    const body = z.intersection(
+      z.union([
+        z.object({ email: z.string().email() }),
+        z.object({ userId: z.string().cuid() }),
+      ]),
+      z.object({ role: z.enum(["RECEPTION", "BARBER"]).default("RECEPTION") })
+    ).parse(request.body);
 
     const where = "email" in body ? { email: body.email } : { id: body.userId };
     const targetUser = await app.prisma.user.findUnique({ where, select: { id: true } });
@@ -55,7 +58,13 @@ export const shopRoutes: FastifyPluginAsync = async (app) => {
       include: { user: { select: { id: true, fullName: true, email: true } } }
     });
 
-    await app.prisma.user.update({ where: { id: targetUser.id }, data: { role: "RECEPTION" } });
+    await app.prisma.user.update({ where: { id: targetUser.id }, data: { role: body.role } });
+    // A BARBER role alone isn't enough to pass assertShopOwnership()'s checks —
+    // they also need a Barber row binding them to this specific shop, the same
+    // way one gets auto-created for whoever creates/owns a shop.
+    if (body.role === "BARBER") {
+      await app.shopDeps.repository.upsertBarberProfile(targetUser.id, shopId);
+    }
 
     return reply.status(201).send({ staff: staffRecord });
   });
@@ -71,6 +80,9 @@ export const shopRoutes: FastifyPluginAsync = async (app) => {
     if (!staffRecord || staffRecord.shopId !== shopId) throw app.httpErrors.notFound("Staff record not found");
 
     await app.prisma.shopStaff.delete({ where: { id: staffId } });
+    // Drop their Barber row for this shop too, so a removed barber immediately
+    // loses shop-editing access rather than keeping it via a stale link.
+    await app.prisma.barber.deleteMany({ where: { userId: staffRecord.userId, shopId } });
     // Revert user role to CLIENT only if they have no other staff assignments
     const otherAssignments = await app.prisma.shopStaff.count({ where: { userId: staffRecord.userId } });
     if (otherAssignments === 0) {

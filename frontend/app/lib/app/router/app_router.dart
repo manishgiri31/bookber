@@ -32,6 +32,7 @@ import '../../features/customer/arrival/smart_arrival_screen.dart';
 import '../../features/customer/arrival/scan_checkin_screen.dart';
 import '../../features/customer/gamification/gamification_screen.dart';
 import '../../features/customer/booking/booking_flow_screen.dart';
+import '../../features/customer/booking/booking_provider.dart';
 import '../../features/customer/customer_shell.dart';
 import '../../features/customer/favourites/favourites_screen.dart';
 import '../../features/customer/home/home_screen.dart';
@@ -839,6 +840,7 @@ class _ReviewScreenState extends ConsumerState<ReviewScreen> {
           if (_tipAmount != null && _tipAmount! > 0) 'tip': _tipAmount,
         },
       );
+      ref.invalidate(myBookingsProvider);
       if (mounted) context.pop();
     } catch (e) {
       if (mounted) {

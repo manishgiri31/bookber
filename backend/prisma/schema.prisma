@@ -237,6 +237,7 @@ model Booking {
   queueEntry         QueueEntry?
   queueEvents        QueueEvent[]
   referenceImages    BookingReferenceImage[]
+  review             Review?
 
   @@index([userId])
   @@index([userId, status])
@@ -360,11 +361,13 @@ model Review {
   id        String   @id @default(cuid())
   userId    String
   shopId    String
+  bookingId String?  @unique
   rating    Int
   comment   String?
   createdAt DateTime @default(now())
   shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
   @@index([shopId])
   @@index([userId])
